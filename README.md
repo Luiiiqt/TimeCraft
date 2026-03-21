@@ -27,8 +27,6 @@
 9. [Scheduling Logic](#-scheduling-logic)
 10. [Frontend Structure](#-frontend-structure)
 11. [Best Practices & Suggestions](#-best-practices--suggestions)
-12. [Find & Replace Reference](#-find--replace-reference)
-
 ---
 
 ## 🎯 Project Overview
