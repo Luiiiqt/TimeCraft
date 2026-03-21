@@ -28,7 +28,6 @@
 10. [Frontend Structure](#-frontend-structure)
 11. [Best Practices & Suggestions](#-best-practices--suggestions)
 12. [Find & Replace Reference](#-find--replace-reference)
-13. [Setup Instructions](#-setup-instructions)
 
 ---
 
