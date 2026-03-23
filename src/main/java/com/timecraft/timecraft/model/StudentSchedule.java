@@ -24,10 +24,10 @@ import lombok.Setter;
 
 @Entity
 @Table(
-    name = "rooms",
+    name = "student_schedules",
     uniqueConstraints = @UniqueConstraint(
-        name = "uq_rooms_name_campus",
-        columnNames = {"campus_id", "name"}
+        name = "uq_student_schedule",
+        columnNames = {"student_id", "schedule_id"}
     )
 )
 @Getter
@@ -35,41 +35,38 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Room {
+public class StudentSchedule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * The student being assigned.
+     * Must be a User with userType = STUDENT.
+     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "campus_id", nullable = false)
-    private Campus campus;
+    @JoinColumn(name = "student_id", nullable = false)
+    private User student;
 
-    /** Display name e.g. "LI Lecture Room 101", "HS Nursing Lab 1". */
-    @Column(name = "name", nullable = false, length = 100)
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "schedule_id", nullable = false)
+    private Schedule schedule;
 
-    /** Room number label e.g. "101", "CL1". */
-    @Column(name = "room_number", length = 20)
-    private String roomNumber;
-
-    @Column(name = "capacity", nullable = false)
-    private int capacity;
-
+    /**
+     * REGULAR   = student is in the block section that owns this schedule.
+     * IRREGULAR = student was individually placed into this class.
+     */
     @Enumerated(EnumType.STRING)
-    @Column(name = "room_type", nullable = false, length = 15)
-    private RoomType roomType;
-
-    @Column(name = "is_active", nullable = false)
-    @Builder.Default
-    private boolean isActive = true;
+    @Column(name = "assignment_type", nullable = false, length = 10)
+    private AssignmentType assignmentType;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "enrolled_at", nullable = false, updatable = false)
+    private LocalDateTime enrolledAt;
 
     // ── Enum ──────────────────────────────────────────────────────────────────
-    public enum RoomType {
-        LECTURE, LABORATORY
+    public enum AssignmentType {
+        REGULAR, IRREGULAR
     }
 }

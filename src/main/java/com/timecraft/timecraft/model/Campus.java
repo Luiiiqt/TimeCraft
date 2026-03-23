@@ -1,10 +1,7 @@
 package com.timecraft.timecraft.model;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,40 +18,35 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "departments")
+@Table(name = "campuses")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Department {
+public class Campus {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Full college name e.g. "College of Nursing". */
+    /** Full campus name e.g. "Campus of Learning Innovation". */
     @Column(name = "name", nullable = false, unique = true, length = 150)
     private String name;
 
-    /** Short code e.g. "CON", "CCSE", "GEN_ED". */
+    /** Short code e.g. "CLI", "CHS". */
     @Column(name = "code", nullable = false, unique = true, length = 20)
     private String code;
+
+    @Column(name = "address", columnDefinition = "TEXT")
+    private String address;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean isActive = true;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     // ── Relationships ─────────────────────────────────────────────────────────
-    @OneToMany(mappedBy = "department", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "campus", fetch = FetchType.LAZY)
     @Builder.Default
-    private List<Course> courses = new ArrayList<>();
-
-    @OneToMany(mappedBy = "department", fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Subject> subjects = new ArrayList<>();
+    private List<Room> rooms = new ArrayList<>();
 }
