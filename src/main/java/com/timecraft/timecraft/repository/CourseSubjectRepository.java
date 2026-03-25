@@ -13,8 +13,6 @@ import com.timecraft.timecraft.model.CourseSubject.Semester;
 @Repository
 public interface CourseSubjectRepository extends JpaRepository<CourseSubject, Long> {
 
-    // ── Curriculum lookup ─────────────────────────────────────────────────────
-
     List<CourseSubject> findByCourseId(Long courseId);
 
     List<CourseSubject> findByCourseIdAndYearLevel(Long courseId, short yearLevel);
@@ -23,27 +21,19 @@ public interface CourseSubjectRepository extends JpaRepository<CourseSubject, Lo
                                                                short yearLevel,
                                                                Semester semester);
 
-    // ── Shared subjects ───────────────────────────────────────────────────────
-
-    /** Returns all curriculum entries flagged as shared across courses. */
     List<CourseSubject> findByIsSharedTrue();
 
     List<CourseSubject> findBySubjectIdAndIsSharedTrue(Long subjectId);
 
-    // ── Subject existence check ───────────────────────────────────────────────
-
     boolean existsByCourseIdAndSubjectId(Long courseId, Long subjectId);
-
-    // ── Courses that include a given subject ──────────────────────────────────
 
     @Query("SELECT cs FROM CourseSubject cs WHERE cs.subject.id = :subjectId")
     List<CourseSubject> findCoursesBySubjectId(@Param("subjectId") Long subjectId);
-
-    // ── Full curriculum for a course (all years and semesters) ───────────────
 
     @Query("SELECT cs FROM CourseSubject cs " +
            "JOIN FETCH cs.subject s " +
            "WHERE cs.course.id = :courseId " +
            "ORDER BY cs.yearLevel, cs.semester")
-    List<CourseSubject> findFullCurriculumByCourseId(@Param("courseId") Long courseId);
+    List<CourseSubject> findFullCurriculumByCourseId(
+            @Param("courseId") Long courseId);
 }

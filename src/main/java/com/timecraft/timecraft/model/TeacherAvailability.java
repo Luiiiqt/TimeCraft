@@ -24,20 +24,14 @@ import lombok.Setter;
         columnNames = {"teacher_id", "timeslot_id"}
     )
 )
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class TeacherAvailability {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * References users.id where user_type = 'TEACHER'.
-     */
+    /** References users.id where user_type = 'TEACHER'. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "teacher_id", nullable = false)
     private User teacher;
@@ -48,7 +42,7 @@ public class TeacherAvailability {
 
     /**
      * TRUE  = teacher is free and can be scheduled in this slot.
-     * FALSE = teacher is blocked; scheduling engine skips this slot.
+     * FALSE = teacher is blocked — scheduling engine skips this slot.
      */
     @Column(name = "available", nullable = false)
     @Builder.Default

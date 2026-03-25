@@ -1,20 +1,32 @@
 package com.timecraft.timecraft.model;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 @Entity
 @Table(name = "subjects")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Subject {
 
     @Id
@@ -29,41 +41,34 @@ public class Subject {
     @Column(name = "code", nullable = false, unique = true, length = 30)
     private String code;
 
-    /** MAJOR or MINOR classification. */
     @Enumerated(EnumType.STRING)
     @Column(name = "subject_type", nullable = false, length = 10)
     private SubjectType subjectType;
 
     /**
-     * Whether this subject requires a lecture room or a laboratory room.
-     * The scheduling engine matches this against Room.roomType.
+     * Determines required room type during scheduling.
+     * LECTURE → must use a LECTURE room.
+     * LABORATORY → must use a LABORATORY room.
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "session_type", nullable = false, length = 15)
     private SessionType sessionType;
 
-    /**
-     * Always 90 minutes (1 hour 30 minutes) per session.
-     * Enforced by DB CHECK constraint.
-     */
+    /** Always 90 minutes. Enforced by DB CHECK constraint. */
     @Column(name = "duration_mins", nullable = false)
     @Builder.Default
     private short durationMins = 90;
 
-    /**
-     * Number of times this subject meets per week.
-     * Typically 2 for both major and minor subjects.
-     */
+    /** Meets twice per week. */
     @Column(name = "sessions_per_week", nullable = false)
     @Builder.Default
     private short sessionsPerWeek = 2;
 
-    /** Credit units. */
     @Column(name = "units", nullable = false)
     @Builder.Default
     private short units = 3;
 
-    /** Department that owns this subject. */
+    /** Owning department. No year-level restriction on teacher assignment. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "department_id", nullable = false)
     private Department department;
@@ -76,18 +81,10 @@ public class Subject {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // ── Relationships ─────────────────────────────────────────────────────────
-    /** Curriculum mappings — which courses include this subject. */
     @OneToMany(mappedBy = "subject", fetch = FetchType.LAZY)
     @Builder.Default
     private List<CourseSubject> courseSubjects = new ArrayList<>();
 
-    // ── Enums ─────────────────────────────────────────────────────────────────
-    public enum SubjectType {
-        MAJOR, MINOR
-    }
-
-    public enum SessionType {
-        LECTURE, LABORATORY
-    }
+    public enum SubjectType { MAJOR, MINOR }
+    public enum SessionType  { LECTURE, LABORATORY }
 }

@@ -30,11 +30,7 @@ import lombok.Setter;
         columnNames = {"campus_id", "name"}
     )
 )
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Room {
 
     @Id
@@ -49,7 +45,6 @@ public class Room {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    /** Room number label e.g. "101", "CL1". */
     @Column(name = "room_number", length = 20)
     private String roomNumber;
 
@@ -68,7 +63,6 @@ public class Room {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // ── Enum ──────────────────────────────────────────────────────────────────
     public enum RoomType {
         LECTURE, LABORATORY
     }

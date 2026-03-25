@@ -15,36 +15,31 @@ import com.timecraft.timecraft.model.StudentSchedule;
 import com.timecraft.timecraft.model.StudentSchedule.AssignmentType;
 
 @Repository
-public interface StudentScheduleRepository extends JpaRepository<StudentSchedule, Long> {
-
-    // ── Lookup ────────────────────────────────────────────────────────────────
+public interface StudentScheduleRepository
+        extends JpaRepository<StudentSchedule, Long> {
 
     Optional<StudentSchedule> findByStudentIdAndScheduleId(Long studentId,
                                                              Long scheduleId);
 
     boolean existsByStudentIdAndScheduleId(Long studentId, Long scheduleId);
 
-    // ── Student's enrolled schedules ──────────────────────────────────────────
-
     List<StudentSchedule> findByStudentId(Long studentId);
 
     List<StudentSchedule> findByStudentIdAndAssignmentType(Long studentId,
-                                                            AssignmentType assignmentType);
+                                                            AssignmentType type);
 
     @Query("SELECT ss FROM StudentSchedule ss " +
            "JOIN ss.schedule sc " +
            "WHERE ss.student.id = :studentId " +
            "AND sc.semester = :semester AND sc.schoolYear = :schoolYear")
-    List<StudentSchedule> findByStudentAndTerm(@Param("studentId") Long studentId,
-                                                @Param("semester") Semester semester,
-                                                @Param("schoolYear") String schoolYear);
-
-    // ── Irregular student conflict check ──────────────────────────────────────
+    List<StudentSchedule> findByStudentAndTerm(
+            @Param("studentId") Long studentId,
+            @Param("semester") Semester semester,
+            @Param("schoolYear") String schoolYear);
 
     /**
-     * Checks whether an irregular student already has a class at
-     * a given timeslot (either session 1 or 2) in the term.
-     * Used before assigning them to a new schedule.
+     * Checks if an irregular student already has a class at the given timeslot.
+     * Prevents double-booking when individually assigning subjects.
      */
     @Query("SELECT ss FROM StudentSchedule ss " +
            "JOIN ss.schedule sc " +
@@ -57,17 +52,12 @@ public interface StudentScheduleRepository extends JpaRepository<StudentSchedule
             @Param("semester") Semester semester,
             @Param("schoolYear") String schoolYear);
 
-    // ── Schedule headcount ────────────────────────────────────────────────────
-
     long countByScheduleId(Long scheduleId);
 
     long countByScheduleIdAndAssignmentType(Long scheduleId,
-                                             AssignmentType assignmentType);
+                                             AssignmentType type);
 
-    // ── Bulk operations ───────────────────────────────────────────────────────
-
-    /** Removes all individual assignments for a student in a term.
-     *  Used when re-building an irregular student's schedule. */
+    /** Removes all irregular assignments for a student in a term (for rebuild). */
     @Modifying
     @Transactional
     @Query("DELETE FROM StudentSchedule ss " +

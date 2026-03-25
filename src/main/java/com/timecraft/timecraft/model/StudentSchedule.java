@@ -30,21 +30,14 @@ import lombok.Setter;
         columnNames = {"student_id", "schedule_id"}
     )
 )
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class StudentSchedule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * The student being assigned.
-     * Must be a User with userType = STUDENT.
-     */
+    /** Must be a User with userType = STUDENT. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
@@ -55,7 +48,7 @@ public class StudentSchedule {
 
     /**
      * REGULAR   = student is in the block section that owns this schedule.
-     * IRREGULAR = student was individually placed into this class.
+     * IRREGULAR = student was individually assigned to this class.
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "assignment_type", nullable = false, length = 10)
@@ -65,7 +58,6 @@ public class StudentSchedule {
     @Column(name = "enrolled_at", nullable = false, updatable = false)
     private LocalDateTime enrolledAt;
 
-    // ── Enum ──────────────────────────────────────────────────────────────────
     public enum AssignmentType {
         REGULAR, IRREGULAR
     }

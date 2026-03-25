@@ -14,8 +14,6 @@ import com.timecraft.timecraft.model.User.UserType;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // ── Lookup ────────────────────────────────────────────────────────────────
-
     Optional<User> findByEmail(String email);
 
     Optional<User> findBySchoolId(String schoolId);
@@ -24,13 +22,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsBySchoolId(String schoolId);
 
-    // ── Filter by type ────────────────────────────────────────────────────────
-
     List<User> findByUserType(UserType userType);
 
     List<User> findByUserTypeAndIsActiveTrue(UserType userType);
-
-    // ── Search ────────────────────────────────────────────────────────────────
 
     @Query("SELECT u FROM User u WHERE u.userType = :type " +
            "AND LOWER(u.fullName) LIKE LOWER(CONCAT('%', :name, '%'))")

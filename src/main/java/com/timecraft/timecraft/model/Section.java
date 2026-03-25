@@ -31,11 +31,7 @@ import lombok.Setter;
         columnNames = {"course_id", "year_level", "section_name", "semester", "school_year"}
     )
 )
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Section {
 
     @Id
@@ -50,7 +46,7 @@ public class Section {
     @Column(name = "year_level", nullable = false)
     private short yearLevel;
 
-    /** Section letter/identifier e.g. "A", "B", "C". */
+    /** Section identifier e.g. "A", "B", "C". */
     @Column(name = "section_name", nullable = false, length = 10)
     private String sectionName;
 
@@ -58,7 +54,7 @@ public class Section {
     @Column(name = "semester", nullable = false, length = 10)
     private CourseSubject.Semester semester;
 
-    /** Academic year this section is active e.g. "2024-2025". */
+    /** Academic year e.g. "2024-2025". */
     @Column(name = "school_year", nullable = false, length = 10)
     private String schoolYear;
 
@@ -70,14 +66,11 @@ public class Section {
     @Builder.Default
     private boolean isActive = true;
 
-    // ── Relationships ─────────────────────────────────────────────────────────
     @OneToMany(mappedBy = "section", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Schedule> schedules = new ArrayList<>();
 
-    /**
-     * Convenience display label e.g. "BSIT 1-A 1st Sem 2024-2025".
-     */
+    /** Convenience label e.g. "BSIT 1-A 1st Sem 2024-2025". */
     @Transient
     public String getDisplayLabel() {
         return String.format("%s %d-%s %s %s",

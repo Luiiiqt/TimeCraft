@@ -19,18 +19,14 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "campuses")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Campus {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Full campus name e.g. "Campus of Learning Innovation". */
+    /** Full name e.g. "Campus of Learning Innovation". */
     @Column(name = "name", nullable = false, unique = true, length = 150)
     private String name;
 
@@ -45,7 +41,6 @@ public class Campus {
     @Builder.Default
     private boolean isActive = true;
 
-    // ── Relationships ─────────────────────────────────────────────────────────
     @OneToMany(mappedBy = "campus", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Room> rooms = new ArrayList<>();

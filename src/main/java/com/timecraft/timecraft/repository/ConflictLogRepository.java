@@ -18,7 +18,6 @@ public interface ConflictLogRepository extends JpaRepository<ConflictLog, Long> 
 
     // ── Admin dashboard ───────────────────────────────────────────────────────
 
-    /** All unresolved conflicts — primary admin dashboard query. */
     List<ConflictLog> findByResolvedFalse();
 
     List<ConflictLog> findByResolvedFalseOrderByDetectedAtDesc();
@@ -43,33 +42,36 @@ public interface ConflictLogRepository extends JpaRepository<ConflictLog, Long> 
            "JOIN cl.schedule sc " +
            "WHERE sc.semester = :semester AND sc.schoolYear = :schoolYear " +
            "ORDER BY cl.detectedAt DESC")
-    List<ConflictLog> findByTerm(@Param("semester") Semester semester,
-                                  @Param("schoolYear") String schoolYear);
+    List<ConflictLog> findByTerm(
+            @Param("semester") Semester semester,
+            @Param("schoolYear") String schoolYear);
 
     @Query("SELECT cl FROM ConflictLog cl " +
            "JOIN cl.schedule sc " +
            "WHERE sc.semester = :semester AND sc.schoolYear = :schoolYear " +
            "AND cl.resolved = false")
-    List<ConflictLog> findUnresolvedByTerm(@Param("semester") Semester semester,
-                                            @Param("schoolYear") String schoolYear);
+    List<ConflictLog> findUnresolvedByTerm(
+            @Param("semester") Semester semester,
+            @Param("schoolYear") String schoolYear);
 
     // ── Resolution ────────────────────────────────────────────────────────────
 
-    /** Bulk-resolve all conflicts for a given schedule — used when admin fixes it. */
+    /** Bulk-resolve all conflicts for a schedule when admin fixes it. */
     @Modifying
     @Transactional
-    @Query("UPDATE ConflictLog cl SET cl.resolved = true, cl.resolvedAt = CURRENT_TIMESTAMP " +
+    @Query("UPDATE ConflictLog cl " +
+           "SET cl.resolved = true, cl.resolvedAt = CURRENT_TIMESTAMP " +
            "WHERE cl.schedule.id = :scheduleId AND cl.resolved = false")
     void resolveAllByScheduleId(@Param("scheduleId") Long scheduleId);
 
-    /** Clears all conflict records for a term — used before re-generating a schedule. */
+    /** Clears all conflict records for a term before re-generating. */
     @Modifying
     @Transactional
     @Query("DELETE FROM ConflictLog cl " +
            "WHERE cl.schedule.id IN (" +
            "  SELECT s.id FROM Schedule s " +
-           "  WHERE s.semester = :semester AND s.schoolYear = :schoolYear" +
-           ")")
-    void deleteAllByTerm(@Param("semester") Semester semester,
-                         @Param("schoolYear") String schoolYear);
+           "  WHERE s.semester = :semester AND s.schoolYear = :schoolYear)")
+    void deleteAllByTerm(
+            @Param("semester") Semester semester,
+            @Param("schoolYear") String schoolYear);
 }

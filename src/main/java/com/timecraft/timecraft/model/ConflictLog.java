@@ -23,11 +23,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "conflict_log")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ConflictLog {
 
     @Id
@@ -35,8 +31,8 @@ public class ConflictLog {
     private Long id;
 
     /**
-     * The schedule entry involved in the conflict.
-     * Can be NULL if the schedule was deleted after detection.
+     * The schedule entry involved in this conflict.
+     * NULL if the schedule was deleted after detection.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "schedule_id")
@@ -63,19 +59,20 @@ public class ConflictLog {
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 
-    // ── Enum ──────────────────────────────────────────────────────────────────
     public enum ConflictType {
-        /** Same teacher assigned to two rooms at the same timeslot. */
+        /** Same teacher in two rooms at the same timeslot. */
         TEACHER_DOUBLE_BOOKED,
         /** Same room assigned to two subjects at the same timeslot. */
         ROOM_DOUBLE_BOOKED,
-        /** A student has two classes at the same time (via section or individual). */
+        /** A student has two classes at the same time. */
         STUDENT_TIME_CONFLICT,
-        /** Teacher is marked unavailable at the assigned timeslot. */
+        /** Teacher marked unavailable at the assigned timeslot. */
         TEACHER_UNAVAILABLE,
-        /** Subject needs a lab but got a lecture room, or vice versa. */
+        /** Subject needs a lab but got a lecture room or vice versa. */
         WRONG_ROOM_TYPE,
-        /** Health-related course was scheduled at the wrong campus. */
-        WRONG_CAMPUS
+        /** Health-related course scheduled at the wrong campus. */
+        WRONG_CAMPUS,
+        /** Teacher assigned to a subject outside their department. */
+        WRONG_DEPARTMENT
     }
 }

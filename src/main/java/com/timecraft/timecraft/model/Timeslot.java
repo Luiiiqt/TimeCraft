@@ -26,37 +26,25 @@ import lombok.Setter;
         columnNames = {"day_of_week", "slot_number"}
     )
 )
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Timeslot {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Day of the week — MONDAY through SATURDAY only.
-     * Sunday is not part of the scheduling window.
-     */
+    /** MONDAY through SATURDAY only. */
     @Enumerated(EnumType.STRING)
     @Column(name = "day_of_week", nullable = false, length = 10)
     private DayOfWeek dayOfWeek;
 
-    /**
-     * Ordered slot within the day.
-     * 1 = 07:30, 2 = 09:00, ... 7 = 16:30 (ends 18:00).
-     */
+    /** 1 = 07:30 AM, 7 = 04:30 PM (ends 06:00 PM). */
     @Column(name = "slot_number", nullable = false)
     private short slotNumber;
 
-    /** Start of the 90-minute block e.g. 07:30. */
     @Column(name = "start_time", nullable = false)
     private LocalTime startTime;
 
-    /** End of the 90-minute block e.g. 09:00. */
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 

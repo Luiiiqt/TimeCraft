@@ -13,13 +13,9 @@ import com.timecraft.timecraft.model.StudentProfile;
 @Repository
 public interface StudentProfileRepository extends JpaRepository<StudentProfile, Long> {
 
-    // ── Lookup ────────────────────────────────────────────────────────────────
-
     Optional<StudentProfile> findByUserId(Long userId);
 
     boolean existsByUserId(Long userId);
-
-    // ── Filter by course / department ─────────────────────────────────────────
 
     List<StudentProfile> findByCourseId(Long courseId);
 
@@ -37,16 +33,17 @@ public interface StudentProfileRepository extends JpaRepository<StudentProfile, 
 
     List<StudentProfile> findByCourseIdAndIsIrregularTrue(Long courseId);
 
-    List<StudentProfile> findByCourseIdAndYearLevelAndIsIrregularTrue(Long courseId,
-                                                                       Short yearLevel);
+    List<StudentProfile> findByCourseIdAndYearLevelAndIsIrregularTrue(
+            Long courseId, Short yearLevel);
 
     // ── Section helpers ───────────────────────────────────────────────────────
 
     @Query("SELECT DISTINCT sp.section FROM StudentProfile sp " +
            "WHERE sp.course.id = :courseId AND sp.yearLevel = :yearLevel " +
            "AND sp.section IS NOT NULL")
-    List<String> findDistinctSectionsByCourseAndYear(@Param("courseId") Long courseId,
-                                                      @Param("yearLevel") Short yearLevel);
+    List<String> findDistinctSectionsByCourseAndYear(
+            @Param("courseId") Long courseId,
+            @Param("yearLevel") Short yearLevel);
 
     long countByCourseIdAndYearLevelAndSection(Long courseId,
                                                Short yearLevel,

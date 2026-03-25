@@ -30,17 +30,17 @@ import lombok.Setter;
 @Table(
     name = "schedules",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uq_schedules_room_ts1",    columnNames = {"room_id",    "timeslot_id",  "semester", "school_year"}),
-        @UniqueConstraint(name = "uq_schedules_room_ts2",    columnNames = {"room_id",    "timeslot2_id", "semester", "school_year"}),
-        @UniqueConstraint(name = "uq_schedules_teacher_ts1", columnNames = {"teacher_id", "timeslot_id",  "semester", "school_year"}),
-        @UniqueConstraint(name = "uq_schedules_teacher_ts2", columnNames = {"teacher_id", "timeslot2_id", "semester", "school_year"})
+        @UniqueConstraint(name = "uq_schedules_room_ts1",
+            columnNames = {"room_id",    "timeslot_id",  "semester", "school_year"}),
+        @UniqueConstraint(name = "uq_schedules_room_ts2",
+            columnNames = {"room_id",    "timeslot2_id", "semester", "school_year"}),
+        @UniqueConstraint(name = "uq_schedules_teacher_ts1",
+            columnNames = {"teacher_id", "timeslot_id",  "semester", "school_year"}),
+        @UniqueConstraint(name = "uq_schedules_teacher_ts2",
+            columnNames = {"teacher_id", "timeslot2_id", "semester", "school_year"})
     }
 )
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Schedule {
 
     @Id
@@ -55,7 +55,11 @@ public class Schedule {
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    /** Must be a User with userType = TEACHER. */
+    /**
+     * Teacher assigned to this schedule entry.
+     * No year-level restriction — any teacher can be assigned to any year level.
+     * Only constraint: no duplicate (teacher, timeslot, semester, school_year).
+     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "teacher_id", nullable = false)
     private User teacher;
@@ -65,12 +69,12 @@ public class Schedule {
     @JoinColumn(name = "timeslot_id", nullable = false)
     private Timeslot timeslot;
 
-    /** Second weekly session e.g. Wednesday 7:30–9:00 AM. Must be a different day. */
+    /** Second weekly session — must be a different day. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "timeslot2_id", nullable = false)
     private Timeslot timeslot2;
 
-    /** Block section this schedule belongs to. NULL for irregular-only classes. */
+    /** Block section. NULL for irregular-only open classes. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "section_id")
     private Section section;
@@ -83,7 +87,11 @@ public class Schedule {
     @Column(name = "school_year", nullable = false, length = 10)
     private String schoolYear;
 
-    /** Campus where this class is held. Health courses prefer CHS campus. */
+    /**
+     * Campus where this class is held.
+     * Health courses → CHS. CCSE/Business/Psychology → CLI.
+     * GE teachers can appear on either campus.
+     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "campus_id", nullable = false)
     private Campus campus;
@@ -97,8 +105,6 @@ public class Schedule {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // ── Relationships ─────────────────────────────────────────────────────────
-
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<StudentSchedule> studentSchedules = new ArrayList<>();
@@ -107,10 +113,7 @@ public class Schedule {
     @Builder.Default
     private List<ConflictLog> conflictLogs = new ArrayList<>();
 
-    // ── Enum ──────────────────────────────────────────────────────────────────
     public enum ScheduleStatus {
-        DRAFT,
-        PUBLISHED,
-        CONFLICTED
+        DRAFT, PUBLISHED, CONFLICTED
     }
 }

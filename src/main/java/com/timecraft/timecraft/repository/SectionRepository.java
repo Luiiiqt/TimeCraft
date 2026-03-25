@@ -14,8 +14,6 @@ import com.timecraft.timecraft.model.Section;
 @Repository
 public interface SectionRepository extends JpaRepository<Section, Long> {
 
-    // ── Lookup ────────────────────────────────────────────────────────────────
-
     Optional<Section> findByCourseIdAndYearLevelAndSectionNameAndSemesterAndSchoolYear(
             Long courseId, short yearLevel, String sectionName,
             Semester semester, String schoolYear);
@@ -23,8 +21,6 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
     boolean existsByCourseIdAndYearLevelAndSectionNameAndSemesterAndSchoolYear(
             Long courseId, short yearLevel, String sectionName,
             Semester semester, String schoolYear);
-
-    // ── Filter ────────────────────────────────────────────────────────────────
 
     List<Section> findByCourseId(Long courseId);
 
@@ -41,11 +37,8 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
 
     List<Section> findByIsActiveTrue();
 
-    // ── Capacity check ────────────────────────────────────────────────────────
-
     /**
-     * Returns how many REGULAR students are currently assigned
-     * to schedules belonging to this section.
+     * Counts how many REGULAR students are currently enrolled in a section.
      */
     @Query("SELECT COUNT(DISTINCT ss.student.id) FROM StudentSchedule ss " +
            "JOIN ss.schedule sc " +

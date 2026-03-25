@@ -22,18 +22,14 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "departments")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Department {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Full college name e.g. "College of Nursing". */
+    /** Full college name e.g. "College of Nursing", "General Education". */
     @Column(name = "name", nullable = false, unique = true, length = 150)
     private String name;
 
@@ -49,7 +45,6 @@ public class Department {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // ── Relationships ─────────────────────────────────────────────────────────
     @OneToMany(mappedBy = "department", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Course> courses = new ArrayList<>();

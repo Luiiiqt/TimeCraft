@@ -24,11 +24,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class User {
 
     @Id
@@ -42,17 +38,14 @@ public class User {
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
 
-    /**
-     * Institutional ID — unique system-wide.
-     * Teachers: "T-2020-001" | Students: "2024-00101"
-     */
+    /** Institutional ID — unique system-wide. e.g. T-2020-001 / 2024-00101 */
     @Column(name = "school_id", nullable = false, unique = true, length = 30)
     private String schoolId;
 
     @Column(name = "email", nullable = false, unique = true, length = 150)
     private String email;
 
-    /** BCrypt-hashed password. Never expose plaintext. */
+    /** BCrypt-hashed password. Never store or expose plaintext. */
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -68,7 +61,7 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // ── Profile relationships — only one is populated per user ────────────────
+    // ── Profile relationships — only one populated per user ───────────────────
 
     /** Populated when userType = STUDENT. */
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -80,7 +73,6 @@ public class User {
 
     // ── Enum ──────────────────────────────────────────────────────────────────
     public enum UserType {
-        STUDENT,
-        TEACHER
+        STUDENT, TEACHER
     }
 }

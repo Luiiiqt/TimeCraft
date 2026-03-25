@@ -13,7 +13,7 @@ import com.timecraft.timecraft.model.Room.RoomType;
 @Repository
 public interface RoomRepository extends JpaRepository<Room, Long> {
 
-    // ── Filter ────────────────────────────────────────────────────────────────
+    // ── Basic filters ─────────────────────────────────────────────────────────
 
     List<Room> findByCampusId(Long campusId);
 
@@ -31,12 +31,12 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     List<Room> findByCampusIdAndRoomTypeAndCapacityGreaterThanEqualAndIsActiveTrue(
             Long campusId, RoomType roomType, int minCapacity);
 
-    // ── Scheduling engine: available rooms ────────────────────────────────────
+    // ── Scheduling engine: campus-locked room lookup ──────────────────────────
 
     /**
-     * Returns rooms on a campus with the required type and capacity
-     * that are NOT already booked for either the first or second
-     * timeslot in the given semester/school year.
+     * Returns available rooms for dept teachers locked to a specific campus.
+     * Filters by campus, room type, min capacity, and excludes rooms already
+     * booked in either session timeslot for the given term.
      */
     @Query("SELECT r FROM Room r " +
            "WHERE r.campus.id = :campusId " +
@@ -47,14 +47,40 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
            "  SELECT s.room.id FROM Schedule s " +
            "  WHERE (s.timeslot.id = :timeslotId OR s.timeslot2.id = :timeslotId) " +
            "  AND s.semester = :semester " +
-           "  AND s.schoolYear = :schoolYear" +
-           ")")
-    List<Room> findAvailableRooms(@Param("campusId") Long campusId,
-                                   @Param("roomType") RoomType roomType,
-                                   @Param("minCapacity") int minCapacity,
-                                   @Param("timeslotId") Long timeslotId,
-                                   @Param("semester") String semester,
-                                   @Param("schoolYear") String schoolYear);
+           "  AND s.schoolYear = :schoolYear)")
+    List<Room> findAvailableRooms(
+            @Param("campusId") Long campusId,
+            @Param("roomType") RoomType roomType,
+            @Param("minCapacity") int minCapacity,
+            @Param("timeslotId") Long timeslotId,
+            @Param("semester") String semester,
+            @Param("schoolYear") String schoolYear);
+
+    // ── Scheduling engine: campus-flexible room lookup (GE teachers) ──────────
+
+    /**
+     * Returns available rooms across BOTH campuses for GE (campus-flexible) teachers.
+     * Results are ordered so preferred campus rooms appear first,
+     * minimizing unnecessary cross-campus travel.
+     * Use only when teacher.campusFlexible = true.
+     */
+    @Query("SELECT r FROM Room r " +
+           "WHERE r.roomType = :roomType " +
+           "AND r.capacity >= :minCapacity " +
+           "AND r.isActive = true " +
+           "AND r.id NOT IN (" +
+           "  SELECT s.room.id FROM Schedule s " +
+           "  WHERE (s.timeslot.id = :timeslotId OR s.timeslot2.id = :timeslotId) " +
+           "  AND s.semester = :semester " +
+           "  AND s.schoolYear = :schoolYear) " +
+           "ORDER BY CASE WHEN r.campus.id = :preferredCampusId THEN 0 ELSE 1 END")
+    List<Room> findAvailableRoomsFlexible(
+            @Param("roomType") RoomType roomType,
+            @Param("minCapacity") int minCapacity,
+            @Param("timeslotId") Long timeslotId,
+            @Param("semester") String semester,
+            @Param("schoolYear") String schoolYear,
+            @Param("preferredCampusId") Long preferredCampusId);
 
     // ── Room utilisation report ───────────────────────────────────────────────
 
@@ -63,7 +89,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
            "AND s.semester = :semester AND s.schoolYear = :schoolYear " +
            "WHERE r.campus.id = :campusId " +
            "GROUP BY r")
-    List<Object[]> getRoomUtilisationByCampusAndTerm(@Param("campusId") Long campusId,
-                                                      @Param("semester") String semester,
-                                                      @Param("schoolYear") String schoolYear);
+    List<Object[]> getRoomUtilisationByCampusAndTerm(
+            @Param("campusId") Long campusId,
+            @Param("semester") String semester,
+            @Param("schoolYear") String schoolYear);
 }

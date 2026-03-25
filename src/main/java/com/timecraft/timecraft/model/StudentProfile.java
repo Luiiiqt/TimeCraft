@@ -17,17 +17,9 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "student_profiles")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class StudentProfile {
 
-    /**
-     * Shares the same PK as users.id — no surrogate key needed.
-     * MapsId pulls the value from the 'user' association.
-     */
     @Id
     @Column(name = "user_id")
     private Long userId;
@@ -45,23 +37,20 @@ public class StudentProfile {
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
-    /**
-     * Year level 1–5.
-     */
+    /** Year level 1–5. */
     @Column(name = "year_level", nullable = false)
     private Short yearLevel;
 
     /**
-     * Block section letter e.g. "A", "B".
-     * NULL when the student is irregular.
+     * Block section e.g. "A", "B".
+     * NULL when student is irregular — enforced by DB CHECK constraint.
      */
     @Column(name = "section", length = 10)
     private String section;
 
     /**
-     * TRUE  = no fixed section; assigned subjects individually.
+     * TRUE  = no fixed section; subjects assigned individually.
      * FALSE = belongs to a block section.
-     * DB CHECK constraint enforces: irregular → section IS NULL.
      */
     @Column(name = "is_irregular", nullable = false)
     @Builder.Default

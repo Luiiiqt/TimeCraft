@@ -14,8 +14,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -24,43 +22,39 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Maps to the same 'users' table as User.java.
+ * Use this entity for teacher-specific business logic.
+ * Use User.java for authentication / Spring Security contexts.
+ *
+ * Teachers can teach ANY subject at ANY year level.
+ * The only hard constraint is no two classes at the same timeslot.
+ */
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Teacher {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Always "TEACHER" for this entity.
-     * Stored as a plain string column — matches the users.user_type
-     * CHECK constraint in the DB.
-     */
+    /** Always "TEACHER" — matches the users.user_type CHECK constraint. */
     @Column(name = "user_type", nullable = false, length = 10)
     @Builder.Default
     private String userType = "TEACHER";
 
-    /** Legal full name e.g. "Dr. Maria Santos". */
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
 
-    /**
-     * Institutional ID — unique system-wide.
-     * Convention: "T-YYYY-NNN" e.g. "T-2020-001".
-     */
+    /** Institutional ID e.g. T-2020-001 — unique system-wide. */
     @Column(name = "school_id", nullable = false, unique = true, length = 30)
     private String schoolId;
 
     @Column(name = "email", nullable = false, unique = true, length = 150)
     private String email;
 
-    /** BCrypt-hashed password. Never store or expose plaintext. */
+    /** BCrypt-hashed password. Never expose plaintext. */
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -79,29 +73,20 @@ public class Teacher {
     // ── Relationships ─────────────────────────────────────────────────────────
 
     /**
-     * Department this teacher belongs to.
-     * Can be General Education or any college department
-     * e.g. College of Nursing, College of Computer Studies and Engineering.
+     * All schedule entries assigned to this teacher — spans all year levels.
+     * A teacher can have Year 1 subjects in the morning and Year 4 in the afternoon.
+     * The only restriction enforced is no duplicate timeslot within the same term.
      */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "department_id", nullable = false,
-                table = "teacher_profiles")
-    private Department department;
+    @OneToMany(mappedBy = "teacher", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Schedule> schedules = new ArrayList<>();
 
     /**
-     * All timeslots this teacher has declared as available.
-     * The scheduling engine only uses entries where available = TRUE.
+     * Timeslots this teacher has declared as available.
+     * Availability is timeslot-based only — not year-level or course based.
      */
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL,
                orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<TeacherAvailability> availabilities = new ArrayList<>();
-
-    /**
-     * All schedule entries where this teacher is assigned.
-     * Use this to compute teaching load and detect double-booking.
-     */
-    @OneToMany(mappedBy = "teacher", fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Schedule> schedules = new ArrayList<>();
 }
