@@ -14,6 +14,7 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,7 +23,11 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "teacher_profiles")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TeacherProfile {
 
     @Id
@@ -47,10 +52,10 @@ public class TeacherProfile {
     private Department department;
 
     /**
-     * TRUE  = General Education teacher.
-     *         Can be scheduled at CLI or CHS — no campus restriction.
+     * TRUE = General Education teacher.
+     * Can be scheduled at CLI or CHS — no campus restriction.
      * FALSE = Department-specific teacher.
-     *         Locked to the campus that serves their college.
+     * Locked to the campus that serves their college.
      */
     @Column(name = "campus_flexible", nullable = false)
     @Builder.Default

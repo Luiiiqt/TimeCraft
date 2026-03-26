@@ -17,7 +17,7 @@ public interface TeacherAvailabilityRepository
     List<TeacherAvailability> findByTeacherId(Long teacherId);
 
     Optional<TeacherAvailability> findByTeacherIdAndTimeslotId(Long teacherId,
-                                                                Long timeslotId);
+            Long timeslotId);
 
     /** Only slots the teacher marked available — used by scheduling engine. */
     List<TeacherAvailability> findByTeacherIdAndAvailableTrue(Long teacherId);
@@ -25,7 +25,7 @@ public interface TeacherAvailabilityRepository
     List<TeacherAvailability> findByTimeslotIdAndAvailableTrue(Long timeslotId);
 
     boolean existsByTeacherIdAndTimeslotIdAndAvailableTrue(Long teacherId,
-                                                            Long timeslotId);
+            Long timeslotId);
 
     /** Clears all availability for a teacher before saving a new full set. */
     @Modifying

@@ -16,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,14 +24,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(
-    name = "student_schedules",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uq_student_schedule",
-        columnNames = {"student_id", "schedule_id"}
-    )
-)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "student_schedules", uniqueConstraints = @UniqueConstraint(name = "uq_student_schedule", columnNames = {
+        "student_id", "schedule_id" }))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class StudentSchedule {
 
     @Id
@@ -47,7 +47,7 @@ public class StudentSchedule {
     private Schedule schedule;
 
     /**
-     * REGULAR   = student is in the block section that owns this schedule.
+     * REGULAR = student is in the block section that owns this schedule.
      * IRREGULAR = student was individually assigned to this class.
      */
     @Enumerated(EnumType.STRING)

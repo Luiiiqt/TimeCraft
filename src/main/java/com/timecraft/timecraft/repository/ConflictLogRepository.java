@@ -16,62 +16,62 @@ import com.timecraft.timecraft.model.CourseSubject.Semester;
 @Repository
 public interface ConflictLogRepository extends JpaRepository<ConflictLog, Long> {
 
-    // ── Admin dashboard ───────────────────────────────────────────────────────
+       // ── Admin dashboard ───────────────────────────────────────────────────────
 
-    List<ConflictLog> findByResolvedFalse();
+       List<ConflictLog> findByResolvedFalse();
 
-    List<ConflictLog> findByResolvedFalseOrderByDetectedAtDesc();
+       List<ConflictLog> findByResolvedFalseOrderByDetectedAtDesc();
 
-    long countByResolvedFalse();
+       long countByResolvedFalse();
 
-    // ── Filter by type ────────────────────────────────────────────────────────
+       // ── Filter by type ────────────────────────────────────────────────────────
 
-    List<ConflictLog> findByConflictType(ConflictType conflictType);
+       List<ConflictLog> findByConflictType(ConflictType conflictType);
 
-    List<ConflictLog> findByConflictTypeAndResolvedFalse(ConflictType conflictType);
+       List<ConflictLog> findByConflictTypeAndResolvedFalse(ConflictType conflictType);
 
-    // ── Filter by schedule ────────────────────────────────────────────────────
+       // ── Filter by schedule ────────────────────────────────────────────────────
 
-    List<ConflictLog> findByScheduleId(Long scheduleId);
+       List<ConflictLog> findByScheduleId(Long scheduleId);
 
-    List<ConflictLog> findByScheduleIdAndResolvedFalse(Long scheduleId);
+       List<ConflictLog> findByScheduleIdAndResolvedFalse(Long scheduleId);
 
-    // ── Term-based ────────────────────────────────────────────────────────────
+       // ── Term-based ────────────────────────────────────────────────────────────
 
-    @Query("SELECT cl FROM ConflictLog cl " +
-           "JOIN cl.schedule sc " +
-           "WHERE sc.semester = :semester AND sc.schoolYear = :schoolYear " +
-           "ORDER BY cl.detectedAt DESC")
-    List<ConflictLog> findByTerm(
-            @Param("semester") Semester semester,
-            @Param("schoolYear") String schoolYear);
+       @Query("SELECT cl FROM ConflictLog cl " +
+                     "JOIN cl.schedule sc " +
+                     "WHERE sc.semester = :semester AND sc.schoolYear = :schoolYear " +
+                     "ORDER BY cl.detectedAt DESC")
+       List<ConflictLog> findByTerm(
+                     @Param("semester") Semester semester,
+                     @Param("schoolYear") String schoolYear);
 
-    @Query("SELECT cl FROM ConflictLog cl " +
-           "JOIN cl.schedule sc " +
-           "WHERE sc.semester = :semester AND sc.schoolYear = :schoolYear " +
-           "AND cl.resolved = false")
-    List<ConflictLog> findUnresolvedByTerm(
-            @Param("semester") Semester semester,
-            @Param("schoolYear") String schoolYear);
+       @Query("SELECT cl FROM ConflictLog cl " +
+                     "JOIN cl.schedule sc " +
+                     "WHERE sc.semester = :semester AND sc.schoolYear = :schoolYear " +
+                     "AND cl.resolved = false")
+       List<ConflictLog> findUnresolvedByTerm(
+                     @Param("semester") Semester semester,
+                     @Param("schoolYear") String schoolYear);
 
-    // ── Resolution ────────────────────────────────────────────────────────────
+       // ── Resolution ────────────────────────────────────────────────────────────
 
-    /** Bulk-resolve all conflicts for a schedule when admin fixes it. */
-    @Modifying
-    @Transactional
-    @Query("UPDATE ConflictLog cl " +
-           "SET cl.resolved = true, cl.resolvedAt = CURRENT_TIMESTAMP " +
-           "WHERE cl.schedule.id = :scheduleId AND cl.resolved = false")
-    void resolveAllByScheduleId(@Param("scheduleId") Long scheduleId);
+       /** Bulk-resolve all conflicts for a schedule when admin fixes it. */
+       @Modifying
+       @Transactional
+       @Query("UPDATE ConflictLog cl " +
+                     "SET cl.resolved = true, cl.resolvedAt = CURRENT_TIMESTAMP " +
+                     "WHERE cl.schedule.id = :scheduleId AND cl.resolved = false")
+       void resolveAllByScheduleId(@Param("scheduleId") Long scheduleId);
 
-    /** Clears all conflict records for a term before re-generating. */
-    @Modifying
-    @Transactional
-    @Query("DELETE FROM ConflictLog cl " +
-           "WHERE cl.schedule.id IN (" +
-           "  SELECT s.id FROM Schedule s " +
-           "  WHERE s.semester = :semester AND s.schoolYear = :schoolYear)")
-    void deleteAllByTerm(
-            @Param("semester") Semester semester,
-            @Param("schoolYear") String schoolYear);
+       /** Clears all conflict records for a term before re-generating. */
+       @Modifying
+       @Transactional
+       @Query("DELETE FROM ConflictLog cl " +
+                     "WHERE cl.schedule.id IN (" +
+                     "  SELECT s.id FROM Schedule s " +
+                     "  WHERE s.semester = :semester AND s.schoolYear = :schoolYear)")
+       void deleteAllByTerm(
+                     @Param("semester") Semester semester,
+                     @Param("schoolYear") String schoolYear);
 }

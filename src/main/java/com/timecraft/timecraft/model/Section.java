@@ -24,14 +24,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(
-    name = "sections",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uq_section_course_year_name_term",
-        columnNames = {"course_id", "year_level", "section_name", "semester", "school_year"}
-    )
-)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "sections", uniqueConstraints = @UniqueConstraint(name = "uq_section_course_year_name_term", columnNames = {
+        "course_id", "year_level", "section_name", "semester", "school_year" }))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Section {
 
     @Id

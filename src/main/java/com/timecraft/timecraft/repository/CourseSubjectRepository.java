@@ -13,27 +13,27 @@ import com.timecraft.timecraft.model.CourseSubject.Semester;
 @Repository
 public interface CourseSubjectRepository extends JpaRepository<CourseSubject, Long> {
 
-    List<CourseSubject> findByCourseId(Long courseId);
+       List<CourseSubject> findByCourseId(Long courseId);
 
-    List<CourseSubject> findByCourseIdAndYearLevel(Long courseId, short yearLevel);
+       List<CourseSubject> findByCourseIdAndYearLevel(Long courseId, short yearLevel);
 
-    List<CourseSubject> findByCourseIdAndYearLevelAndSemester(Long courseId,
-                                                               short yearLevel,
-                                                               Semester semester);
+       List<CourseSubject> findByCourseIdAndYearLevelAndSemester(Long courseId,
+                     short yearLevel,
+                     Semester semester);
 
-    List<CourseSubject> findByIsSharedTrue();
+       List<CourseSubject> findByIsSharedTrue();
 
-    List<CourseSubject> findBySubjectIdAndIsSharedTrue(Long subjectId);
+       List<CourseSubject> findBySubjectIdAndIsSharedTrue(Long subjectId);
 
-    boolean existsByCourseIdAndSubjectId(Long courseId, Long subjectId);
+       boolean existsByCourseIdAndSubjectId(Long courseId, Long subjectId);
 
-    @Query("SELECT cs FROM CourseSubject cs WHERE cs.subject.id = :subjectId")
-    List<CourseSubject> findCoursesBySubjectId(@Param("subjectId") Long subjectId);
+       @Query("SELECT cs FROM CourseSubject cs WHERE cs.subject.id = :subjectId")
+       List<CourseSubject> findCoursesBySubjectId(@Param("subjectId") Long subjectId);
 
-    @Query("SELECT cs FROM CourseSubject cs " +
-           "JOIN FETCH cs.subject s " +
-           "WHERE cs.course.id = :courseId " +
-           "ORDER BY cs.yearLevel, cs.semester")
-    List<CourseSubject> findFullCurriculumByCourseId(
-            @Param("courseId") Long courseId);
+       @Query("SELECT cs FROM CourseSubject cs " +
+                     "JOIN FETCH cs.subject s " +
+                     "WHERE cs.course.id = :courseId " +
+                     "ORDER BY cs.yearLevel, cs.semester")
+       List<CourseSubject> findFullCurriculumByCourseId(
+                     @Param("courseId") Long courseId);
 }

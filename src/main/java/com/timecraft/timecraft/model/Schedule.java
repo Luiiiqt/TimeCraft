@@ -27,20 +27,21 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(
-    name = "schedules",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uq_schedules_room_ts1",
-            columnNames = {"room_id",    "timeslot_id",  "semester", "school_year"}),
-        @UniqueConstraint(name = "uq_schedules_room_ts2",
-            columnNames = {"room_id",    "timeslot2_id", "semester", "school_year"}),
-        @UniqueConstraint(name = "uq_schedules_teacher_ts1",
-            columnNames = {"teacher_id", "timeslot_id",  "semester", "school_year"}),
-        @UniqueConstraint(name = "uq_schedules_teacher_ts2",
-            columnNames = {"teacher_id", "timeslot2_id", "semester", "school_year"})
-    }
-)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "schedules", uniqueConstraints = {
+        @UniqueConstraint(name = "uq_schedules_room_ts1", columnNames = { "room_id", "timeslot_id", "semester",
+                "school_year" }),
+        @UniqueConstraint(name = "uq_schedules_room_ts2", columnNames = { "room_id", "timeslot2_id", "semester",
+                "school_year" }),
+        @UniqueConstraint(name = "uq_schedules_teacher_ts1", columnNames = { "teacher_id", "timeslot_id", "semester",
+                "school_year" }),
+        @UniqueConstraint(name = "uq_schedules_teacher_ts2", columnNames = { "teacher_id", "timeslot2_id", "semester",
+                "school_year" })
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Schedule {
 
     @Id

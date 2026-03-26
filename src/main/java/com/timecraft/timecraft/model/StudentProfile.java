@@ -9,6 +9,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,7 +18,11 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "student_profiles")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class StudentProfile {
 
     @Id
@@ -49,7 +54,7 @@ public class StudentProfile {
     private String section;
 
     /**
-     * TRUE  = no fixed section; subjects assigned individually.
+     * TRUE = no fixed section; subjects assigned individually.
      * FALSE = belongs to a block section.
      */
     @Column(name = "is_irregular", nullable = false)

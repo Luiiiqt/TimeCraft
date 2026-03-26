@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,14 +18,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(
-    name = "teacher_availability",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uq_availability_teacher_timeslot",
-        columnNames = {"teacher_id", "timeslot_id"}
-    )
-)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "teacher_availability", uniqueConstraints = @UniqueConstraint(name = "uq_availability_teacher_timeslot", columnNames = {
+        "teacher_id", "timeslot_id" }))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TeacherAvailability {
 
     @Id
@@ -41,7 +41,7 @@ public class TeacherAvailability {
     private Timeslot timeslot;
 
     /**
-     * TRUE  = teacher is free and can be scheduled in this slot.
+     * TRUE = teacher is free and can be scheduled in this slot.
      * FALSE = teacher is blocked — scheduling engine skips this slot.
      */
     @Column(name = "available", nullable = false)

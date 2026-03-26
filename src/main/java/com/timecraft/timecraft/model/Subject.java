@@ -26,7 +26,11 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "subjects")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Subject {
 
     @Id
@@ -85,6 +89,11 @@ public class Subject {
     @Builder.Default
     private List<CourseSubject> courseSubjects = new ArrayList<>();
 
-    public enum SubjectType { MAJOR, MINOR }
-    public enum SessionType  { LECTURE, LABORATORY }
+    public enum SubjectType {
+        MAJOR, MINOR
+    }
+
+    public enum SessionType {
+        LECTURE, LABORATORY
+    }
 }

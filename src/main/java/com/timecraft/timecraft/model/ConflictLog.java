@@ -23,7 +23,11 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "conflict_log")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ConflictLog {
 
     @Id

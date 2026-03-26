@@ -13,39 +13,39 @@ import com.timecraft.timecraft.model.StudentProfile;
 @Repository
 public interface StudentProfileRepository extends JpaRepository<StudentProfile, Long> {
 
-    Optional<StudentProfile> findByUserId(Long userId);
+        Optional<StudentProfile> findByUserId(Long userId);
 
-    boolean existsByUserId(Long userId);
+        boolean existsByUserId(Long userId);
 
-    List<StudentProfile> findByCourseId(Long courseId);
+        List<StudentProfile> findByCourseId(Long courseId);
 
-    List<StudentProfile> findByDepartmentId(Long departmentId);
+        List<StudentProfile> findByDepartmentId(Long departmentId);
 
-    List<StudentProfile> findByCourseIdAndYearLevel(Long courseId, Short yearLevel);
+        List<StudentProfile> findByCourseIdAndYearLevel(Long courseId, Short yearLevel);
 
-    List<StudentProfile> findByCourseIdAndYearLevelAndSection(Long courseId,
-                                                               Short yearLevel,
-                                                               String section);
+        List<StudentProfile> findByCourseIdAndYearLevelAndSection(Long courseId,
+                        Short yearLevel,
+                        String section);
 
-    // ── Irregular students ────────────────────────────────────────────────────
+        // ── Irregular students ────────────────────────────────────────────────────
 
-    List<StudentProfile> findByIsIrregularTrue();
+        List<StudentProfile> findByIsIrregularTrue();
 
-    List<StudentProfile> findByCourseIdAndIsIrregularTrue(Long courseId);
+        List<StudentProfile> findByCourseIdAndIsIrregularTrue(Long courseId);
 
-    List<StudentProfile> findByCourseIdAndYearLevelAndIsIrregularTrue(
-            Long courseId, Short yearLevel);
+        List<StudentProfile> findByCourseIdAndYearLevelAndIsIrregularTrue(
+                        Long courseId, Short yearLevel);
 
-    // ── Section helpers ───────────────────────────────────────────────────────
+        // ── Section helpers ───────────────────────────────────────────────────────
 
-    @Query("SELECT DISTINCT sp.section FROM StudentProfile sp " +
-           "WHERE sp.course.id = :courseId AND sp.yearLevel = :yearLevel " +
-           "AND sp.section IS NOT NULL")
-    List<String> findDistinctSectionsByCourseAndYear(
-            @Param("courseId") Long courseId,
-            @Param("yearLevel") Short yearLevel);
+        @Query("SELECT DISTINCT sp.section FROM StudentProfile sp " +
+                        "WHERE sp.course.id = :courseId AND sp.yearLevel = :yearLevel " +
+                        "AND sp.section IS NOT NULL")
+        List<String> findDistinctSectionsByCourseAndYear(
+                        @Param("courseId") Long courseId,
+                        @Param("yearLevel") Short yearLevel);
 
-    long countByCourseIdAndYearLevelAndSection(Long courseId,
-                                               Short yearLevel,
-                                               String section);
+        long countByCourseIdAndYearLevelAndSection(Long courseId,
+                        Short yearLevel,
+                        String section);
 }

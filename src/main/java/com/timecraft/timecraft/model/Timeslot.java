@@ -19,14 +19,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(
-    name = "timeslots",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uq_timeslot_day_slot",
-        columnNames = {"day_of_week", "slot_number"}
-    )
-)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "timeslots", uniqueConstraints = @UniqueConstraint(name = "uq_timeslot_day_slot", columnNames = {
+        "day_of_week", "slot_number" }))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Timeslot {
 
     @Id

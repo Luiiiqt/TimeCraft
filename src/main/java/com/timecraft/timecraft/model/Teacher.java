@@ -16,6 +16,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,7 +33,11 @@ import lombok.Setter;
  */
 @Entity
 @Table(name = "users")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Teacher {
 
     @Id
@@ -74,7 +79,8 @@ public class Teacher {
 
     /**
      * All schedule entries assigned to this teacher — spans all year levels.
-     * A teacher can have Year 1 subjects in the morning and Year 4 in the afternoon.
+     * A teacher can have Year 1 subjects in the morning and Year 4 in the
+     * afternoon.
      * The only restriction enforced is no duplicate timeslot within the same term.
      */
     @OneToMany(mappedBy = "teacher", fetch = FetchType.LAZY)
@@ -85,8 +91,7 @@ public class Teacher {
      * Timeslots this teacher has declared as available.
      * Availability is timeslot-based only — not year-level or course based.
      */
-    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL,
-               orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<TeacherAvailability> availabilities = new ArrayList<>();
 }

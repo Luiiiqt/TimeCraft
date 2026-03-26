@@ -13,19 +13,19 @@ import com.timecraft.timecraft.model.TeacherProfile;
 @Repository
 public interface TeacherProfileRepository extends JpaRepository<TeacherProfile, Long> {
 
-    Optional<TeacherProfile> findByUserId(Long userId);
+       Optional<TeacherProfile> findByUserId(Long userId);
 
-    boolean existsByUserId(Long userId);
+       boolean existsByUserId(Long userId);
 
-    // ── Campus flexibility lookups ────────────────────────────────────────────
+       // ── Campus flexibility lookups ────────────────────────────────────────────
 
-    List<TeacherProfile> findByCampusFlexibleTrue();
+       List<TeacherProfile> findByCampusFlexibleTrue();
 
-    List<TeacherProfile> findByDepartmentId(Long departmentId);
+       List<TeacherProfile> findByDepartmentId(Long departmentId);
 
-    @Query("SELECT tp FROM TeacherProfile tp " +
-           "WHERE tp.campusFlexible = true " +
-           "AND tp.preferredCampus.id = :campusId")
-    List<TeacherProfile> findFlexibleByPreferredCampus(
-            @Param("campusId") Long campusId);
+       @Query("SELECT tp FROM TeacherProfile tp " +
+                     "WHERE tp.campusFlexible = true " +
+                     "AND tp.preferredCampus.id = :campusId")
+       List<TeacherProfile> findFlexibleByPreferredCampus(
+                     @Param("campusId") Long campusId);
 }

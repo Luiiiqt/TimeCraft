@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,14 +20,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(
-    name = "course_subjects",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uq_course_subject_year_sem",
-        columnNames = {"course_id", "subject_id", "year_level", "semester"}
-    )
-)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "course_subjects", uniqueConstraints = @UniqueConstraint(name = "uq_course_subject_year_sem", columnNames = {
+        "course_id", "subject_id", "year_level", "semester" }))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CourseSubject {
 
     @Id
@@ -50,7 +50,7 @@ public class CourseSubject {
     private Semester semester;
 
     /**
-     * TRUE  = shared across multiple courses e.g. BSIT + BSCS.
+     * TRUE = shared across multiple courses e.g. BSIT + BSCS.
      * FALSE = exclusive to this course.
      */
     @Column(name = "is_shared", nullable = false)
@@ -61,7 +61,13 @@ public class CourseSubject {
         FIRST("1st"), SECOND("2nd"), SUMMER("Summer");
 
         private final String label;
-        Semester(String label) { this.label = label; }
-        public String getLabel() { return label; }
+
+        Semester(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
+        }
     }
 }

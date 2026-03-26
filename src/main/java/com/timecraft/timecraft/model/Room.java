@@ -23,14 +23,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(
-    name = "rooms",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uq_rooms_name_campus",
-        columnNames = {"campus_id", "name"}
-    )
-)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "rooms", uniqueConstraints = @UniqueConstraint(name = "uq_rooms_name_campus", columnNames = { "campus_id",
+        "name" }))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Room {
 
     @Id

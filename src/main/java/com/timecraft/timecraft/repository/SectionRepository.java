@@ -14,35 +14,35 @@ import com.timecraft.timecraft.model.Section;
 @Repository
 public interface SectionRepository extends JpaRepository<Section, Long> {
 
-    Optional<Section> findByCourseIdAndYearLevelAndSectionNameAndSemesterAndSchoolYear(
-            Long courseId, short yearLevel, String sectionName,
-            Semester semester, String schoolYear);
+        Optional<Section> findByCourseIdAndYearLevelAndSectionNameAndSemesterAndSchoolYear(
+                        Long courseId, short yearLevel, String sectionName,
+                        Semester semester, String schoolYear);
 
-    boolean existsByCourseIdAndYearLevelAndSectionNameAndSemesterAndSchoolYear(
-            Long courseId, short yearLevel, String sectionName,
-            Semester semester, String schoolYear);
+        boolean existsByCourseIdAndYearLevelAndSectionNameAndSemesterAndSchoolYear(
+                        Long courseId, short yearLevel, String sectionName,
+                        Semester semester, String schoolYear);
 
-    List<Section> findByCourseId(Long courseId);
+        List<Section> findByCourseId(Long courseId);
 
-    List<Section> findByCourseIdAndYearLevel(Long courseId, short yearLevel);
+        List<Section> findByCourseIdAndYearLevel(Long courseId, short yearLevel);
 
-    List<Section> findByCourseIdAndSemesterAndSchoolYear(Long courseId,
-                                                          Semester semester,
-                                                          String schoolYear);
+        List<Section> findByCourseIdAndSemesterAndSchoolYear(Long courseId,
+                        Semester semester,
+                        String schoolYear);
 
-    List<Section> findByCourseIdAndYearLevelAndSemesterAndSchoolYear(
-            Long courseId, short yearLevel, Semester semester, String schoolYear);
+        List<Section> findByCourseIdAndYearLevelAndSemesterAndSchoolYear(
+                        Long courseId, short yearLevel, Semester semester, String schoolYear);
 
-    List<Section> findBySemesterAndSchoolYear(Semester semester, String schoolYear);
+        List<Section> findBySemesterAndSchoolYear(Semester semester, String schoolYear);
 
-    List<Section> findByIsActiveTrue();
+        List<Section> findByIsActiveTrue();
 
-    /**
-     * Counts how many REGULAR students are currently enrolled in a section.
-     */
-    @Query("SELECT COUNT(DISTINCT ss.student.id) FROM StudentSchedule ss " +
-           "JOIN ss.schedule sc " +
-           "WHERE sc.section.id = :sectionId " +
-           "AND ss.assignmentType = 'REGULAR'")
-    long countRegularStudentsBySection(@Param("sectionId") Long sectionId);
+        /**
+         * Counts how many REGULAR students are currently enrolled in a section.
+         */
+        @Query("SELECT COUNT(DISTINCT ss.student.id) FROM StudentSchedule ss " +
+                        "JOIN ss.schedule sc " +
+                        "WHERE sc.section.id = :sectionId " +
+                        "AND ss.assignmentType = 'REGULAR'")
+        long countRegularStudentsBySection(@Param("sectionId") Long sectionId);
 }

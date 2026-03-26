@@ -15,45 +15,46 @@ import com.timecraft.timecraft.model.Subject.SubjectType;
 @Repository
 public interface SubjectRepository extends JpaRepository<Subject, Long> {
 
-    Optional<Subject> findByCode(String code);
+       Optional<Subject> findByCode(String code);
 
-    boolean existsByCode(String code);
+       boolean existsByCode(String code);
 
-    List<Subject> findByDepartmentId(Long departmentId);
+       List<Subject> findByDepartmentId(Long departmentId);
 
-    List<Subject> findBySubjectType(SubjectType subjectType);
+       List<Subject> findBySubjectType(SubjectType subjectType);
 
-    List<Subject> findBySessionType(SessionType sessionType);
+       List<Subject> findBySessionType(SessionType sessionType);
 
-    List<Subject> findByDepartmentIdAndSubjectType(Long departmentId,
-                                                    SubjectType subjectType);
+       List<Subject> findByDepartmentIdAndSubjectType(Long departmentId,
+                     SubjectType subjectType);
 
-    List<Subject> findByIsActiveTrue();
+       List<Subject> findByIsActiveTrue();
 
-    List<Subject> findByDepartmentIdAndIsActiveTrue(Long departmentId);
+       List<Subject> findByDepartmentIdAndIsActiveTrue(Long departmentId);
 
-    /**
-     * Returns active subjects for a course at a specific year and semester.
-     * No teacher year-level restriction — subjects are matched by curriculum map only.
-     */
-    @Query("SELECT s FROM Subject s " +
-           "JOIN CourseSubject cs ON cs.subject = s " +
-           "WHERE cs.course.id = :courseId " +
-           "AND cs.yearLevel = :yearLevel " +
-           "AND cs.semester = :semester " +
-           "AND s.isActive = true")
-    List<Subject> findByCourseYearAndSemester(@Param("courseId") Long courseId,
-                                               @Param("yearLevel") short yearLevel,
-                                               @Param("semester") String semester);
+       /**
+        * Returns active subjects for a course at a specific year and semester.
+        * No teacher year-level restriction — subjects are matched by curriculum map
+        * only.
+        */
+       @Query("SELECT s FROM Subject s " +
+                     "JOIN CourseSubject cs ON cs.subject = s " +
+                     "WHERE cs.course.id = :courseId " +
+                     "AND cs.yearLevel = :yearLevel " +
+                     "AND cs.semester = :semester " +
+                     "AND s.isActive = true")
+       List<Subject> findByCourseYearAndSemester(@Param("courseId") Long courseId,
+                     @Param("yearLevel") short yearLevel,
+                     @Param("semester") String semester);
 
-    /** Returns subjects shared between multiple courses e.g. BSIT + BSCS. */
-    @Query("SELECT s FROM Subject s " +
-           "JOIN CourseSubject cs ON cs.subject = s " +
-           "WHERE cs.isShared = true AND cs.course.id = :courseId")
-    List<Subject> findSharedSubjectsByCourse(@Param("courseId") Long courseId);
+       /** Returns subjects shared between multiple courses e.g. BSIT + BSCS. */
+       @Query("SELECT s FROM Subject s " +
+                     "JOIN CourseSubject cs ON cs.subject = s " +
+                     "WHERE cs.isShared = true AND cs.course.id = :courseId")
+       List<Subject> findSharedSubjectsByCourse(@Param("courseId") Long courseId);
 
-    @Query("SELECT s FROM Subject s " +
-           "WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "OR LOWER(s.code) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    List<Subject> searchByNameOrCode(@Param("keyword") String keyword);
+       @Query("SELECT s FROM Subject s " +
+                     "WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                     "OR LOWER(s.code) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+       List<Subject> searchByNameOrCode(@Param("keyword") String keyword);
 }
