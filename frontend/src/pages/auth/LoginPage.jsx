@@ -1,161 +1,87 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 
-// ── Role → route map ──────────────────────────────────────────────────────────
-const ROLE_REDIRECT = {
-  ADMIN   : "/dashboard",
-  TEACHER : "/dashboard",
-  STUDENT : "/dashboard",
-};
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
 export default function LoginPage() {
-  const navigate          = useNavigate();
-  const { login }         = useAuth();
+  const { login } = useAuth();
+  const navigate  = useNavigate();
 
-  const [form, setForm]         = useState({ email: "", password: "" });
-  const [error, setError]       = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [showPass, setShowPass] = useState(false);
+  const [form,    setForm]    = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState(null);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    if (error) setError("");
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    setError("");
-
-    if (!form.email.trim() || !form.password) {
-      setError("Please enter your email and password.");
-      return;
-    }
-
-    setSubmitting(true);
+    setError(null);
+    setLoading(true);
     try {
-      const user     = await login(form.email.trim(), form.password);
-      const redirect = ROLE_REDIRECT[user.role] ?? "/dashboard";
-      navigate(redirect, { replace: true });
+      const user = await login(form.email, form.password);
+      if (user.role === "ADMIN")        navigate("/admin");
+      else if (user.role === "TEACHER") navigate("/teacher");
+      else                              navigate("/student");
     } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.response?.data?.error    ||
-        "Invalid email or password. Please try again.";
-      setError(msg);
+      setError(err?.response?.data?.message ?? "Invalid email or password.");
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
-
-  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={styles.page}>
-      {/* Left panel — branding */}
-      <div style={styles.brand}>
-        <div style={styles.brandInner}>
-          <div style={styles.logo}>
-            <span style={styles.logoIcon}>⏱</span>
-            <span style={styles.logoText}>TimeCraft</span>
-          </div>
-          <p style={styles.brandTagline}>
-            Intelligent scheduling,<br />crafted for your campus.
-          </p>
-          <div style={styles.brandDots}>
-            {[...Array(6)].map((_, i) => (
-              <div key={i} style={{ ...styles.dot, opacity: 0.15 + i * 0.1 }} />
-            ))}
-          </div>
+    <div style={authShell}>
+      <style>{STYLES}</style>
+
+      {/* Left decorative panel */}
+      <div style={authLeft}>
+        <div style={{ position: "relative", zIndex: 1, textAlign: "center", color: "#fff" }}>
+          <div style={authLogo}>TC</div>
+          <h1 style={authBrandName}>TimeCraft</h1>
+          <p style={authTagline}>Intelligent scheduling for modern academic institutions.</p>
         </div>
+        <div style={circle1} />
+        <div style={circle2} />
       </div>
 
-      {/* Right panel — form */}
-      <div style={styles.formPanel}>
-        <div style={styles.card}>
-          <h1 style={styles.heading}>Welcome back</h1>
-          <p style={styles.subheading}>Sign in to your account</p>
+      {/* Right form panel */}
+      <div style={authRight}>
+        <div style={authCard}>
+          <h2 style={authTitle}>Welcome back</h2>
+          <p style={authSub}>Sign in to your account to continue.</p>
 
           {error && (
-            <div style={styles.errorBanner} role="alert">
-              <span style={styles.errorIcon}>⚠</span> {error}
-            </div>
+            <div className="auth-alert auth-alert-error">⚠️ {error}</div>
           )}
 
-          <form onSubmit={handleSubmit} noValidate style={styles.form}>
-            {/* Email */}
-            <div style={styles.field}>
-              <label htmlFor="email" style={styles.label}>Email address</label>
+          <form onSubmit={handleSubmit}>
+            <div className="auth-group">
+              <label className="auth-label">Email address</label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                autoFocus
-                value={form.email}
-                onChange={handleChange}
-                disabled={submitting}
-                style={styles.input}
-                placeholder="you@school.edu"
+                className="auth-input"
+                type="email" name="email"
+                value={form.email} onChange={handleChange}
+                placeholder="you@university.edu"
+                required autoFocus
               />
             </div>
-
-            {/* Password */}
-            <div style={styles.field}>
-              <label htmlFor="password" style={styles.label}>Password</label>
-              <div style={styles.passwordWrapper}>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPass ? "text" : "password"}
-                  autoComplete="current-password"
-                  value={form.password}
-                  onChange={handleChange}
-                  disabled={submitting}
-                  style={{ ...styles.input, paddingRight: "3rem" }}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass((p) => !p)}
-                  style={styles.eyeBtn}
-                  aria-label={showPass ? "Hide password" : "Show password"}
-                  tabIndex={-1}
-                >
-                  {showPass ? "🙈" : "👁"}
-                </button>
-              </div>
+            <div className="auth-group">
+              <label className="auth-label">Password</label>
+              <input
+                className="auth-input"
+                type="password" name="password"
+                value={form.password} onChange={handleChange}
+                placeholder="••••••••"
+                required
+              />
             </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                ...styles.submitBtn,
-                opacity: submitting ? 0.7 : 1,
-                cursor: submitting ? "not-allowed" : "pointer",
-              }}
-            >
-              {submitting ? (
-                <span style={styles.spinnerRow}>
-                  <span style={styles.spinner} /> Signing in…
-                </span>
-              ) : (
-                "Sign in"
-              )}
+            <button type="submit" className="auth-btn" disabled={loading}>
+              {loading ? "Signing in…" : "Sign In →"}
             </button>
           </form>
 
-          <p style={styles.registerLink}>
-            New student?{" "}
-            <Link to="/register" style={styles.link}>
-              Create an account
-            </Link>
+          <p style={{ marginTop: 20, fontSize: 13, color: "#9CA3AF", textAlign: "center" }}>
+            Don't have an account?{" "}
+            <Link to="/register" style={{ color: "#1A237E", fontWeight: 600 }}>Create one</Link>
           </p>
         </div>
       </div>
@@ -165,198 +91,32 @@ export default function LoginPage() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const palette = {
-  primary : "#1a56db",
-  primaryDark : "#1343b0",
-  bg      : "#f8faff",
-  brand   : "#0f2057",
-  white   : "#ffffff",
-  text    : "#111827",
-  muted   : "#6b7280",
-  border  : "#d1d5db",
-  error   : "#dc2626",
-  errorBg : "#fef2f2",
-};
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Outfit:wght@400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Outfit', system-ui, sans-serif; }
+  .auth-group  { margin-bottom: 14px; }
+  .auth-label  { display: block; font-size: 11.5px; font-weight: 700; color: #6B7280; margin-bottom: 5px; letter-spacing: .4px; text-transform: uppercase; }
+  .auth-input  { width: 100%; padding: 10px 14px; border: 1.5px solid #E4E7F0; border-radius: 8px; font-size: 13.5px; color: #111827; background: #fff; outline: none; font-family: 'Outfit', sans-serif; transition: border-color .15s; }
+  .auth-input:focus { border-color: #5C6BC0; box-shadow: 0 0 0 3px rgba(89,101,196,.12); }
+  .auth-btn    { width: 100%; padding: 11px; border-radius: 8px; background: #1A237E; color: #fff; border: none; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Outfit', sans-serif; margin-top: 8px; transition: background .15s; }
+  .auth-btn:hover { background: #3949AB; }
+  .auth-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .auth-alert  { padding: 11px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; }
+  .auth-alert-error   { background: #FEE2E2; border: 1px solid #FCA5A5; color: #991B1B; }
+  .auth-alert-success { background: #D1FAE5; border: 1px solid #6EE7B7; color: #065F46; }
+  .auth-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .auth-grid-2 { grid-template-columns: 1fr; } }
+`;
 
-const styles = {
-  page: {
-    display        : "flex",
-    minHeight      : "100vh",
-    fontFamily     : "'Sora', 'Segoe UI', sans-serif",
-    backgroundColor: palette.bg,
-  },
-  brand: {
-    width          : "42%",
-    background     : `linear-gradient(145deg, ${palette.brand} 0%, #1a3a8f 100%)`,
-    display        : "flex",
-    alignItems     : "center",
-    justifyContent : "center",
-    padding        : "2rem",
-    position       : "relative",
-    overflow       : "hidden",
-  },
-  brandInner: {
-    position       : "relative",
-    zIndex         : 1,
-    color          : palette.white,
-  },
-  logo: {
-    display        : "flex",
-    alignItems     : "center",
-    gap            : "0.6rem",
-    marginBottom   : "1.5rem",
-  },
-  logoIcon: {
-    fontSize       : "2.4rem",
-  },
-  logoText: {
-    fontSize       : "2rem",
-    fontWeight     : "700",
-    letterSpacing  : "-0.03em",
-    color          : palette.white,
-  },
-  brandTagline: {
-    fontSize       : "1.15rem",
-    lineHeight     : "1.6",
-    color          : "rgba(255,255,255,0.75)",
-    maxWidth       : "280px",
-  },
-  brandDots: {
-    display        : "flex",
-    gap            : "0.6rem",
-    marginTop      : "3rem",
-  },
-  dot: {
-    width          : "10px",
-    height         : "10px",
-    borderRadius   : "50%",
-    backgroundColor: palette.white,
-  },
-  formPanel: {
-    flex           : 1,
-    display        : "flex",
-    alignItems     : "center",
-    justifyContent : "center",
-    padding        : "2rem",
-  },
-  card: {
-    width          : "100%",
-    maxWidth       : "420px",
-    backgroundColor: palette.white,
-    borderRadius   : "16px",
-    padding        : "2.5rem",
-    boxShadow      : "0 4px 32px rgba(0,0,0,0.08)",
-  },
-  heading: {
-    fontSize       : "1.75rem",
-    fontWeight     : "700",
-    color          : palette.text,
-    margin         : "0 0 0.25rem",
-    letterSpacing  : "-0.02em",
-  },
-  subheading: {
-    fontSize       : "0.95rem",
-    color          : palette.muted,
-    margin         : "0 0 1.75rem",
-  },
-  errorBanner: {
-    display        : "flex",
-    alignItems     : "center",
-    gap            : "0.5rem",
-    backgroundColor: palette.errorBg,
-    color          : palette.error,
-    border         : `1px solid ${palette.error}30`,
-    borderRadius   : "8px",
-    padding        : "0.75rem 1rem",
-    fontSize       : "0.875rem",
-    marginBottom   : "1.25rem",
-  },
-  errorIcon: { fontSize: "1rem" },
-  form: {
-    display        : "flex",
-    flexDirection  : "column",
-    gap            : "1.1rem",
-  },
-  field: {
-    display        : "flex",
-    flexDirection  : "column",
-    gap            : "0.35rem",
-  },
-  label: {
-    fontSize       : "0.85rem",
-    fontWeight     : "600",
-    color          : palette.text,
-  },
-  input: {
-    padding        : "0.7rem 0.9rem",
-    border         : `1.5px solid ${palette.border}`,
-    borderRadius   : "8px",
-    fontSize       : "0.95rem",
-    color          : palette.text,
-    outline        : "none",
-    transition     : "border-color 0.15s",
-    width          : "100%",
-    boxSizing      : "border-box",
-  },
-  passwordWrapper: {
-    position       : "relative",
-  },
-  eyeBtn: {
-    position       : "absolute",
-    right          : "0.75rem",
-    top            : "50%",
-    transform      : "translateY(-50%)",
-    background     : "none",
-    border         : "none",
-    cursor         : "pointer",
-    fontSize       : "1rem",
-    lineHeight     : 1,
-    padding        : 0,
-  },
-  submitBtn: {
-    marginTop      : "0.5rem",
-    padding        : "0.8rem",
-    backgroundColor: palette.primary,
-    color          : palette.white,
-    border         : "none",
-    borderRadius   : "8px",
-    fontSize       : "1rem",
-    fontWeight     : "600",
-    transition     : "background-color 0.15s",
-    width          : "100%",
-  },
-  spinnerRow: {
-    display        : "flex",
-    alignItems     : "center",
-    justifyContent : "center",
-    gap            : "0.5rem",
-  },
-  spinner: {
-    display        : "inline-block",
-    width          : "14px",
-    height         : "14px",
-    border         : "2px solid rgba(255,255,255,0.4)",
-    borderTop      : "2px solid #fff",
-    borderRadius   : "50%",
-    animation      : "spin 0.7s linear infinite",
-  },
-  registerLink: {
-    textAlign      : "center",
-    marginTop      : "1.5rem",
-    fontSize       : "0.9rem",
-    color          : palette.muted,
-  },
-  link: {
-    color          : palette.primary,
-    fontWeight     : "600",
-    textDecoration : "none",
-  },
-};
-
-// Inject keyframe for spinner
-if (typeof document !== "undefined" && !document.getElementById("tc-spin")) {
-  const style    = document.createElement("style");
-  style.id       = "tc-spin";
-  style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
-  document.head.appendChild(style);
-}
+const authShell    = { minHeight: "100vh", display: "flex", fontFamily: "'Outfit', sans-serif" };
+const authLeft     = { width: 420, background: "linear-gradient(150deg,#1A237E 0%,#3949AB 55%,#5C6BC0 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 40px", position: "relative", overflow: "hidden", flexShrink: 0 };
+const authRight    = { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px", background: "#F5F6FA" };
+const authCard     = { background: "#fff", borderRadius: 18, padding: "36px 32px", width: "100%", maxWidth: 420, boxShadow: "0 4px 32px rgba(0,0,0,0.08)", border: "1.5px solid #E4E7F0" };
+const authLogo     = { width: 56, height: 56, borderRadius: 16, background: "rgba(255,255,255,0.18)", margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800 };
+const authBrandName= { fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, marginBottom: 10 };
+const authTagline  = { fontSize: 14, color: "rgba(255,255,255,0.72)", lineHeight: 1.6, maxWidth: 280, margin: "0 auto" };
+const authTitle    = { fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 700, color: "#111827", marginBottom: 6 };
+const authSub      = { fontSize: 13.5, color: "#6B7280", marginBottom: 24 };
+const circle1      = { position: "absolute", width: 300, height: 300, borderRadius: "50%", background: "rgba(255,255,255,0.06)", top: -80, right: -80 };
+const circle2      = { position: "absolute", width: 200, height: 200, borderRadius: "50%", background: "rgba(255,255,255,0.04)", bottom: -60, left: -60 };

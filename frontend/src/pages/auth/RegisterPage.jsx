@@ -1,632 +1,177 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
-import api from "../../services/api";
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-const YEAR_LEVELS = [
-  { value: 1, label: "1st Year" },
-  { value: 2, label: "2nd Year" },
-  { value: 3, label: "3rd Year" },
-  { value: 4, label: "4th Year" },
-];
-
-const SECTION_OPTIONS = ["A", "B", "C", "D", "E", "F"];
-
-// ── Step definitions ──────────────────────────────────────────────────────────
-const STEPS = ["Account", "Profile", "Academic"];
-
-// ── Initial form state ────────────────────────────────────────────────────────
-const INITIAL = {
-  fullName      : "",
-  schoolId      : "",
-  email         : "",
-  password      : "",
-  confirmPassword: "",
-  departmentId  : "",
-  courseId      : "",
-  yearLevel     : "",
-  section       : "",
-  isIrregular   : false,
-};
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function RegisterPage() {
-  const navigate       = useNavigate();
-  const { register }   = useAuth();
+  const { register } = useAuth();
+  const navigate     = useNavigate();
 
-  // Form state
-  const [step, setStep]           = useState(0);
-  const [form, setForm]           = useState(INITIAL);
-  const [errors, setErrors]       = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [globalError, setGlobalError] = useState("");
-  const [showPass, setShowPass]   = useState(false);
-  const [success, setSuccess]     = useState(false);
+  const [form, setForm] = useState({
+    fullName: "", schoolId: "", email: "", password: "",
+    departmentId: "", courseId: "", yearLevel: "1",
+    section: "", isIrregular: false,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState(null);
+  const [success, setSuccess] = useState(false);
 
-  // Lookup data
-  const [departments, setDepartments] = useState([]);
-  const [courses, setCourses]         = useState([]);
-  const [deptLoading, setDeptLoading] = useState(false);
-  const [courseLoading, setCourseLoading] = useState(false);
-
-  // ── Fetch departments on mount ────────────────────────────────────────────
-  useEffect(() => {
-    const fetchDepts = async () => {
-      setDeptLoading(true);
-      try {
-        const res  = await api.get("/departments");
-        const data = res.data?.data ?? res.data;
-        setDepartments(Array.isArray(data) ? data : []);
-      } catch {
-        setDepartments([]);
-      } finally {
-        setDeptLoading(false);
-      }
-    };
-    fetchDepts();
-  }, []);
-
-  // ── Fetch courses when department changes ─────────────────────────────────
-  useEffect(() => {
-    if (!form.departmentId) { setCourses([]); return; }
-
-    const fetchCourses = async () => {
-      setCourseLoading(true);
-      try {
-        const res  = await api.get(`/departments/${form.departmentId}/courses`);
-        const data = res.data?.data ?? res.data;
-        setCourses(Array.isArray(data) ? data : []);
-      } catch {
-        setCourses([]);
-      } finally {
-        setCourseLoading(false);
-      }
-    };
-    fetchCourses();
-
-    // Reset dependent fields
-    setForm((prev) => ({ ...prev, courseId: "" }));
-  }, [form.departmentId]);
-
-  // ── Field change ──────────────────────────────────────────────────────────
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-      // clear section when switching to irregular
-      ...(name === "isIrregular" && checked ? { section: "" } : {}),
-    }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
-    setGlobalError("");
+    setForm(f => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   };
 
-  // ── Per-step validation ───────────────────────────────────────────────────
-  const validateStep = () => {
-    const errs = {};
-
-    if (step === 0) {
-      if (!form.fullName.trim())   errs.fullName = "Full name is required.";
-      if (!form.schoolId.trim())   errs.schoolId = "School ID is required.";
-      if (!form.email.trim())      errs.email    = "Email is required.";
-      else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = "Enter a valid email.";
-    }
-
-    if (step === 1) {
-      if (!form.password)          errs.password = "Password is required.";
-      else if (form.password.length < 8) errs.password = "Minimum 8 characters.";
-      if (form.confirmPassword !== form.password) errs.confirmPassword = "Passwords do not match.";
-    }
-
-    if (step === 2) {
-      if (!form.departmentId)      errs.departmentId = "Select a department.";
-      if (!form.courseId)          errs.courseId     = "Select a course.";
-      if (!form.yearLevel)         errs.yearLevel    = "Select a year level.";
-      if (!form.isIrregular && !form.section) errs.section = "Select a section.";
-    }
-
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const nextStep = () => { if (validateStep()) setStep((s) => s + 1); };
-  const prevStep = () => setStep((s) => s - 1);
-
-  // ── Submit ────────────────────────────────────────────────────────────────
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    if (!validateStep()) return;
-
-    setSubmitting(true);
-    setGlobalError("");
+    setError(null);
+    setLoading(true);
     try {
       await register({
-        fullName    : form.fullName.trim(),
-        schoolId    : form.schoolId.trim(),
-        email       : form.email.trim(),
-        password    : form.password,
-        departmentId: Number(form.departmentId),
-        courseId    : Number(form.courseId),
-        yearLevel   : Number(form.yearLevel),
-        section     : form.isIrregular ? null : form.section,
-        isIrregular : form.isIrregular,
+        ...form,
+        departmentId: Number(form.departmentId) || undefined,
+        courseId:     Number(form.courseId)     || undefined,
+        yearLevel:    Number(form.yearLevel),
+        section:      form.isIrregular ? null : form.section,
+        userType:     "STUDENT",
       });
       setSuccess(true);
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.response?.data?.error    ||
-        "Registration failed. Please try again.";
-      setGlobalError(msg);
+      setError(err?.response?.data?.message ?? "Registration failed. Please try again.");
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
-  // ── Success screen ────────────────────────────────────────────────────────
-  if (success) {
-    return (
-      <div style={styles.page}>
-        <div style={styles.successCard}>
-          <div style={styles.successIcon}>✓</div>
-          <h2 style={styles.successTitle}>Account created!</h2>
-          <p style={styles.successMsg}>
-            Your student account has been successfully registered. You can now sign in.
+  return (
+    <div style={authShell}>
+      <style>{STYLES}</style>
+
+      {/* Left panel */}
+      <div style={authLeft}>
+        <div style={{ position: "relative", zIndex: 1, textAlign: "center", color: "#fff" }}>
+          <div style={authLogo}>TC</div>
+          <h1 style={authBrandName}>TimeCraft</h1>
+          <p style={authTagline}>Create your student account to view your personalised timetable.</p>
+        </div>
+        <div style={circle1} />
+        <div style={circle2} />
+      </div>
+
+      {/* Right form */}
+      <div style={{ ...authRight, overflowY: "auto" }}>
+        <div style={{ ...authCard, maxWidth: 460 }}>
+          <h2 style={authTitle}>Create account</h2>
+          <p style={authSub}>Student registration — all fields required.</p>
+
+          {error   && <div className="auth-alert auth-alert-error">⚠️ {error}</div>}
+          {success && <div className="auth-alert auth-alert-success">✅ Account created! Redirecting to login…</div>}
+
+          <form onSubmit={handleSubmit}>
+            <div className="auth-grid-2">
+              <div className="auth-group">
+                <label className="auth-label">Full Name</label>
+                <input className="auth-input" name="fullName" value={form.fullName}
+                  onChange={handleChange} placeholder="Juan dela Cruz" required />
+              </div>
+              <div className="auth-group">
+                <label className="auth-label">School ID</label>
+                <input className="auth-input" name="schoolId" value={form.schoolId}
+                  onChange={handleChange} placeholder="2024-0001" required />
+              </div>
+            </div>
+
+            <div className="auth-group">
+              <label className="auth-label">Email Address</label>
+              <input className="auth-input" type="email" name="email" value={form.email}
+                onChange={handleChange} placeholder="student@university.edu" required />
+            </div>
+
+            <div className="auth-group">
+              <label className="auth-label">Password</label>
+              <input className="auth-input" type="password" name="password" value={form.password}
+                onChange={handleChange} placeholder="Min. 8 characters" required minLength={8} />
+            </div>
+
+            <div className="auth-grid-2">
+              <div className="auth-group">
+                <label className="auth-label">Department ID</label>
+                <input className="auth-input" type="number" name="departmentId"
+                  value={form.departmentId} onChange={handleChange} placeholder="e.g. 1" required />
+              </div>
+              <div className="auth-group">
+                <label className="auth-label">Course ID</label>
+                <input className="auth-input" type="number" name="courseId"
+                  value={form.courseId} onChange={handleChange} placeholder="e.g. 3" required />
+              </div>
+            </div>
+
+            <div className="auth-grid-2">
+              <div className="auth-group">
+                <label className="auth-label">Year Level</label>
+                <select className="auth-input" name="yearLevel" value={form.yearLevel} onChange={handleChange}>
+                  {[1,2,3,4,5].map(y => <option key={y} value={y}>Year {y}</option>)}
+                </select>
+              </div>
+              <div className="auth-group">
+                <label className="auth-label">Section</label>
+                <input className="auth-input" name="section" value={form.section}
+                  onChange={handleChange} placeholder="A / B / C…"
+                  disabled={form.isIrregular} />
+              </div>
+            </div>
+
+            <div className="auth-group" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input type="checkbox" id="isIrregular" name="isIrregular"
+                checked={form.isIrregular} onChange={handleChange}
+                style={{ width: 16, height: 16, accentColor: "#1A237E" }} />
+              <label htmlFor="isIrregular" style={{ fontSize: 13, color: "#6B7280", cursor: "pointer" }}>
+                I am an <strong>irregular student</strong> (no fixed section)
+              </label>
+            </div>
+
+            <button type="submit" className="auth-btn" disabled={loading || success}>
+              {loading ? "Creating account…" : "Create Account →"}
+            </button>
+          </form>
+
+          <p style={{ marginTop: 20, fontSize: 13, color: "#9CA3AF", textAlign: "center" }}>
+            Already have an account?{" "}
+            <Link to="/login" style={{ color: "#1A237E", fontWeight: 600 }}>Sign in</Link>
           </p>
-          <button style={styles.submitBtn} onClick={() => navigate("/login")}>
-            Go to Login
-          </button>
         </div>
-      </div>
-    );
-  }
-
-  // ── Main render ───────────────────────────────────────────────────────────
-  return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        {/* Header */}
-        <div style={styles.cardHeader}>
-          <div style={styles.logo}>
-            <span>⏱</span>
-            <span style={styles.logoText}>TimeCraft</span>
-          </div>
-          <h1 style={styles.heading}>Create your account</h1>
-          <p style={styles.subheading}>Student registration</p>
-        </div>
-
-        {/* Step indicator */}
-        <div style={styles.stepper}>
-          {STEPS.map((label, i) => (
-            <div key={i} style={styles.stepItem}>
-              <div style={{
-                ...styles.stepCircle,
-                backgroundColor: i <= step ? palette.primary : palette.border,
-                color: i <= step ? palette.white : palette.muted,
-              }}>
-                {i < step ? "✓" : i + 1}
-              </div>
-              <span style={{
-                ...styles.stepLabel,
-                color: i === step ? palette.primary : palette.muted,
-                fontWeight: i === step ? "600" : "400",
-              }}>{label}</span>
-              {i < STEPS.length - 1 && (
-                <div style={{
-                  ...styles.stepLine,
-                  backgroundColor: i < step ? palette.primary : palette.border,
-                }} />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Global error */}
-        {globalError && (
-          <div style={styles.errorBanner} role="alert">
-            <span>⚠</span> {globalError}
-          </div>
-        )}
-
-        <form onSubmit={step === 2 ? handleSubmit : (e) => { e.preventDefault(); nextStep(); }} noValidate>
-
-          {/* ── Step 0: Account info ─────────────────────────────────── */}
-          {step === 0 && (
-            <div style={styles.fields}>
-              <Field label="Full name" error={errors.fullName}>
-                <input name="fullName" value={form.fullName} onChange={handleChange}
-                  style={fieldInputStyle(errors.fullName)} placeholder="Juan Dela Cruz" />
-              </Field>
-              <Field label="School ID" error={errors.schoolId}>
-                <input name="schoolId" value={form.schoolId} onChange={handleChange}
-                  style={fieldInputStyle(errors.schoolId)} placeholder="2024-00001" />
-              </Field>
-              <Field label="Email address" error={errors.email}>
-                <input name="email" type="email" value={form.email} onChange={handleChange}
-                  style={fieldInputStyle(errors.email)} placeholder="you@school.edu" />
-              </Field>
-            </div>
-          )}
-
-          {/* ── Step 1: Password ─────────────────────────────────────── */}
-          {step === 1 && (
-            <div style={styles.fields}>
-              <Field label="Password" error={errors.password}
-                hint="Minimum 8 characters">
-                <div style={styles.passwordWrapper}>
-                  <input name="password" type={showPass ? "text" : "password"}
-                    value={form.password} onChange={handleChange}
-                    style={{ ...fieldInputStyle(errors.password), paddingRight: "3rem" }}
-                    placeholder="••••••••" />
-                  <button type="button" onClick={() => setShowPass((p) => !p)}
-                    style={styles.eyeBtn} tabIndex={-1}>
-                    {showPass ? "🙈" : "👁"}
-                  </button>
-                </div>
-              </Field>
-              <Field label="Confirm password" error={errors.confirmPassword}>
-                <input name="confirmPassword" type={showPass ? "text" : "password"}
-                  value={form.confirmPassword} onChange={handleChange}
-                  style={fieldInputStyle(errors.confirmPassword)}
-                  placeholder="••••••••" />
-              </Field>
-            </div>
-          )}
-
-          {/* ── Step 2: Academic info ────────────────────────────────── */}
-          {step === 2 && (
-            <div style={styles.fields}>
-              <Field label="Department" error={errors.departmentId}>
-                <select name="departmentId" value={form.departmentId} onChange={handleChange}
-                  style={fieldInputStyle(errors.departmentId)} disabled={deptLoading}>
-                  <option value="">{deptLoading ? "Loading…" : "Select department"}</option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Course" error={errors.courseId}>
-                <select name="courseId" value={form.courseId} onChange={handleChange}
-                  style={fieldInputStyle(errors.courseId)}
-                  disabled={!form.departmentId || courseLoading}>
-                  <option value="">
-                    {!form.departmentId ? "Select department first"
-                      : courseLoading ? "Loading…"
-                      : "Select course"}
-                  </option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Year level" error={errors.yearLevel}>
-                <select name="yearLevel" value={form.yearLevel} onChange={handleChange}
-                  style={fieldInputStyle(errors.yearLevel)}>
-                  <option value="">Select year level</option>
-                  {YEAR_LEVELS.map((y) => (
-                    <option key={y.value} value={y.value}>{y.label}</option>
-                  ))}
-                </select>
-              </Field>
-
-              {/* Irregular checkbox */}
-              <div style={styles.checkRow}>
-                <input type="checkbox" id="isIrregular" name="isIrregular"
-                  checked={form.isIrregular} onChange={handleChange}
-                  style={{ accentColor: palette.primary, width: "16px", height: "16px" }} />
-                <label htmlFor="isIrregular" style={styles.checkLabel}>
-                  I am an irregular student
-                </label>
-              </div>
-
-              {!form.isIrregular && (
-                <Field label="Section" error={errors.section}>
-                  <select name="section" value={form.section} onChange={handleChange}
-                    style={fieldInputStyle(errors.section)}>
-                    <option value="">Select section</option>
-                    {SECTION_OPTIONS.map((s) => (
-                      <option key={s} value={s}>Section {s}</option>
-                    ))}
-                  </select>
-                </Field>
-              )}
-            </div>
-          )}
-
-          {/* ── Navigation buttons ────────────────────────────────────── */}
-          <div style={styles.navBtns}>
-            {step > 0 && (
-              <button type="button" onClick={prevStep} style={styles.backBtn}
-                disabled={submitting}>
-                ← Back
-              </button>
-            )}
-            {step < 2 ? (
-              <button type="submit" style={{ ...styles.submitBtn, flex: 1 }}>
-                Continue →
-              </button>
-            ) : (
-              <button type="submit"
-                disabled={submitting}
-                style={{
-                  ...styles.submitBtn,
-                  flex: 1,
-                  opacity: submitting ? 0.7 : 1,
-                  cursor: submitting ? "not-allowed" : "pointer",
-                }}>
-                {submitting ? "Creating account…" : "Create account"}
-              </button>
-            )}
-          </div>
-        </form>
-
-        <p style={styles.loginLink}>
-          Already have an account?{" "}
-          <Link to="/login" style={styles.link}>Sign in</Link>
-        </p>
       </div>
     </div>
   );
 }
-
-// ── Field wrapper component ───────────────────────────────────────────────────
-
-function Field({ label, error, hint, children }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
-      <label style={styles.label}>{label}</label>
-      {children}
-      {hint  && !error && <span style={styles.hint}>{hint}</span>}
-      {error && <span style={styles.fieldError}>{error}</span>}
-    </div>
-  );
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const fieldInputStyle = (error) => ({
-  ...styles.input,
-  borderColor: error ? palette.error : palette.border,
-});
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const palette = {
-  primary  : "#1a56db",
-  bg       : "#f8faff",
-  white    : "#ffffff",
-  text     : "#111827",
-  muted    : "#6b7280",
-  border   : "#d1d5db",
-  error    : "#dc2626",
-  errorBg  : "#fef2f2",
-  success  : "#16a34a",
-  successBg: "#f0fdf4",
-};
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Outfit:wght@400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Outfit', system-ui, sans-serif; }
+  .auth-group  { margin-bottom: 14px; }
+  .auth-label  { display: block; font-size: 11.5px; font-weight: 700; color: #6B7280; margin-bottom: 5px; letter-spacing: .4px; text-transform: uppercase; }
+  .auth-input  { width: 100%; padding: 10px 14px; border: 1.5px solid #E4E7F0; border-radius: 8px; font-size: 13.5px; color: #111827; background: #fff; outline: none; font-family: 'Outfit', sans-serif; transition: border-color .15s; }
+  .auth-input:focus { border-color: #5C6BC0; box-shadow: 0 0 0 3px rgba(89,101,196,.12); }
+  .auth-btn    { width: 100%; padding: 11px; border-radius: 8px; background: #1A237E; color: #fff; border: none; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Outfit', sans-serif; margin-top: 8px; transition: background .15s; }
+  .auth-btn:hover { background: #3949AB; }
+  .auth-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .auth-alert  { padding: 11px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; }
+  .auth-alert-error   { background: #FEE2E2; border: 1px solid #FCA5A5; color: #991B1B; }
+  .auth-alert-success { background: #D1FAE5; border: 1px solid #6EE7B7; color: #065F46; }
+  .auth-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .auth-grid-2 { grid-template-columns: 1fr; } }
+`;
 
-const styles = {
-  page: {
-    minHeight      : "100vh",
-    backgroundColor: palette.bg,
-    display        : "flex",
-    alignItems     : "center",
-    justifyContent : "center",
-    padding        : "2rem 1rem",
-    fontFamily     : "'Sora', 'Segoe UI', sans-serif",
-  },
-  card: {
-    width          : "100%",
-    maxWidth       : "480px",
-    backgroundColor: palette.white,
-    borderRadius   : "16px",
-    padding        : "2rem 2.5rem",
-    boxShadow      : "0 4px 32px rgba(0,0,0,0.08)",
-  },
-  cardHeader: {
-    marginBottom   : "1.5rem",
-  },
-  logo: {
-    display        : "flex",
-    alignItems     : "center",
-    gap            : "0.4rem",
-    marginBottom   : "0.75rem",
-    fontSize       : "1.3rem",
-  },
-  logoText: {
-    fontWeight     : "700",
-    color          : "#0f2057",
-    letterSpacing  : "-0.02em",
-  },
-  heading: {
-    fontSize       : "1.5rem",
-    fontWeight     : "700",
-    color          : palette.text,
-    margin         : "0 0 0.2rem",
-    letterSpacing  : "-0.02em",
-  },
-  subheading: {
-    fontSize       : "0.9rem",
-    color          : palette.muted,
-    margin         : 0,
-  },
-  // Stepper
-  stepper: {
-    display        : "flex",
-    alignItems     : "center",
-    marginBottom   : "1.75rem",
-    gap            : 0,
-  },
-  stepItem: {
-    display        : "flex",
-    alignItems     : "center",
-    flex           : 1,
-    position       : "relative",
-  },
-  stepCircle: {
-    width          : "28px",
-    height         : "28px",
-    borderRadius   : "50%",
-    display        : "flex",
-    alignItems     : "center",
-    justifyContent : "center",
-    fontSize       : "0.75rem",
-    fontWeight     : "700",
-    flexShrink     : 0,
-    transition     : "background-color 0.2s",
-  },
-  stepLabel: {
-    fontSize       : "0.75rem",
-    marginLeft     : "0.4rem",
-    whiteSpace     : "nowrap",
-    transition     : "color 0.2s",
-  },
-  stepLine: {
-    flex           : 1,
-    height         : "2px",
-    margin         : "0 0.4rem",
-    transition     : "background-color 0.2s",
-  },
-  // Fields
-  fields: {
-    display        : "flex",
-    flexDirection  : "column",
-    gap            : "1rem",
-    marginBottom   : "1.5rem",
-  },
-  label: {
-    fontSize       : "0.85rem",
-    fontWeight     : "600",
-    color          : palette.text,
-  },
-  input: {
-    padding        : "0.65rem 0.9rem",
-    border         : `1.5px solid ${palette.border}`,
-    borderRadius   : "8px",
-    fontSize       : "0.93rem",
-    color          : palette.text,
-    outline        : "none",
-    width          : "100%",
-    boxSizing      : "border-box",
-    backgroundColor: palette.white,
-  },
-  hint: {
-    fontSize       : "0.78rem",
-    color          : palette.muted,
-  },
-  fieldError: {
-    fontSize       : "0.78rem",
-    color          : palette.error,
-    fontWeight     : "500",
-  },
-  passwordWrapper: {
-    position       : "relative",
-  },
-  eyeBtn: {
-    position       : "absolute",
-    right          : "0.75rem",
-    top            : "50%",
-    transform      : "translateY(-50%)",
-    background     : "none",
-    border         : "none",
-    cursor         : "pointer",
-    fontSize       : "1rem",
-    padding        : 0,
-  },
-  checkRow: {
-    display        : "flex",
-    alignItems     : "center",
-    gap            : "0.5rem",
-  },
-  checkLabel: {
-    fontSize       : "0.9rem",
-    color          : palette.text,
-    cursor         : "pointer",
-  },
-  // Nav buttons
-  navBtns: {
-    display        : "flex",
-    gap            : "0.75rem",
-    marginBottom   : "1rem",
-  },
-  backBtn: {
-    padding        : "0.75rem 1.1rem",
-    backgroundColor: "transparent",
-    border         : `1.5px solid ${palette.border}`,
-    borderRadius   : "8px",
-    fontSize       : "0.9rem",
-    fontWeight     : "600",
-    color          : palette.muted,
-    cursor         : "pointer",
-  },
-  submitBtn: {
-    padding        : "0.75rem",
-    backgroundColor: palette.primary,
-    color          : palette.white,
-    border         : "none",
-    borderRadius   : "8px",
-    fontSize       : "0.95rem",
-    fontWeight     : "600",
-    cursor         : "pointer",
-  },
-  errorBanner: {
-    display        : "flex",
-    alignItems     : "center",
-    gap            : "0.5rem",
-    backgroundColor: palette.errorBg,
-    color          : palette.error,
-    border         : `1px solid ${palette.error}30`,
-    borderRadius   : "8px",
-    padding        : "0.7rem 1rem",
-    fontSize       : "0.875rem",
-    marginBottom   : "1rem",
-  },
-  loginLink: {
-    textAlign      : "center",
-    fontSize       : "0.875rem",
-    color          : palette.muted,
-    marginTop      : "0.5rem",
-  },
-  link: {
-    color          : palette.primary,
-    fontWeight     : "600",
-    textDecoration : "none",
-  },
-  // Success screen
-  successCard: {
-    textAlign      : "center",
-    backgroundColor: palette.white,
-    borderRadius   : "16px",
-    padding        : "3rem 2rem",
-    maxWidth       : "400px",
-    width          : "100%",
-    boxShadow      : "0 4px 32px rgba(0,0,0,0.08)",
-  },
-  successIcon: {
-    width          : "64px",
-    height         : "64px",
-    borderRadius   : "50%",
-    backgroundColor: palette.successBg,
-    color          : palette.success,
-    fontSize       : "2rem",
-    display        : "flex",
-    alignItems     : "center",
-    justifyContent : "center",
-    margin         : "0 auto 1.25rem",
-  },
-  successTitle: {
-    fontSize       : "1.5rem",
-    fontWeight     : "700",
-    color          : palette.text,
-    margin         : "0 0 0.5rem",
-  },
-  successMsg: {
-    color          : palette.muted,
-    fontSize       : "0.92rem",
-    lineHeight     : "1.6",
-    marginBottom   : "1.75rem",
-  },
-};
+const authShell    = { minHeight: "100vh", display: "flex", fontFamily: "'Outfit', sans-serif" };
+const authLeft     = { width: 420, background: "linear-gradient(150deg,#1A237E 0%,#3949AB 55%,#5C6BC0 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 40px", position: "relative", overflow: "hidden", flexShrink: 0 };
+const authRight    = { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px", background: "#F5F6FA" };
+const authCard     = { background: "#fff", borderRadius: 18, padding: "36px 32px", width: "100%", maxWidth: 420, boxShadow: "0 4px 32px rgba(0,0,0,0.08)", border: "1.5px solid #E4E7F0" };
+const authLogo     = { width: 56, height: 56, borderRadius: 16, background: "rgba(255,255,255,0.18)", margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800 };
+const authBrandName= { fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, marginBottom: 10 };
+const authTagline  = { fontSize: 14, color: "rgba(255,255,255,0.72)", lineHeight: 1.6, maxWidth: 280, margin: "0 auto" };
+const authTitle    = { fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 700, color: "#111827", marginBottom: 6 };
+const authSub      = { fontSize: 13.5, color: "#6B7280", marginBottom: 24 };
+const circle1      = { position: "absolute", width: 300, height: 300, borderRadius: "50%", background: "rgba(255,255,255,0.06)", top: -80, right: -80 };
+const circle2      = { position: "absolute", width: 200, height: 200, borderRadius: "50%", background: "rgba(255,255,255,0.04)", bottom: -60, left: -60 };

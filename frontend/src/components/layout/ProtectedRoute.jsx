@@ -1,57 +1,59 @@
-import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
+import { Navigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 
 /**
- * Wraps a route so only authenticated users with the correct role can access it.
+ * ProtectedRoute
+ * --------------
+ * Wraps any route that requires the user to be authenticated.
+ * Optionally restricts access to specific roles.
  *
  * Usage:
- *   <ProtectedRoute roles={['ADMIN']}>
+ *   <ProtectedRoute allowedRoles={["ADMIN"]}>
  *     <AdminDashboard />
  *   </ProtectedRoute>
- *
- * If no roles prop is given, any authenticated user is allowed.
  */
-export default function ProtectedRoute({ children, roles = [] }) {
-  const { user, loading } = useAuth()
-  const location = useLocation()
+export default function ProtectedRoute({ children, allowedRoles }) {
+  const { isAuthenticated, role, loading } = useAuth();
 
-  // Still loading auth state — show a minimal spinner
+  // While AuthContext is verifying the stored token, show a spinner
   if (loading) {
     return (
-      <div style={styles.center}>
-        <span style={styles.spinner} />
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--bg)",
+        fontFamily: "var(--font-body)",
+        color: "var(--text-muted)",
+        fontSize: 14,
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{
+            fontSize: 32, marginBottom: 12,
+            display: "inline-block",
+            animation: "spin 1s linear infinite",
+          }}>
+            ⏳
+          </div>
+          <div>Loading…</div>
+        </div>
       </div>
-    )
+    );
   }
 
-  // Not logged in — redirect to login, preserve intended destination
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+  // Not logged in → go to login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
-  // Logged in but wrong role
-  if (roles.length > 0 && !roles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />
+  // Logged in but wrong role → redirect to their own home
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    const home =
+      role === "ADMIN"   ? "/admin"   :
+      role === "TEACHER" ? "/teacher" : "/student";
+    return <Navigate to={home} replace />;
   }
 
-  return children
-}
-
-const styles = {
-  center: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    background: '#0f172a',
-  },
-  spinner: {
-    display: 'block',
-    width: '36px',
-    height: '36px',
-    border: '3px solid rgba(245,158,11,0.2)',
-    borderTopColor: '#f59e0b',
-    borderRadius: '50%',
-    animation: 'spin 0.7s linear infinite',
-  },
+  return children;
 }
