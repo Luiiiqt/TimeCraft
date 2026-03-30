@@ -3,6 +3,8 @@ package com.timecraft.timecraft.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -43,8 +45,14 @@ public class Campus {
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
+    @lombok.Getter(lombok.AccessLevel.NONE)
     private boolean isActive = true;
 
+    public boolean isActive() {
+        return isActive;
+    }
+
+    @JsonIgnore
     @OneToMany(mappedBy = "campus", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Room> rooms = new ArrayList<>();

@@ -54,7 +54,7 @@ public class AuthService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
                 .password(user.getPasswordHash())
-                .roles(user.getUserType().name()) // STUDENT, TEACHER
+                .roles(user.getUserType().name()) // STUDENT, TEACHER, ADMIN
                 .build();
     }
 
@@ -146,6 +146,7 @@ public class AuthService implements UserDetailsService {
         } else if (user.getUserType() == UserType.TEACHER) {
             enrichWithTeacherClaims(user, claims);
         }
+        // ADMIN has no profile table — base claims only
 
         return claims;
     }

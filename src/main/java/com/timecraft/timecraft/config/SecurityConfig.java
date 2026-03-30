@@ -28,123 +28,133 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
-    private final UserDetailsServiceImpl userDetailsService;
-    private final CorsConfig corsConfig;
+        private final JwtAuthFilter jwtAuthFilter;
+        private final UserDetailsServiceImpl userDetailsService;
+        private final CorsConfig corsConfig;
 
-    // ── Security filter chain ─────────────────────────────────────────────────
+        // ── Security filter chain ─────────────────────────────────────────────────
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {
-        http
-                // Disable CSRF — we use stateless JWT, not cookies
-                .csrf(AbstractHttpConfigurer::disable)
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http)
+                        throws Exception {
+                http
+                                // Disable CSRF — we use stateless JWT, not cookies
+                                .csrf(AbstractHttpConfigurer::disable)
 
-                // Apply CORS config from CorsConfig bean
-                .cors(cors -> cors.configurationSource(
-                        corsConfig.corsConfigurationSource()))
+                                // Apply CORS config from CorsConfig bean
+                                .cors(cors -> cors.configurationSource(
+                                                corsConfig.corsConfigurationSource()))
 
-                // Stateless session — no HttpSession created or used
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                // Stateless session — no HttpSession created or used
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // Route-level authorization rules
-                .authorizeHttpRequests(auth -> auth
+                                // Route-level authorization rules
+                                .authorizeHttpRequests(auth -> auth
 
-                        // ── Public endpoints ──────────────────────────────────────────
-                        .requestMatchers(
-                                "/api/v1/auth/login",
-                                "/api/v1/auth/register")
-                        .permitAll()
+                                                // ── Public endpoints ──────────────────────────────────────────
+                                                .requestMatchers(
+                                                                "/api/v1/auth/login",
+                                                                "/api/v1/auth/register")
+                                                .permitAll()
 
-                        // Swagger / OpenAPI docs — accessible without auth
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/api-docs/**",
-                                "/api-docs")
-                        .permitAll()
+                                                // Swagger / OpenAPI docs — accessible without auth
+                                                .requestMatchers(
+                                                                "/swagger-ui/**",
+                                                                "/swagger-ui.html",
+                                                                "/api-docs/**",
+                                                                "/api-docs")
+                                                .permitAll()
 
-                        // Actuator health check — public
-                        .requestMatchers("/actuator/health").permitAll()
+                                                // Actuator health check — public
+                                                .requestMatchers("/actuator/health").permitAll()
 
-                        // ── Student endpoints ─────────────────────────────────────────
-                        // Students can only view their own schedule
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/v1/schedules/my",
-                                "/api/v1/students/me")
-                        .hasRole("STUDENT")
+                                                // ── Student endpoints ─────────────────────────────────────────
+                                                // Students can only view their own schedule
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/v1/schedules/my",
+                                                                "/api/v1/students/me")
+                                                .hasRole("STUDENT")
 
-                        // ── Teacher endpoints ─────────────────────────────────────────
-                        // Teachers can view their schedule and update availability
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/v1/schedules/teacher/**",
-                                "/api/v1/teachers/me")
-                        .hasAnyRole("TEACHER", "ADMIN")
+                                                // ── Teacher endpoints ─────────────────────────────────────────
+                                                // Teachers can view their schedule and update availability
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/v1/schedules/teacher/**",
+                                                                "/api/v1/teachers/me")
+                                                .hasAnyRole("TEACHER", "ADMIN")
 
-                        .requestMatchers(HttpMethod.PUT,
-                                "/api/v1/teachers/*/availability")
-                        .hasAnyRole("TEACHER", "ADMIN")
+                                                .requestMatchers(HttpMethod.PUT,
+                                                                "/api/v1/teachers/*/availability")
+                                                .hasAnyRole("TEACHER", "ADMIN")
 
-                        // ── Admin-only endpoints ──────────────────────────────────────
-                        .requestMatchers(
-                                "/api/v1/schedules/generate",
-                                "/api/v1/schedules/publish/**",
-                                "/api/v1/schedules/audit",
-                                "/api/v1/conflicts/**",
-                                "/api/v1/rooms/**",
-                                "/api/v1/departments/**",
-                                "/api/v1/sections/**",
-                                "/api/v1/reports/**")
-                        .hasRole("ADMIN")
+                                                // ── Admin-only endpoints ──────────────────────────────────────
+                                                .requestMatchers(
+                                                                "/api/v1/schedules/generate",
+                                                                "/api/v1/schedules/publish/**",
+                                                                "/api/v1/schedules/audit",
+                                                                "/api/v1/conflicts/**",
+                                                                "/api/v1/rooms/**",
+                                                                "/api/v1/departments/**",
+                                                                "/api/v1/sections/**",
+                                                                "/api/v1/reports/**")
+                                                .hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.POST,
-                                "/api/v1/teachers",
-                                "/api/v1/students")
-                        .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/v1/teachers",
+                                                                "/api/v1/students")
+                                                .hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.PUT,
-                                "/api/v1/schedules/**")
-                        .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT,
+                                                                "/api/v1/schedules/**")
+                                                .hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.DELETE,
-                                "/api/v1/schedules/**",
-                                "/api/v1/teachers/**",
-                                "/api/v1/students/**")
-                        .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE,
+                                                                "/api/v1/schedules/**",
+                                                                "/api/v1/teachers/**",
+                                                                "/api/v1/students/**")
+                                                .hasRole("ADMIN")
 
-                        // All other requests require authentication
-                        .anyRequest().authenticated())
+                                                // All other requests require authentication
+                                                .anyRequest().authenticated())
 
-                // Register authentication provider
-                .authenticationProvider(authenticationProvider())
+                                .exceptionHandling(ex -> ex
+                                                .authenticationEntryPoint((req, res, e) -> {
+                                                        res.setStatus(401);
+                                                        res.getWriter().write("Unauthorized: " + e.getMessage());
+                                                })
+                                                .accessDeniedHandler((req, res, e) -> {
+                                                        res.setStatus(403);
+                                                        res.getWriter().write("Forbidden: " + e.getMessage());
+                                                }))
 
-                // Insert JWT filter before Spring's username/password filter
-                .addFilterBefore(jwtAuthFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                                // Register authentication provider
+                                .authenticationProvider(authenticationProvider())
 
-        return http.build();
-    }
+                                // Insert JWT filter before Spring's username/password filter
+                                .addFilterBefore(jwtAuthFilter,
+                                                UsernamePasswordAuthenticationFilter.class);
 
-    // ── Beans ─────────────────────────────────────────────────────────────────
+                return http.build();
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
-    }
+        // ── Beans ─────────────────────────────────────────────────────────────────
 
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder(12);
+        }
 
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
-    }
+        @Bean
+        public AuthenticationProvider authenticationProvider() {
+                DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
 
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+                provider.setPasswordEncoder(passwordEncoder());
+                return provider;
+        }
+
+        @Bean
+        public AuthenticationManager authenticationManager(
+                        AuthenticationConfiguration config) throws Exception {
+                return config.getAuthenticationManager();
+        }
 }
