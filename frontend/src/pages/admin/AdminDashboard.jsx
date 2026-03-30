@@ -4,20 +4,101 @@ import useAuth from "../../hooks/useAuth";
 import useConflict from "../../hooks/useConflict";
 import api from "../../services/api";
 
-// ── Term defaults ─────────────────────────────────────────────────────────────
-const CURRENT_SEMESTER  = "FIRST";
-const CURRENT_YEAR      = "2024-2025";
+const CURRENT_SEMESTER = "FIRST";
+const CURRENT_YEAR     = "2024-2025";
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Stat Card ─────────────────────────────────────────────────────────────────
+
+function StatCard({ label, value, icon, accentColor, onClick }) {
+  return (
+    <button className="stat-card" onClick={onClick} style={{ width: "100%", background: "var(--surface-card)" }}>
+      <div
+        className="stat-icon"
+        style={{ background: accentColor + "18" }}
+      >
+        <span style={{ fontSize: "1.4rem" }}>{icon}</span>
+      </div>
+      <div>
+        <div className="stat-value" style={{ color: accentColor }}>
+          {value}
+        </div>
+        <div className="stat-label">{label}</div>
+      </div>
+    </button>
+  );
+}
+
+// ── Quick Action Card ─────────────────────────────────────────────────────────
+
+function QuickCard({ label, icon, accentColor, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background    : "var(--surface-card)",
+        border        : `1.5px solid var(--grey-200)`,
+        borderTop     : `3px solid ${accentColor}`,
+        borderRadius  : "var(--radius-xl)",
+        padding       : "var(--space-5) var(--space-5)",
+        cursor        : "pointer",
+        textAlign     : "left",
+        display       : "flex",
+        flexDirection : "column",
+        gap           : "var(--space-3)",
+        boxShadow     : "var(--shadow-sm)",
+        transition    : "box-shadow var(--ease-base), transform var(--ease-base)",
+        fontFamily    : "var(--font-body)",
+        width         : "100%",
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.boxShadow = "var(--shadow-md)";
+        e.currentTarget.style.transform = "translateY(-2px)";
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.boxShadow = "var(--shadow-sm)";
+        e.currentTarget.style.transform = "translateY(0)";
+      }}
+    >
+      <div style={{
+        width           : 44,
+        height          : 44,
+        borderRadius    : "var(--radius-lg)",
+        background      : accentColor + "18",
+        display         : "flex",
+        alignItems      : "center",
+        justifyContent  : "center",
+        fontSize        : "1.6rem",
+      }}>
+        {icon}
+      </div>
+      <div style={{
+        fontSize   : "var(--text-sm)",
+        fontWeight : "var(--weight-semibold)",
+        color      : "var(--grey-900)",
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize   : "var(--text-sm)",
+        color      : accentColor,
+        fontWeight : "var(--weight-bold)",
+      }}>
+        →
+      </div>
+    </button>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
+
 export default function AdminDashboard() {
-  const navigate            = useNavigate();
-  const { user, logout }    = useAuth();
+  const navigate              = useNavigate();
+  const { user }              = useAuth();
   const { unresolvedCount, fetchCount } = useConflict();
 
   const [stats,        setStats]        = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // ── Fetch dashboard stats on mount ────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       setStatsLoading(true);
@@ -43,273 +124,110 @@ export default function AdminDashboard() {
     load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleLogout = () => { logout(); navigate("/login"); };
+  const val = (v) => (statsLoading ? "…" : v);
 
-  // ── Stat cards config ─────────────────────────────────────────────────────
-  const statCards = [
-    {
-      label : "Departments",
-      value : statsLoading ? "…" : stats?.departments,
-      icon  : "🏫",
-      color : "#1a56db",
-      action: () => navigate("/admin/departments"),
-    },
-    {
-      label : "Rooms",
-      value : statsLoading ? "…" : stats?.rooms,
-      icon  : "🚪",
-      color : "#0891b2",
-      action: () => navigate("/admin/rooms"),
-    },
-    {
-      label : "Unresolved Conflicts",
-      value : statsLoading ? "…" : stats?.conflicts,
-      icon  : "⚠️",
-      color : stats?.conflicts > 0 ? "#dc2626" : "#16a34a",
-      action: () => navigate("/admin/reports"),
-    },
-  ];
-
-  // ── Quick links ───────────────────────────────────────────────────────────
-  const quickLinks = [
-    { label: "Generate Schedule", icon: "⚡", path: "/admin/generate",    bg: "#1a56db" },
-    { label: "Manage Departments",icon: "🏫", path: "/admin/departments", bg: "#0891b2" },
-    { label: "Manage Rooms",      icon: "🚪", path: "/admin/rooms",       bg: "#7c3aed" },
-    { label: "Reports",           icon: "📊", path: "/admin/reports",     bg: "#0f766e" },
-  ];
-
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div style={styles.page}>
-      {/* Sidebar */}
-      <aside style={styles.sidebar}>
-        <div style={styles.sidebarLogo}>
-          <span>⏱</span>
-          <span style={styles.sidebarLogoText}>TimeCraft</span>
-        </div>
-        <nav style={styles.nav}>
-          {quickLinks.map((l) => (
-            <button key={l.path} onClick={() => navigate(l.path)}
-              style={styles.navItem}>
-              <span style={styles.navIcon}>{l.icon}</span>
-              {l.label}
-            </button>
-          ))}
-        </nav>
-        <div style={styles.sidebarFooter}>
-          <div style={styles.userInfo}>
-            <div style={styles.avatar}>{user?.fullName?.[0] ?? "A"}</div>
-            <div>
-              <div style={styles.userName}>{user?.fullName ?? "Admin"}</div>
-              <div style={styles.userRole}>Administrator</div>
-            </div>
-          </div>
-          <button onClick={handleLogout} style={styles.logoutBtn}>
-            Sign out
-          </button>
-        </div>
-      </aside>
+    <div className="fade-in">
 
-      {/* Main */}
-      <main style={styles.main}>
-        <div style={styles.header}>
+      {/* Page header */}
+      <div className="page-header">
+        <h1 className="page-title">Dashboard</h1>
+        <p className="page-subtitle">
+          {CURRENT_SEMESTER} Semester · {CURRENT_YEAR}
+        </p>
+      </div>
+
+      {/* Conflict alert banner */}
+      {!statsLoading && stats?.conflicts > 0 && (
+        <div className="alert alert-danger" style={{ marginBottom: "var(--space-6)" }}>
+          <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>⚠️</span>
           <div>
-            <h1 style={styles.pageTitle}>Dashboard</h1>
-            <p style={styles.pageSubtitle}>
-              {CURRENT_SEMESTER} Semester · {CURRENT_YEAR}
-            </p>
+            <strong>
+              {stats.conflicts} unresolved conflict{stats.conflicts !== 1 ? "s" : ""}
+            </strong>{" "}
+            detected in the current schedule.{" "}
+            <button
+              onClick={() => navigate("/admin/reports")}
+              style={{
+                background    : "none",
+                border        : "none",
+                color         : "var(--color-danger)",
+                fontWeight    : "var(--weight-bold)",
+                cursor        : "pointer",
+                fontSize      : "var(--text-sm)",
+                padding       : 0,
+                textDecoration: "underline",
+                fontFamily    : "var(--font-body)",
+              }}
+            >
+              View in Reports →
+            </button>
           </div>
         </div>
+      )}
 
-        {/* Stat cards */}
-        <div style={styles.statsGrid}>
-          {statCards.map((s) => (
-            <button key={s.label} onClick={s.action} style={styles.statCard}>
-              <div style={{ ...styles.statIcon, backgroundColor: s.color + "18" }}>
-                <span style={{ fontSize: "1.5rem" }}>{s.icon}</span>
-              </div>
-              <div>
-                <div style={{ ...styles.statValue, color: s.color }}>
-                  {s.value}
-                </div>
-                <div style={styles.statLabel}>{s.label}</div>
-              </div>
-            </button>
-          ))}
-        </div>
+      {/* Stat cards */}
+      <div style={{
+        display              : "grid",
+        gridTemplateColumns  : "repeat(3, 1fr)",
+        gap                  : "var(--space-4)",
+        marginBottom         : "var(--space-8)",
+      }}>
+        <StatCard
+          label="Departments"
+          value={val(stats?.departments)}
+          icon="⬡"
+          accentColor="var(--brand-secondary)"
+          onClick={() => navigate("/admin/departments")}
+        />
+        <StatCard
+          label="Rooms"
+          value={val(stats?.rooms)}
+          icon="▣"
+          accentColor="#0891b2"
+          onClick={() => navigate("/admin/rooms")}
+        />
+        <StatCard
+          label="Unresolved Conflicts"
+          value={val(stats?.conflicts)}
+          icon="⚠️"
+          accentColor={stats?.conflicts > 0 ? "var(--color-danger)" : "var(--color-success)"}
+          onClick={() => navigate("/admin/reports")}
+        />
+      </div>
 
-        {/* Quick actions */}
-        <h2 style={styles.sectionTitle}>Quick Actions</h2>
-        <div style={styles.quickGrid}>
-          {quickLinks.map((l) => (
-            <button key={l.path} onClick={() => navigate(l.path)}
-              style={{ ...styles.quickCard, borderTop: `4px solid ${l.bg}` }}>
-              <div style={{ ...styles.quickIcon, backgroundColor: l.bg + "18" }}>
-                <span style={{ fontSize: "1.8rem" }}>{l.icon}</span>
-              </div>
-              <span style={styles.quickLabel}>{l.label}</span>
-              <span style={{ ...styles.quickArrow, color: l.bg }}>→</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Conflict alert */}
-        {!statsLoading && stats?.conflicts > 0 && (
-          <div style={styles.conflictAlert}>
-            <span style={{ fontSize: "1.2rem" }}>⚠️</span>
-            <div>
-              <strong>
-                {stats.conflicts} unresolved conflict{stats.conflicts !== 1 ? "s" : ""}
-              </strong>{" "}
-              detected in the current schedule.{" "}
-              <button onClick={() => navigate("/admin/reports")}
-                style={styles.conflictLink}>
-                View in Reports →
-              </button>
-            </div>
-          </div>
-        )}
-      </main>
+      {/* Quick actions */}
+      <h2 className="section-title">Quick Actions</h2>
+      <div style={{
+        display              : "grid",
+        gridTemplateColumns  : "repeat(4, 1fr)",
+        gap                  : "var(--space-4)",
+      }}>
+        <QuickCard
+          label="Generate Schedule"
+          icon="⚡"
+          accentColor="var(--brand-secondary)"
+          onClick={() => navigate("/admin/generate")}
+        />
+        <QuickCard
+          label="Manage Departments"
+          icon="⬡"
+          accentColor="#0891b2"
+          onClick={() => navigate("/admin/departments")}
+        />
+        <QuickCard
+          label="Manage Rooms"
+          icon="▣"
+          accentColor="#7c3aed"
+          onClick={() => navigate("/admin/rooms")}
+        />
+        <QuickCard
+          label="Reports"
+          icon="↗"
+          accentColor="#0f766e"
+          onClick={() => navigate("/admin/reports")}
+        />
+      </div>
     </div>
   );
 }
-
-// ── Styles ────────────────────────────────────────────────────────────────────
-const styles = {
-  page: {
-    display       : "flex",
-    minHeight     : "100vh",
-    fontFamily    : "'Sora', 'Segoe UI', sans-serif",
-    backgroundColor: "#f8faff",
-  },
-  sidebar: {
-    width          : "240px",
-    backgroundColor: "#0f2057",
-    display        : "flex",
-    flexDirection  : "column",
-    padding        : "1.5rem 1rem",
-    flexShrink     : 0,
-  },
-  sidebarLogo: {
-    display     : "flex",
-    alignItems  : "center",
-    gap         : "0.5rem",
-    fontSize    : "1.3rem",
-    color       : "#fff",
-    marginBottom: "2rem",
-    paddingLeft : "0.5rem",
-  },
-  sidebarLogoText: { fontWeight: "700", letterSpacing: "-0.02em" },
-  nav: { display: "flex", flexDirection: "column", gap: "0.25rem", flex: 1 },
-  navItem: {
-    display        : "flex",
-    alignItems     : "center",
-    gap            : "0.6rem",
-    padding        : "0.65rem 0.75rem",
-    borderRadius   : "8px",
-    border         : "none",
-    background     : "transparent",
-    color          : "rgba(255,255,255,0.75)",
-    fontSize       : "0.9rem",
-    cursor         : "pointer",
-    textAlign      : "left",
-    transition     : "background 0.15s, color 0.15s",
-  },
-  navIcon: { fontSize: "1rem" },
-  sidebarFooter: { borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "1rem" },
-  userInfo: { display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.75rem" },
-  avatar: {
-    width          : "36px",
-    height         : "36px",
-    borderRadius   : "50%",
-    backgroundColor: "#1a56db",
-    color          : "#fff",
-    display        : "flex",
-    alignItems     : "center",
-    justifyContent : "center",
-    fontWeight     : "700",
-    fontSize       : "0.9rem",
-    flexShrink     : 0,
-  },
-  userName  : { color: "#fff", fontSize: "0.85rem", fontWeight: "600" },
-  userRole  : { color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" },
-  logoutBtn : {
-    width          : "100%",
-    padding        : "0.5rem",
-    backgroundColor: "rgba(255,255,255,0.07)",
-    border         : "1px solid rgba(255,255,255,0.12)",
-    borderRadius   : "6px",
-    color          : "rgba(255,255,255,0.65)",
-    fontSize       : "0.82rem",
-    cursor         : "pointer",
-  },
-  main: { flex: 1, padding: "2rem 2.5rem", overflowY: "auto" },
-  header: {
-    display        : "flex",
-    justifyContent : "space-between",
-    alignItems     : "flex-start",
-    marginBottom   : "2rem",
-  },
-  pageTitle   : { fontSize: "1.75rem", fontWeight: "700", color: "#111827", margin: "0 0 0.2rem", letterSpacing: "-0.02em" },
-  pageSubtitle: { color: "#6b7280", fontSize: "0.9rem", margin: 0 },
-  sectionTitle: { fontSize: "1.1rem", fontWeight: "700", color: "#111827", margin: "2rem 0 1rem" },
-  // Stat grid
-  statsGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" },
-  statCard: {
-    display        : "flex",
-    alignItems     : "center",
-    gap            : "1rem",
-    backgroundColor: "#fff",
-    borderRadius   : "12px",
-    padding        : "1.25rem 1.5rem",
-    border         : "1px solid #e5e7eb",
-    cursor         : "pointer",
-    textAlign      : "left",
-    boxShadow      : "0 1px 4px rgba(0,0,0,0.04)",
-    transition     : "box-shadow 0.15s",
-  },
-  statIcon  : { width: "48px", height: "48px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  statValue : { fontSize: "2rem", fontWeight: "700", lineHeight: 1 },
-  statLabel : { fontSize: "0.82rem", color: "#6b7280", marginTop: "0.2rem" },
-  // Quick grid
-  quickGrid : { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem" },
-  quickCard : {
-    backgroundColor: "#fff",
-    border         : "1px solid #e5e7eb",
-    borderRadius   : "12px",
-    padding        : "1.25rem",
-    cursor         : "pointer",
-    textAlign      : "left",
-    display        : "flex",
-    flexDirection  : "column",
-    gap            : "0.75rem",
-    boxShadow      : "0 1px 4px rgba(0,0,0,0.04)",
-    transition     : "box-shadow 0.15s",
-  },
-  quickIcon : { width: "44px", height: "44px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center" },
-  quickLabel: { fontSize: "0.9rem", fontWeight: "600", color: "#111827", flex: 1 },
-  quickArrow: { fontSize: "1.1rem", fontWeight: "700" },
-  // Conflict alert
-  conflictAlert: {
-    marginTop      : "1.5rem",
-    display        : "flex",
-    alignItems     : "flex-start",
-    gap            : "0.75rem",
-    backgroundColor: "#fef2f2",
-    border         : "1px solid #fecaca",
-    borderRadius   : "10px",
-    padding        : "1rem 1.25rem",
-    color          : "#7f1d1d",
-    fontSize       : "0.9rem",
-  },
-  conflictLink: {
-    background    : "none",
-    border        : "none",
-    color         : "#dc2626",
-    fontWeight    : "700",
-    cursor        : "pointer",
-    fontSize      : "0.9rem",
-    padding       : 0,
-    textDecoration: "underline",
-  },
-};

@@ -1,0 +1,155 @@
+/* ============================================================
+   TimeCraft Design Tokens
+   src/styles/tokens.css
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Figtree:wght@400;500;600;700;800&display=swap');
+
+/* ── Root tokens ──────────────────────────────────────────── */
+:root {
+
+  /* Brand */
+  --brand-primary:    #1E2875;   /* deep navy — the core identity colour  */
+  --brand-secondary:  #3B4FD8;   /* medium indigo                         */
+  --brand-accent:     #6C7FFF;   /* electric periwinkle — CTA hover, glow */
+  --brand-light:      #EEF0FF;   /* tinted white for highlight surfaces   */
+
+  /* Role accent palette */
+  --admin-bg:         #1E2875;
+  --admin-mid:        #3B4FD8;
+  --admin-glow:       #6C7FFF;
+
+  --teacher-bg:       #14432A;
+  --teacher-mid:      #1E6B45;
+  --teacher-glow:     #34C47C;
+
+  --student-bg:       #2D1B69;
+  --student-mid:      #5B3FBF;
+  --student-glow:     #9B77FF;
+
+  /* Neutrals */
+  --grey-50:          #F8F9FC;
+  --grey-100:         #F1F3F8;
+  --grey-200:         #E4E7F0;
+  --grey-300:         #C9CEDF;
+  --grey-400:         #9BA3BC;
+  --grey-500:         #6B7494;
+  --grey-700:         #2E3350;
+  --grey-900:         #0F1121;
+
+  /* Semantic colours */
+  --color-success:    #16A34A;
+  --color-warning:    #D97706;
+  --color-danger:     #DC2626;
+  --color-info:       #0284C7;
+
+  --color-success-bg: #DCFCE7;
+  --color-warning-bg: #FEF3C7;
+  --color-danger-bg:  #FEE2E2;
+  --color-info-bg:    #E0F2FE;
+
+  /* Surfaces */
+  --surface-base:     #ffffff;
+  --surface-page:     #F5F7FC;
+  --surface-card:     #ffffff;
+  --surface-overlay:  rgba(15, 17, 33, 0.55);
+
+  /* Typography */
+  --font-display:     'Instrument Serif', Georgia, serif;
+  --font-body:        'Figtree', system-ui, sans-serif;
+
+  --text-xs:          0.72rem;   /* 11.5px */
+  --text-sm:          0.825rem;  /* 13.2px */
+  --text-base:        0.9375rem; /* 15px   */
+  --text-md:          1.0625rem; /* 17px   */
+  --text-lg:          1.25rem;   /* 20px   */
+  --text-xl:          1.5rem;    /* 24px   */
+  --text-2xl:         1.875rem;  /* 30px   */
+  --text-3xl:         2.5rem;    /* 40px   */
+  --text-4xl:         3.25rem;   /* 52px   */
+
+  --weight-regular:   400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
+  --weight-extrabold: 800;
+
+  /* Spacing */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Radii */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-2xl:  28px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-xs:  0 1px 3px rgba(15,17,33,0.06);
+  --shadow-sm:  0 2px 8px rgba(15,17,33,0.07);
+  --shadow-md:  0 4px 16px rgba(15,17,33,0.09);
+  --shadow-lg:  0 8px 32px rgba(15,17,33,0.12);
+  --shadow-xl:  0 16px 48px rgba(15,17,33,0.16);
+
+  /* Sidebar */
+  --sidebar-width:        240px;
+  --sidebar-width-mini:   64px;
+
+  /* Transitions */
+  --ease-fast:   0.12s ease;
+  --ease-base:   0.2s ease;
+  --ease-slow:   0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Z-index layers */
+  --z-sidebar:   100;
+  --z-navbar:    90;
+  --z-modal:     200;
+  --z-toast:     300;
+}
+
+/* ── Base resets ──────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--grey-900);
+  background: var(--surface-page);
+  line-height: 1.6;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--grey-300); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--grey-400); }
+
+/* ── Keyframes ────────────────────────────────────────────── */
+@keyframes spin      { to { transform: rotate(360deg); } }
+@keyframes fadeIn    { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.fade-in     { animation: fadeIn 0.3s ease forwards; }
+.slide-left  { animation: slideInLeft 0.3s ease forwards; }

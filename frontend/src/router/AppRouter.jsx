@@ -8,6 +8,8 @@ import ProtectedRoute from "../components/layout/ProtectedRoute";
 
 // ── Lazy pages ────────────────────────────────────────────────────────────────
 
+const LandingPage       = lazy(() => import("../pages/LandingPage"));
+
 const LoginPage         = lazy(() => import("../pages/auth/LoginPage"));
 const RegisterPage      = lazy(() => import("../pages/auth/RegisterPage"));
 
@@ -30,10 +32,12 @@ function PageLoader() {
   return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center",
-      justifyContent: "center", background: "var(--bg, #F5F6FA)",
+      justifyContent: "center", background: "var(--surface-page)",
     }}>
-      <div style={{ textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>
-        <div style={{ fontSize: 32, display: "inline-block", animation: "spin 1s linear infinite" }}>⏳</div>
+      <div style={{ textAlign: "center", color: "var(--grey-400)", fontSize: 14, fontFamily: "var(--font-body)" }}>
+        <div style={{ fontSize: 28, display: "inline-block", animation: "spin 1s linear infinite" }}>
+          ⏳
+        </div>
         <div style={{ marginTop: 10 }}>Loading…</div>
       </div>
     </div>
@@ -56,12 +60,14 @@ function AppShell({ children }) {
   );
 }
 
-// ── Root redirect based on role ───────────────────────────────────────────────
+// ── Root redirect ─────────────────────────────────────────────────────────────
+// If already authenticated → go straight to their dashboard.
+// If not authenticated     → show the public landing page.
 
-function HomeRedirect() {
+function HomeRoute() {
   const { isAuthenticated, role, loading } = useAuth();
-  if (loading)            return <PageLoader />;
-  if (!isAuthenticated)   return <Navigate to="/login"   replace />;
+  if (loading)          return <PageLoader />;
+  if (!isAuthenticated) return <LandingPage />;
   if (role === "ADMIN")   return <Navigate to="/admin"   replace />;
   if (role === "TEACHER") return <Navigate to="/teacher" replace />;
   return                         <Navigate to="/student" replace />;
@@ -86,12 +92,12 @@ export default function AppRouter() {
         <Suspense fallback={<PageLoader />}>
           <Routes>
 
-            {/* Public */}
+            {/* Root — shows landing or redirects to dashboard */}
+            <Route path="/" element={<HomeRoute />} />
+
+            {/* Public auth pages */}
             <Route path="/login"    element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-
-            {/* Root */}
-            <Route path="/" element={<HomeRedirect />} />
 
             {/* Student */}
             <Route path="/student"           element={<Page roles={["STUDENT"]}><StudentDashboard /></Page>} />
