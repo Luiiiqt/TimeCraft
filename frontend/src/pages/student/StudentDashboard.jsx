@@ -253,6 +253,15 @@ export default function StudentDashboard() {
               }}>
                 📅 View Full Timetable
               </Link>
+              <Link to="/student/enrollment" style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "10px 12px", borderRadius: 10,
+                background: "#F0FBF4", color: "#1A6640",
+                textDecoration: "none", fontSize: 13, fontWeight: 600,
+                marginBottom: 8,
+              }}>
+                📋 Enroll This Semester
+              </Link>
             </div>
           </div>
         </div>

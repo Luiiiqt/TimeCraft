@@ -11,17 +11,13 @@ import com.timecraft.timecraft.exception.ResourceNotFoundException;
 import com.timecraft.timecraft.model.Campus;
 import com.timecraft.timecraft.model.Department;
 import com.timecraft.timecraft.model.Teacher;
-import com.timecraft.timecraft.model.TeacherAvailability;
 import com.timecraft.timecraft.model.TeacherProfile;
-import com.timecraft.timecraft.model.Timeslot;
 import com.timecraft.timecraft.model.User;
 import com.timecraft.timecraft.model.User.UserType;
 import com.timecraft.timecraft.repository.CampusRepository;
 import com.timecraft.timecraft.repository.DepartmentRepository;
-import com.timecraft.timecraft.repository.TeacherAvailabilityRepository;
 import com.timecraft.timecraft.repository.TeacherProfileRepository;
 import com.timecraft.timecraft.repository.TeacherRepository;
-import com.timecraft.timecraft.repository.TimeslotRepository;
 import com.timecraft.timecraft.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -33,11 +29,11 @@ public class TeacherService {
 
     private final TeacherRepository teacherRepository;
     private final TeacherProfileRepository teacherProfileRepository;
-    private final TeacherAvailabilityRepository availabilityRepository;
+
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final CampusRepository campusRepository;
-    private final TimeslotRepository timeslotRepository;
+
     private final PasswordEncoder passwordEncoder;
 
     // ── Lookup ────────────────────────────────────────────────────────────────
@@ -169,41 +165,6 @@ public class TeacherService {
         }
 
         return teacherProfileRepository.save(profile);
-    }
-
-    // ── Availability ──────────────────────────────────────────────────────────
-
-    public List<TeacherAvailability> getAvailability(Long teacherId) {
-        return availabilityRepository.findByTeacherId(teacherId);
-    }
-
-    public List<TeacherAvailability> getAvailableSlots(Long teacherId) {
-        return availabilityRepository.findByTeacherIdAndAvailableTrue(teacherId);
-    }
-
-    /**
-     * Replaces a teacher's entire availability grid with the provided timeslot IDs.
-     * Any timeslot not in the list is marked unavailable.
-     */
-    @Transactional
-    public void saveAvailability(Long teacherId, List<Long> availableTimeslotIds) {
-        User teacher = userRepository.findById(teacherId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Teacher not found: " + teacherId));
-
-        // Delete old records and replace with new set
-        availabilityRepository.deleteByTeacherId(teacherId);
-
-        List<Timeslot> allTimeslots = timeslotRepository.findAll();
-        for (Timeslot ts : allTimeslots) {
-            boolean available = availableTimeslotIds.contains(ts.getId());
-            TeacherAvailability avail = TeacherAvailability.builder()
-                    .teacher(teacher)
-                    .timeslot(ts)
-                    .available(available)
-                    .build();
-            availabilityRepository.save(avail);
-        }
     }
 
     // ── Deactivate ────────────────────────────────────────────────────────────

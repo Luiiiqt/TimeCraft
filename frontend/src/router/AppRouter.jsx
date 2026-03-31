@@ -15,15 +15,16 @@ const RegisterPage      = lazy(() => import("../pages/auth/RegisterPage"));
 
 const StudentDashboard  = lazy(() => import("../pages/student/StudentDashboard"));
 const ViewTimetable     = lazy(() => import("../pages/student/ViewTimetable"));
+const Enrollment        = lazy(() => import("../pages/student/Enrollment"));
 
 const TeacherDashboard  = lazy(() => import("../pages/teacher/TeacherDashboard"));
 const ViewMySchedule    = lazy(() => import("../pages/teacher/ViewMySchedule"));
-const SetAvailability   = lazy(() => import("../pages/teacher/SetAvailability"));
 
 const AdminDashboard    = lazy(() => import("../pages/admin/AdminDashboard"));
 const GenerateSchedule  = lazy(() => import("../pages/admin/GenerateSchedule"));
 const ManageDepartments = lazy(() => import("../pages/admin/ManageDepartments"));
 const ManageRooms       = lazy(() => import("../pages/admin/ManageRooms"));
+const ManageSubjects    = lazy(() => import("../pages/admin/ManageSubjects"));
 const Reports           = lazy(() => import("../pages/admin/Reports"));
 
 // ── Loader ────────────────────────────────────────────────────────────────────
@@ -100,19 +101,20 @@ export default function AppRouter() {
             <Route path="/register" element={<RegisterPage />} />
 
             {/* Student */}
-            <Route path="/student"           element={<Page roles={["STUDENT"]}><StudentDashboard /></Page>} />
-            <Route path="/student/timetable" element={<Page roles={["STUDENT"]}><ViewTimetable /></Page>} />
+            <Route path="/student"            element={<Page roles={["STUDENT"]}><StudentDashboard /></Page>} />
+            <Route path="/student/timetable"  element={<Page roles={["STUDENT"]}><ViewTimetable /></Page>} />
+            <Route path="/student/enrollment" element={<Page roles={["STUDENT"]}><Enrollment /></Page>} />
 
             {/* Teacher */}
-            <Route path="/teacher"               element={<Page roles={["TEACHER"]}><TeacherDashboard /></Page>} />
-            <Route path="/teacher/schedule"      element={<Page roles={["TEACHER"]}><ViewMySchedule /></Page>} />
-            <Route path="/teacher/availability"  element={<Page roles={["TEACHER"]}><SetAvailability /></Page>} />
+            <Route path="/teacher"          element={<Page roles={["TEACHER"]}><TeacherDashboard /></Page>} />
+            <Route path="/teacher/schedule" element={<Page roles={["TEACHER"]}><ViewMySchedule /></Page>} />
 
             {/* Admin */}
             <Route path="/admin"             element={<Page roles={["ADMIN"]}><AdminDashboard /></Page>} />
             <Route path="/admin/generate"    element={<Page roles={["ADMIN"]}><GenerateSchedule /></Page>} />
             <Route path="/admin/departments" element={<Page roles={["ADMIN"]}><ManageDepartments /></Page>} />
             <Route path="/admin/rooms"       element={<Page roles={["ADMIN"]}><ManageRooms /></Page>} />
+            <Route path="/admin/subjects"    element={<Page roles={["ADMIN"]}><ManageSubjects /></Page>} />
             <Route path="/admin/reports"     element={<Page roles={["ADMIN"]}><Reports /></Page>} />
 
             {/* Catch-all */}

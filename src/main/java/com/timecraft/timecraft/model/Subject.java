@@ -72,6 +72,14 @@ public class Subject {
     @Builder.Default
     private short units = 3;
 
+    /**
+     * Name of the prerequisite subject, or null if none.
+     * Stored as plain text to avoid hard FK coupling.
+     * e.g. "IT-DSA" or "Calculus 1"
+     */
+    @Column(name = "prerequisite", length = 200)
+    private String prerequisite;
+
     /** Owning department. No year-level restriction on teacher assignment. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "department_id", nullable = false)

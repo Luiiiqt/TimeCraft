@@ -154,6 +154,14 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
                         @Param("semester") Semester semester,
                         @Param("schoolYear") String schoolYear);
 
+        // ── Load balancing ────────────────────────────────────────────────────────
+
+        /**
+         * Count of DRAFT schedules per teacher — used by the engine to
+         * distribute teaching load evenly across teachers in a department.
+         */
+        long countByTeacherIdAndStatus(Long teacherId, ScheduleStatus status);
+
         // ── Reporting ─────────────────────────────────────────────────────────────
 
         /**

@@ -82,7 +82,7 @@ public class SubjectService {
 
     @Transactional
     public Subject create(String name, String code, SubjectType subjectType,
-            SessionType sessionType, short units,
+            SessionType sessionType, short units, String prerequisite,
             Long departmentId) {
         if (subjectRepository.existsByCode(code)) {
             throw new DuplicateResourceException(
@@ -98,8 +98,38 @@ public class SubjectService {
                 .subjectType(subjectType)
                 .sessionType(sessionType)
                 .units(units)
+                .prerequisite(prerequisite)
                 .department(dept)
                 .build());
+    }
+
+    // ── Update ────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public Subject update(Long id, String name, String code,
+            SubjectType subjectType, SessionType sessionType,
+            short units, String prerequisite, Long departmentId) {
+        Subject subject = findById(id);
+
+        // If code is changing, check it won't clash with another subject
+        if (!subject.getCode().equals(code) && subjectRepository.existsByCode(code)) {
+            throw new DuplicateResourceException(
+                    "Subject code already exists: " + code);
+        }
+
+        Department dept = departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Department not found: " + departmentId));
+
+        subject.setName(name);
+        subject.setCode(code);
+        subject.setSubjectType(subjectType);
+        subject.setSessionType(sessionType);
+        subject.setUnits(units);
+        subject.setPrerequisite(prerequisite);
+        subject.setDepartment(dept);
+
+        return subjectRepository.save(subject);
     }
 
     // ── Deactivate ────────────────────────────────────────────────────────────
@@ -109,5 +139,23 @@ public class SubjectService {
         Subject subject = findById(id);
         subject.setActive(false);
         subjectRepository.save(subject);
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public void delete(Long id) {
+        Subject subject = findById(id);
+
+        // Guard: do not hard-delete if subject is linked to any course curriculum
+        if (!subject.getCourseSubjects().isEmpty()) {
+            throw new IllegalStateException(
+                    "Cannot delete subject '" + subject.getCode() +
+                            "' — it is still assigned to " +
+                            subject.getCourseSubjects().size() +
+                            " course(s). Deactivate it instead.");
+        }
+
+        subjectRepository.delete(subject);
     }
 }

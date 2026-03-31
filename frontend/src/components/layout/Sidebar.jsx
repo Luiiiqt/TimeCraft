@@ -19,7 +19,6 @@ const TEACHER_NAV = [
   { to: "/teacher",              icon: "◈", label: "Dashboard"      },
   { section: "My Schedule" },
   { to: "/teacher/schedule",     icon: "▦", label: "View Schedule"  },
-  { to: "/teacher/availability", icon: "◷", label: "Set Availability" },
 ];
 
 const STUDENT_NAV = [

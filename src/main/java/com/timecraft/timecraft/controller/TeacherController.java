@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.timecraft.timecraft.dto.response.ApiResponse;
 import com.timecraft.timecraft.model.Teacher;
-import com.timecraft.timecraft.model.TeacherAvailability;
 import com.timecraft.timecraft.service.TeacherService;
 
 import lombok.RequiredArgsConstructor;
@@ -97,33 +96,12 @@ public class TeacherController {
 
         boolean flexible = Boolean.TRUE.equals(body.get("campusFlexible"));
         Long preferredCampusId = body.get("preferredCampusId") != null
-                ? Long.valueOf(body.get("preferredCampusId").toString()) : null;
+                ? Long.valueOf(body.get("preferredCampusId").toString())
+                : null;
 
         teacherService.updateCampusFlexibility(id, flexible, preferredCampusId);
         return ResponseEntity.ok(
                 ApiResponse.success("Campus flexibility updated"));
-    }
-
-    // ── GET /api/v1/teachers/{id}/availability ────────────────────────────────
-
-    @GetMapping("/{id}/availability")
-    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<List<TeacherAvailability>>> getAvailability(
-            @PathVariable Long id) {
-        return ResponseEntity.ok(
-                ApiResponse.of(teacherService.getAvailability(id)));
-    }
-
-    // ── PUT /api/v1/teachers/{id}/availability ────────────────────────────────
-
-    @PutMapping("/{id}/availability")
-    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> saveAvailability(
-            @PathVariable Long id,
-            @RequestBody Map<String, List<Long>> body) {
-
-        teacherService.saveAvailability(id, body.get("availableTimeslotIds"));
-        return ResponseEntity.ok(ApiResponse.success("Availability saved"));
     }
 
     // ── DELETE /api/v1/teachers/{id} ─────────────────────────────────────────

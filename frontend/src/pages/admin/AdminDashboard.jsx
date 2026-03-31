@@ -103,16 +103,22 @@ export default function AdminDashboard() {
     const load = async () => {
       setStatsLoading(true);
       try {
-        const [deptRes, roomRes, conflictCount] = await Promise.all([
+        const [deptRes, roomRes, subjectRes, studentRes, conflictCount] = await Promise.all([
           api.get("/departments"),
           api.get("/rooms"),
+          api.get("/subjects"),
+          api.get("/students"),
           fetchCount(),
         ]);
-        const departments = deptRes.data?.data ?? deptRes.data ?? [];
-        const rooms       = roomRes.data?.data ?? roomRes.data ?? [];
+        const departments = deptRes.data?.data    ?? deptRes.data    ?? [];
+        const rooms       = roomRes.data?.data     ?? roomRes.data     ?? [];
+        const subjects    = subjectRes.data?.data  ?? subjectRes.data  ?? [];
+        const students    = studentRes.data?.data  ?? studentRes.data  ?? [];
         setStats({
           departments : Array.isArray(departments) ? departments.length : 0,
           rooms       : Array.isArray(rooms)       ? rooms.length       : 0,
+          subjects    : Array.isArray(subjects)    ? subjects.length    : 0,
+          students    : Array.isArray(students)    ? students.length    : 0,
           conflicts   : conflictCount,
         });
       } catch {
@@ -169,7 +175,7 @@ export default function AdminDashboard() {
       {/* Stat cards */}
       <div style={{
         display              : "grid",
-        gridTemplateColumns  : "repeat(3, 1fr)",
+        gridTemplateColumns  : "repeat(5, 1fr)",
         gap                  : "var(--space-4)",
         marginBottom         : "var(--space-8)",
       }}>
@@ -188,6 +194,20 @@ export default function AdminDashboard() {
           onClick={() => navigate("/admin/rooms")}
         />
         <StatCard
+          label="Subjects"
+          value={val(stats?.subjects)}
+          icon="📖"
+          accentColor="#7c3aed"
+          onClick={() => navigate("/admin/subjects")}
+        />
+        <StatCard
+          label="Students"
+          value={val(stats?.students)}
+          icon="🎓"
+          accentColor="#0f766e"
+          onClick={() => navigate("/admin/students")}
+        />
+        <StatCard
           label="Unresolved Conflicts"
           value={val(stats?.conflicts)}
           icon="⚠️"
@@ -200,7 +220,7 @@ export default function AdminDashboard() {
       <h2 className="section-title">Quick Actions</h2>
       <div style={{
         display              : "grid",
-        gridTemplateColumns  : "repeat(4, 1fr)",
+        gridTemplateColumns  : "repeat(3, 1fr)",
         gap                  : "var(--space-4)",
       }}>
         <QuickCard
@@ -222,9 +242,21 @@ export default function AdminDashboard() {
           onClick={() => navigate("/admin/rooms")}
         />
         <QuickCard
+          label="Manage Subjects"
+          icon="📖"
+          accentColor="#b45309"
+          onClick={() => navigate("/admin/subjects")}
+        />
+        <QuickCard
+          label="Manage Students"
+          icon="🎓"
+          accentColor="#0f766e"
+          onClick={() => navigate("/admin/students")}
+        />
+        <QuickCard
           label="Reports"
           icon="↗"
-          accentColor="#0f766e"
+          accentColor="#be185d"
           onClick={() => navigate("/admin/reports")}
         />
       </div>

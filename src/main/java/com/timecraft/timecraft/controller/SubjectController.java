@@ -1,10 +1,10 @@
 package com.timecraft.timecraft.controller;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.timecraft.timecraft.dto.request.SubjectRequest;
 import com.timecraft.timecraft.dto.response.ApiResponse;
 import com.timecraft.timecraft.model.CourseSubject;
 import com.timecraft.timecraft.model.Subject;
@@ -21,6 +22,7 @@ import com.timecraft.timecraft.model.Subject.SessionType;
 import com.timecraft.timecraft.model.Subject.SubjectType;
 import com.timecraft.timecraft.service.SubjectService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -84,22 +86,40 @@ public class SubjectController {
         return ResponseEntity.ok(
                 ApiResponse.of(subjectService.findFullCurriculum(courseId)));
     }
-
     // ── POST /api/v1/subjects ─────────────────────────────────────────────────
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Subject>> create(
-            @RequestBody Map<String, Object> body) {
+            @Valid @RequestBody SubjectRequest request) {
         Subject subject = subjectService.create(
-                (String)  body.get("name"),
-                (String)  body.get("code"),
-                SubjectType.valueOf((String) body.get("subjectType")),
-                SessionType.valueOf((String) body.get("sessionType")),
-                Short.valueOf(body.get("units").toString()),
-                Long.valueOf(body.get("departmentId").toString()));
-        return ResponseEntity.ok(
-                ApiResponse.success("Subject created", subject));
+                request.getName(),
+                request.getCode(),
+                SubjectType.valueOf(request.getSubjectType()),
+                SessionType.valueOf(request.getSessionType()),
+                request.getUnits(),
+                request.getPrerequisite(),
+                request.getDepartmentId());
+        return ResponseEntity.ok(ApiResponse.success("Subject created", subject));
+    }
+
+    // ── PUT /api/v1/subjects/{id} ─────────────────────────────────────────────
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Subject>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody SubjectRequest request) {
+        Subject updated = subjectService.update(
+                id,
+                request.getName(),
+                request.getCode(),
+                SubjectType.valueOf(request.getSubjectType()),
+                SessionType.valueOf(request.getSessionType()),
+                request.getUnits(),
+                request.getPrerequisite(),
+                request.getDepartmentId());
+        return ResponseEntity.ok(ApiResponse.success("Subject updated", updated));
     }
 
     // ── PUT /api/v1/subjects/{id}/deactivate ──────────────────────────────────
@@ -109,5 +129,14 @@ public class SubjectController {
     public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable Long id) {
         subjectService.deactivate(id);
         return ResponseEntity.ok(ApiResponse.success("Subject deactivated"));
+    }
+
+    // ── DELETE /api/v1/subjects/{id} ──────────────────────────────────────────
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+        subjectService.delete(id);
+        return ResponseEntity.ok(ApiResponse.success("Subject deleted"));
     }
 }
