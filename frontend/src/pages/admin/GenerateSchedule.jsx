@@ -182,6 +182,13 @@ export default function GenerateSchedule() {
                   </button>.
                 </div>
               )}
+
+              {result.aiSummary && result.aiSummary !== "AI summary unavailable." && (
+                <div style={styles.aiBox}>
+                  <div style={styles.aiLabel}>🤖 AI Summary</div>
+                  <p style={styles.aiText}>{result.aiSummary}</p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -231,4 +238,7 @@ const styles = {
   successBanner: { backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "0.85rem 1rem", color: "#14532d", fontSize: "0.875rem" },
   warnBanner   : { backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "0.85rem 1rem", color: "#7f1d1d", fontSize: "0.875rem" },
   inlineLink   : { background: "none", border: "none", color: "#dc2626", fontWeight: "700", cursor: "pointer", padding: 0, textDecoration: "underline", fontSize: "0.875rem" },
+  aiBox        : { backgroundColor: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "8px", padding: "1rem" },
+  aiLabel      : { fontSize: "0.8rem", fontWeight: "700", color: "#0369a1", marginBottom: "0.5rem" },
+  aiText       : { fontSize: "0.875rem", color: "#0c4a6e", lineHeight: "1.6", margin: 0 },
 };

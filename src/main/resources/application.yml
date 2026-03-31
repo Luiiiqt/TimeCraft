@@ -5,11 +5,11 @@ spring:
   application:
     name: timecraft
 
-  spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/timecraft_db
     username: timecraft
     password: timecraft
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -40,6 +40,10 @@ app:
 
   cors:
     allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+
+ollama:
+  base-url: http://localhost:11434
+  model: llama3.2
 
 springdoc:
   api-docs:

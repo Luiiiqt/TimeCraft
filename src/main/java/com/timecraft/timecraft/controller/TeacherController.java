@@ -112,4 +112,25 @@ public class TeacherController {
         teacherService.deactivate(id);
         return ResponseEntity.ok(ApiResponse.success("Teacher deactivated"));
     }
+
+    // ── GET /api/v1/teachers/{id}/availability ────────────────────────────────
+
+    @GetMapping("/{id}/availability")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<?>>> getAvailability(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(
+                ApiResponse.of(teacherService.getAvailability(id)));
+    }
+
+    // ── PUT /api/v1/teachers/{id}/availability ────────────────────────────────
+
+    @PutMapping("/{id}/availability")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> saveAvailability(
+            @PathVariable Long id,
+            @RequestBody Map<String, List<Long>> body) {
+        teacherService.saveAvailability(id, body.get("availableTimeslotIds"));
+        return ResponseEntity.ok(ApiResponse.success("Availability saved"));
+    }
 }

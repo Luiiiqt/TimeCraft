@@ -19,6 +19,8 @@ const Enrollment        = lazy(() => import("../pages/student/Enrollment"));
 
 const TeacherDashboard  = lazy(() => import("../pages/teacher/TeacherDashboard"));
 const ViewMySchedule    = lazy(() => import("../pages/teacher/ViewMySchedule"));
+const SetAvailability   = lazy(() => import("../pages/teacher/SetAvailability"));
+const TeacherAvailabilityReview = lazy(() => import("../pages/admin/TeacherAvailabilityReview"));
 
 const AdminDashboard    = lazy(() => import("../pages/admin/AdminDashboard"));
 const GenerateSchedule  = lazy(() => import("../pages/admin/GenerateSchedule"));
@@ -107,7 +109,8 @@ export default function AppRouter() {
 
             {/* Teacher */}
             <Route path="/teacher"          element={<Page roles={["TEACHER"]}><TeacherDashboard /></Page>} />
-            <Route path="/teacher/schedule" element={<Page roles={["TEACHER"]}><ViewMySchedule /></Page>} />
+            <Route path="/teacher/schedule"      element={<Page roles={["TEACHER"]}><ViewMySchedule /></Page>} />
+            <Route path="/teacher/availability"  element={<Page roles={["TEACHER"]}><SetAvailability /></Page>} />
 
             {/* Admin */}
             <Route path="/admin"             element={<Page roles={["ADMIN"]}><AdminDashboard /></Page>} />
@@ -115,7 +118,8 @@ export default function AppRouter() {
             <Route path="/admin/departments" element={<Page roles={["ADMIN"]}><ManageDepartments /></Page>} />
             <Route path="/admin/rooms"       element={<Page roles={["ADMIN"]}><ManageRooms /></Page>} />
             <Route path="/admin/subjects"    element={<Page roles={["ADMIN"]}><ManageSubjects /></Page>} />
-            <Route path="/admin/reports"     element={<Page roles={["ADMIN"]}><Reports /></Page>} />
+            <Route path="/admin/reports"       element={<Page roles={["ADMIN"]}><Reports /></Page>} />
+            <Route path="/admin/availability"  element={<Page roles={["ADMIN"]}><TeacherAvailabilityReview /></Page>} />
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />

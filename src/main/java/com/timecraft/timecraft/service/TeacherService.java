@@ -1,6 +1,9 @@
 package com.timecraft.timecraft.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -11,13 +14,17 @@ import com.timecraft.timecraft.exception.ResourceNotFoundException;
 import com.timecraft.timecraft.model.Campus;
 import com.timecraft.timecraft.model.Department;
 import com.timecraft.timecraft.model.Teacher;
+import com.timecraft.timecraft.model.TeacherAvailability;
 import com.timecraft.timecraft.model.TeacherProfile;
+import com.timecraft.timecraft.model.Timeslot;
 import com.timecraft.timecraft.model.User;
 import com.timecraft.timecraft.model.User.UserType;
 import com.timecraft.timecraft.repository.CampusRepository;
 import com.timecraft.timecraft.repository.DepartmentRepository;
+import com.timecraft.timecraft.repository.TeacherAvailabilityRepository;
 import com.timecraft.timecraft.repository.TeacherProfileRepository;
 import com.timecraft.timecraft.repository.TeacherRepository;
+import com.timecraft.timecraft.repository.TimeslotRepository;
 import com.timecraft.timecraft.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +42,8 @@ public class TeacherService {
     private final CampusRepository campusRepository;
 
     private final PasswordEncoder passwordEncoder;
+    private final TeacherAvailabilityRepository availabilityRepository;
+    private final TimeslotRepository timeslotRepository;
 
     // ── Lookup ────────────────────────────────────────────────────────────────
 
@@ -165,6 +174,68 @@ public class TeacherService {
         }
 
         return teacherProfileRepository.save(profile);
+    }
+
+       // ── Availability ──────────────────────────────────────────────────────────
+
+    public List<Map<String, Object>> getAvailability(Long teacherId) {
+        // Load all timeslots
+        List<Timeslot> allSlots = timeslotRepository
+                .findAllByOrderByDayOfWeekAscSlotNumberAsc();
+
+        // Load teacher's saved availability
+        List<TeacherAvailability> saved = availabilityRepository
+                .findByTeacherId(teacherId);
+
+        // Build a map of timeslotId → available
+        Map<Long, Boolean> availMap = new HashMap<>();
+        saved.forEach(a -> availMap.put(a.getTimeslot().getId(), a.isAvailable()));
+
+        // Return all timeslots with available flag
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Timeslot ts : allSlots) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("timeslotId", ts.getId());
+            row.put("available",  availMap.getOrDefault(ts.getId(), false));
+
+            Map<String, Object> tsMap = new HashMap<>();
+            tsMap.put("id",         ts.getId());
+            tsMap.put("dayOfWeek",  ts.getDayOfWeek());
+            tsMap.put("slotNumber", ts.getSlotNumber());
+            tsMap.put("startTime",  ts.getStartTime().toString());
+            tsMap.put("endTime",    ts.getEndTime().toString());
+            tsMap.put("label",      ts.getLabel());
+            row.put("timeslot", tsMap);
+
+            result.add(row);
+        }
+        return result;
+    }
+
+    @Transactional
+    public void saveAvailability(Long teacherId, List<Long> availableTimeslotIds) {
+        User teacher = userRepository.findById(teacherId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Teacher not found: " + teacherId));
+
+        // Delete all existing availability for this teacher
+        availabilityRepository.deleteByTeacherId(teacherId);
+
+        // Re-insert all timeslots — available=true only for selected IDs
+        List<Timeslot> allSlots = timeslotRepository
+                .findAllByOrderByDayOfWeekAscSlotNumberAsc();
+
+        List<TeacherAvailability> records = new ArrayList<>();
+        for (Timeslot ts : allSlots) {
+            boolean isAvailable = availableTimeslotIds != null
+                    && availableTimeslotIds.contains(ts.getId());
+            records.add(TeacherAvailability.builder()
+                    .teacher(teacher)
+                    .timeslot(ts)
+                    .available(isAvailable)
+                    .build());
+        }
+        availabilityRepository.saveAll(records);
     }
 
     // ── Deactivate ────────────────────────────────────────────────────────────

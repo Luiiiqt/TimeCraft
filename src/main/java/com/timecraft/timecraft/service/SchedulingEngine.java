@@ -75,6 +75,7 @@ public class SchedulingEngine {
         private final TeacherRepository teacherRepository;
         private final StudentChecklistRepository studentChecklistRepository;
         private final ConflictLogService conflictLogService;
+        private final OllamaScheduleAdvisorService ollamaAdvisor;
 
         // Max students per section — used to compute how many sections to open
         private static final int MAX_CLASS_SIZE = 40;
@@ -129,6 +130,24 @@ public class SchedulingEngine {
                                 allSchedules.stream()
                                                 .filter(s -> s.getStatus() == ScheduleStatus.CONFLICTED)
                                                 .count());
+
+                // ── Ollama advisory pass (non-blocking) ──────────────────────
+                // Runs AFTER the CSP engine and conflict checks are complete.
+                // Ollama explains the result and flags soft issues only.
+                // Any exception from Ollama must NOT break the schedule result.
+                try {
+                        List<Schedule> successfulOnly = allSchedules.stream()
+                                        .filter(s -> s.getStatus() == ScheduleStatus.DRAFT)
+                                        .toList();
+
+                        if (!successfulOnly.isEmpty()) {
+                                String summary = ollamaAdvisor.summarizeSchedule(
+                                                successfulOnly, semester, schoolYear);
+                                log.info("Ollama schedule summary:\n{}", summary);
+                        }
+                } catch (Exception e) {
+                        log.warn("Ollama advisory pass failed (non-critical): {}", e.getMessage());
+                }
 
                 return allSchedules;
         }
@@ -322,7 +341,7 @@ public class SchedulingEngine {
                 boolean isHealth = HEALTH_DEPT_CODES.contains(deptCode);
                 String campusCode = isHealth ? CHS_CODE : CLI_CODE;
 
-                return roomRepository.findByCampusId(1L) // placeholder — injected properly
+                return roomRepository.findAll()
                                 .stream()
                                 .map(Room::getCampus)
                                 .filter(c -> c.getCode().equals(campusCode))

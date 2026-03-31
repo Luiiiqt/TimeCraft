@@ -259,6 +259,12 @@ export default function AdminDashboard() {
           accentColor="#be185d"
           onClick={() => navigate("/admin/reports")}
         />
+        <QuickCard
+          label="Teacher Availability"
+          icon="🕐"
+          accentColor="#0369a1"
+          onClick={() => navigate("/admin/availability")}
+        />
       </div>
     </div>
   );
