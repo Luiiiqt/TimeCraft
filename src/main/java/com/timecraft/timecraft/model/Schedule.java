@@ -4,7 +4,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -52,8 +54,8 @@ public class Schedule {
     @JoinColumn(name = "subject_id", nullable = false)
     private Subject subject;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "room_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id")
     private Room room;
 
     /**
@@ -61,18 +63,18 @@ public class Schedule {
      * No year-level restriction — any teacher can be assigned to any year level.
      * Only constraint: no duplicate (teacher, timeslot, semester, school_year).
      */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "teacher_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "teacher_id")
     private User teacher;
 
     /** First weekly session e.g. Monday 7:30–9:00 AM. */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "timeslot_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "timeslot_id")
     private Timeslot timeslot;
 
     /** Second weekly session — must be a different day. */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "timeslot2_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "timeslot2_id")
     private Timeslot timeslot2;
 
     /** Block section. NULL for irregular-only open classes. */
@@ -81,7 +83,7 @@ public class Schedule {
     private Section section;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "semester", nullable = false, length = 10)
+    @Column(name = "semester", nullable = false, length = 20)
     private CourseSubject.Semester semester;
 
     /** Academic year e.g. "2024-2025". */
@@ -105,6 +107,15 @@ public class Schedule {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    /** Optional — populated when this schedule is part of a merged class. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "merged_section_id")
+    private MergedSection mergedSection;
 
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default

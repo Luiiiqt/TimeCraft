@@ -1,5 +1,5 @@
 -- ============================================================
--- V10: Add ADMIN to users.user_type check constraint
+-- V8: Add ADMIN to users.user_type check constraint
 --      and seed the default admin account
 -- ============================================================
 

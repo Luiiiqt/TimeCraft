@@ -17,7 +17,6 @@ import com.timecraft.timecraft.model.Schedule;
 import com.timecraft.timecraft.model.Schedule.ScheduleStatus;
 import com.timecraft.timecraft.model.Section;
 import com.timecraft.timecraft.model.Subject;
-import com.timecraft.timecraft.model.Teacher;
 import com.timecraft.timecraft.model.TeacherProfile;
 import com.timecraft.timecraft.model.Timeslot;
 import com.timecraft.timecraft.model.User;
@@ -27,7 +26,6 @@ import com.timecraft.timecraft.repository.ScheduleRepository;
 import com.timecraft.timecraft.repository.SectionRepository;
 import com.timecraft.timecraft.repository.StudentChecklistRepository;
 import com.timecraft.timecraft.repository.TeacherProfileRepository;
-import com.timecraft.timecraft.repository.TeacherRepository;
 import com.timecraft.timecraft.repository.TimeslotRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -72,7 +70,6 @@ public class SchedulingEngine {
         private final RoomRepository roomRepository;
         private final TimeslotRepository timeslotRepository;
         private final TeacherProfileRepository teacherProfileRepository;
-        private final TeacherRepository teacherRepository;
         private final StudentChecklistRepository studentChecklistRepository;
         private final ConflictLogService conflictLogService;
         private final OllamaScheduleAdvisorService ollamaAdvisor;
@@ -246,7 +243,7 @@ public class SchedulingEngine {
                 // Find an available room
                 Room room = findRoom(profile, campus, requiredRoomType,
                                 section.getMaxStudents(), pair.ts1().getId(),
-                                semester.getLabel(), schoolYear);
+                                semester, schoolYear);
 
                 if (room == null) {
                         return logAndSaveConflict(null, subject, section, campus,
@@ -314,16 +311,16 @@ public class SchedulingEngine {
 
         private Room findRoom(TeacherProfile profile, Campus defaultCampus,
                         RoomType roomType, int minCapacity,
-                        Long timeslotId, String semester, String schoolYear) {
+                        Long timeslotId, Semester semester, String schoolYear) {
                 if (profile != null && profile.isGETeacher()) {
                         // GE teacher: search both campuses, preferred campus first
                         Long preferredId = profile.getPreferredCampus() != null
                                         ? profile.getPreferredCampus().getId()
                                         : defaultCampus.getId();
 
-                        List<Room> rooms = roomRepository.findAvailableRoomsFlexible(
-                                        roomType, minCapacity, timeslotId, semester, schoolYear,
-                                        preferredId);
+                        List<Room> rooms = roomRepository.findAvailableRooms(
+                                defaultCampus.getId(), roomType, minCapacity,
+                                timeslotId, semester, schoolYear);
                         return rooms.isEmpty() ? null : rooms.get(0);
                 }
 
@@ -376,20 +373,14 @@ public class SchedulingEngine {
         }
 
         private User resolveTeacher(Subject subject) {
-                // Find any active teacher belonging to the subject's department.
-                // Pick the one with the fewest scheduled classes this term to
-                // distribute load evenly — falls back to null if department has
-                // no active teachers, which the caller logs as TEACHER_UNAVAILABLE.
-                return teacherRepository
-                                .findActiveByDepartmentId(subject.getDepartment().getId())
+                return teacherProfileRepository
+                                .findByDepartmentId(subject.getDepartment().getId())
                                 .stream()
-                                .map(Teacher::getId)
-                                .map(id -> teacherProfileRepository.findByUserId(id).orElse(null))
-                                .filter(p -> p != null)
-                                .map(p -> p.getUser())
+                                .map(TeacherProfile::getUser)
+                                .filter(u -> u != null && u.isActive())
                                 .min(Comparator.comparingLong(u -> scheduleRepository.countByTeacherIdAndStatus(
                                                 u.getId(),
-                                                com.timecraft.timecraft.model.Schedule.ScheduleStatus.DRAFT)))
+                                                ScheduleStatus.DRAFT)))
                                 .orElse(null);
         }
 

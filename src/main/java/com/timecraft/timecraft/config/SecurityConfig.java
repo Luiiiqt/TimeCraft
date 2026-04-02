@@ -18,7 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.timecraft.timecraft.security.JwtAuthFilter;
-import com.timecraft.timecraft.security.UserDetailsServiceImpl;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -87,9 +87,12 @@ public class SecurityConfig {
                                                                 "/api/v1/teachers/*/availability")
                                                 .hasAnyRole("TEACHER", "ADMIN")
 
+                                                // ── Program Head endpoints ────────────────────────────────────
+                                                .requestMatchers("/api/v1/program-head/**")
+                                                .hasAnyRole("PROGRAM_HEAD", "ADMIN")
+
                                                 // ── Admin-only endpoints ──────────────────────────────────────
                                                 .requestMatchers(
-                                                                "/api/v1/schedules/generate",
                                                                 "/api/v1/schedules/publish/**",
                                                                 "/api/v1/schedules/audit",
                                                                 "/api/v1/conflicts/**",
@@ -101,12 +104,15 @@ public class SecurityConfig {
 
                                                 .requestMatchers(HttpMethod.POST,
                                                                 "/api/v1/teachers",
-                                                                "/api/v1/students")
+                                                                "/api/v1/students",
+                                                                "/api/v1/schedules/generate",
+                                                                "/api/v1/schedules",
+                                                                "/api/v1/conflicts/audit")
                                                 .hasRole("ADMIN")
 
                                                 .requestMatchers(HttpMethod.PUT,
                                                                 "/api/v1/schedules/**")
-                                                .hasRole("ADMIN")
+                                                .hasAnyRole("ADMIN", "PROGRAM_HEAD")
 
                                                 .requestMatchers(HttpMethod.DELETE,
                                                                 "/api/v1/schedules/**",
@@ -146,8 +152,8 @@ public class SecurityConfig {
 
         @Bean
         public AuthenticationProvider authenticationProvider() {
-                DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
-
+                DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+                provider.setUserDetailsService(userDetailsService);
                 provider.setPasswordEncoder(passwordEncoder());
                 return provider;
         }

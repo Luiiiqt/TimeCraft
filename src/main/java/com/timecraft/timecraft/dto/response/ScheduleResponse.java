@@ -110,20 +110,30 @@ public class ScheduleResponse {
                 .sessionType(schedule.getSubject().getSessionType().name())
 
                 // Teacher
-                .teacherId(schedule.getTeacher().getId())
-                .teacherName(schedule.getTeacher().getFullName())
-                .teacherSchoolId(schedule.getTeacher().getSchoolId())
+                .teacherId(schedule.getTeacher() != null
+                        ? schedule.getTeacher().getId() : null)
+                .teacherName(schedule.getTeacher() != null
+                        ? schedule.getTeacher().getFullName() : null)
+                .teacherSchoolId(schedule.getTeacher() != null
+                        ? schedule.getTeacher().getSchoolId() : null)
 
                 // Room
-                .roomId(schedule.getRoom().getId())
-                .roomName(schedule.getRoom().getName())
-                .roomNumber(schedule.getRoom().getRoomNumber())
-                .roomType(schedule.getRoom().getRoomType().name())
+                .roomId(schedule.getRoom() != null
+                        ? schedule.getRoom().getId() : null)
+                .roomName(schedule.getRoom() != null
+                        ? schedule.getRoom().getName() : null)
+                .roomNumber(schedule.getRoom() != null
+                        ? schedule.getRoom().getRoomNumber() : null)
+                .roomType(schedule.getRoom() != null
+                        ? schedule.getRoom().getRoomType().name() : null)
 
                 // Campus
-                .campusId(schedule.getCampus().getId())
-                .campusName(schedule.getCampus().getName())
-                .campusCode(schedule.getCampus().getCode())
+                .campusId(schedule.getCampus() != null
+                        ? schedule.getCampus().getId() : null)
+                .campusName(schedule.getCampus() != null
+                        ? schedule.getCampus().getName() : null)
+                .campusCode(schedule.getCampus() != null
+                        ? schedule.getCampus().getCode() : null)
 
                 // Section
                 .sectionId(schedule.getSection() != null
@@ -138,18 +148,28 @@ public class ScheduleResponse {
                         ? schedule.getSection().getCourse().getName() : null)
 
                 // Session 1
-                .timeslotId(schedule.getTimeslot().getId())
-                .day1(schedule.getTimeslot().getDayOfWeek().name())
-                .startTime1(schedule.getTimeslot().getStartTime().toString())
-                .endTime1(schedule.getTimeslot().getEndTime().toString())
-                .timeslotLabel1(schedule.getTimeslot().getLabel())
+                .timeslotId(schedule.getTimeslot() != null
+                        ? schedule.getTimeslot().getId() : null)
+                .day1(schedule.getTimeslot() != null
+                        ? schedule.getTimeslot().getDayOfWeek().name() : null)
+                .startTime1(schedule.getTimeslot() != null
+                        ? schedule.getTimeslot().getStartTime().toString() : null)
+                .endTime1(schedule.getTimeslot() != null
+                        ? schedule.getTimeslot().getEndTime().toString() : null)
+                .timeslotLabel1(schedule.getTimeslot() != null
+                        ? schedule.getTimeslot().getLabel() : null)
 
                 // Session 2
-                .timeslot2Id(schedule.getTimeslot2().getId())
-                .day2(schedule.getTimeslot2().getDayOfWeek().name())
-                .startTime2(schedule.getTimeslot2().getStartTime().toString())
-                .endTime2(schedule.getTimeslot2().getEndTime().toString())
-                .timeslotLabel2(schedule.getTimeslot2().getLabel())
+                .timeslot2Id(schedule.getTimeslot2() != null
+                        ? schedule.getTimeslot2().getId() : null)
+                .day2(schedule.getTimeslot2() != null
+                        ? schedule.getTimeslot2().getDayOfWeek().name() : null)
+                .startTime2(schedule.getTimeslot2() != null
+                        ? schedule.getTimeslot2().getStartTime().toString() : null)
+                .endTime2(schedule.getTimeslot2() != null
+                        ? schedule.getTimeslot2().getEndTime().toString() : null)
+                .timeslotLabel2(schedule.getTimeslot2() != null
+                        ? schedule.getTimeslot2().getLabel() : null)
 
                 // Term
                 .semester(schedule.getSemester().getLabel())

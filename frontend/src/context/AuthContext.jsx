@@ -102,10 +102,11 @@ export function AuthProvider({ children }) {
 
   // ── Derived helpers ───────────────────────────────────────────────────────
   const isAuthenticated = Boolean(token && user);
-  const role            = user?.role ?? null; // "STUDENT" | "TEACHER" | "ADMIN"
+  const role            = user?.role ?? null; // "STUDENT" | "TEACHER" | "ADMIN" | "PROGRAM_HEAD"
   const isAdmin         = role === "ADMIN";
   const isTeacher       = role === "TEACHER";
   const isStudent       = role === "STUDENT";
+  const isProgramHead   = role === "PROGRAM_HEAD";
 
   const value = {
     user,
@@ -116,6 +117,7 @@ export function AuthProvider({ children }) {
     isAdmin,
     isTeacher,
     isStudent,
+    isProgramHead,
     login,
     register,
     logout,

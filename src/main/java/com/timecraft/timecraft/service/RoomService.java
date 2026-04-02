@@ -68,7 +68,8 @@ public class RoomService {
      */
     public List<Room> findAvailableRooms(Long campusId, RoomType roomType,
             int minCapacity, Long timeslotId,
-            String semester, String schoolYear) {
+            com.timecraft.timecraft.model.CourseSubject.Semester semester,
+            String schoolYear) {
         return roomRepository.findAvailableRooms(
                 campusId, roomType, minCapacity,
                 timeslotId, semester, schoolYear);
@@ -81,7 +82,7 @@ public class RoomService {
     public List<Room> findAvailableRoomsFlexible(RoomType roomType,
             int minCapacity,
             Long timeslotId,
-            String semester,
+            com.timecraft.timecraft.model.CourseSubject.Semester semester,
             String schoolYear,
             Long preferredCampusId) {
         return roomRepository.findAvailableRoomsFlexible(

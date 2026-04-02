@@ -51,7 +51,8 @@ INSERT INTO courses (department_id, name, code, degree_level) VALUES
     ((SELECT id FROM departments WHERE code = 'CORT'),  'Bachelor of Science in Radiologic Technology',     'BSRT',  'BACHELOR'),
     ((SELECT id FROM departments WHERE code = 'CMLS'),  'Bachelor of Science in Medical Laboratory Science','BSMLS', 'BACHELOR'),
     ((SELECT id FROM departments WHERE code = 'COP'),   'Bachelor of Science in Pharmacy',                  'BSPhar','BACHELOR'),
-    ((SELECT id FROM departments WHERE code = 'CORT2'), 'Bachelor of Science in Respiratory Therapy',       'BSRT2', 'BACHELOR'),
+    ((SELECT id FROM departments WHERE code = 'CORT2'), 'Bachelor of Science in Respiratory Therapy',       'BSREST', 'BACHELOR'),
+    ((SELECT id FROM departments WHERE code = 'COL_IE'), 'Bachelor of Science in Special Needs Education',  'BSNED',  'BACHELOR'),
     ((SELECT id FROM departments WHERE code = 'COPT'),  'Bachelor of Science in Physical Therapy',          'BSPT',  'BACHELOR');
 
 -- College of Psychology
@@ -64,8 +65,7 @@ INSERT INTO courses (department_id, name, code, degree_level) VALUES
     ((SELECT id FROM departments WHERE code = 'CCSE'), 'Bachelor of Science in Information Technology',  'BSIT',  'BACHELOR'),
     ((SELECT id FROM departments WHERE code = 'CCSE'), 'Bachelor of Science in Computer Science',        'BSCS',  'BACHELOR'),
     ((SELECT id FROM departments WHERE code = 'CCSE'), 'Bachelor of Science in Computer Engineering',    'BSCpE', 'BACHELOR'),
-    ((SELECT id FROM departments WHERE code = 'CCSE'), 'Biomedical',                                     'BMD',   'BACHELOR'),
-    ((SELECT id FROM departments WHERE code = 'CCSE'), 'Electronics and Computer Technology',            'ECT',   'BACHELOR'),
+    ((SELECT id FROM departments WHERE code = 'CCSE'), 'Biomedical, Electronics and Computer Technology','BECT',   'BACHELOR'),
     ((SELECT id FROM departments WHERE code = 'CCSE'), 'Digital Imaging Technology',                     'DIT',   'BACHELOR'),
     ((SELECT id FROM departments WHERE code = 'CCSE'), 'Master in Information Systems',                  'MIS',   'MASTER');
 

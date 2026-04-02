@@ -21,6 +21,7 @@ import com.timecraft.timecraft.repository.CampusRepository;
 import com.timecraft.timecraft.repository.RoomRepository;
 import com.timecraft.timecraft.repository.ScheduleRepository;
 import com.timecraft.timecraft.repository.SectionRepository;
+import com.timecraft.timecraft.repository.StudentProfileRepository;
 import com.timecraft.timecraft.repository.StudentScheduleRepository;
 import com.timecraft.timecraft.repository.SubjectRepository;
 import com.timecraft.timecraft.repository.TimeslotRepository;
@@ -41,6 +42,7 @@ public class ScheduleService {
     private final TimeslotRepository timeslotRepository;
     private final UserRepository userRepository;
     private final CampusRepository campusRepository;
+    private final StudentProfileRepository studentProfileRepository;
 
     // ── Lookup ────────────────────────────────────────────────────────────────
 
@@ -86,6 +88,41 @@ public class ScheduleService {
 
     public List<Schedule> findConflicted() {
         return scheduleRepository.findByStatus(ScheduleStatus.CONFLICTED);
+    }
+
+    // ── Back subjects for irregular students ──────────────────────────────────
+
+    public List<Schedule> findBackSubjects(Long studentId,
+            Semester semester, String schoolYear) {
+
+        // Get student's current year level
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Student not found: " + studentId));
+
+        // Get student's profile to find year level
+        // Back subjects = published schedules where section year_level < student year_level
+        // and student is not already enrolled in them
+        List<Long> alreadyEnrolled = studentScheduleRepository
+                .findByStudentId(studentId)
+                .stream()
+                .map(ss -> ss.getSchedule().getId())
+                .toList();
+
+        return scheduleRepository
+                .findPublishedBySemesterAndSchoolYear(semester, schoolYear)
+                .stream()
+                .filter(s -> s.getSection() != null)
+                .filter(s -> s.getSection().getYearLevel() < getStudentYearLevel(student))
+                .filter(s -> !alreadyEnrolled.contains(s.getId()))
+                .toList();
+    }
+
+    private int getStudentYearLevel(User student) {
+        return studentProfileRepository
+                .findByUserId(student.getId())
+                .map(p -> (int) p.getYearLevel())
+                .orElse(2);
     }
 
     // ── Conflict checks ───────────────────────────────────────────────────────

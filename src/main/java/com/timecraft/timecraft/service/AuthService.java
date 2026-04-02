@@ -8,8 +8,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.timecraft.timecraft.exception.ResourceNotFoundException;
 import com.timecraft.timecraft.model.User;
 import com.timecraft.timecraft.model.User.UserType;
+import com.timecraft.timecraft.repository.ProgramHeadProfileRepository;
 import com.timecraft.timecraft.repository.StudentProfileRepository;
 import com.timecraft.timecraft.repository.TeacherProfileRepository;
 import com.timecraft.timecraft.repository.UserRepository;
@@ -29,11 +28,12 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class AuthService implements UserDetailsService {
+public class AuthService {
 
     private final UserRepository userRepository;
-    private final StudentProfileRepository studentProfileRepository;
-    private final TeacherProfileRepository teacherProfileRepository;
+    private final StudentProfileRepository    studentProfileRepository;
+    private final TeacherProfileRepository    teacherProfileRepository;
+    private final ProgramHeadProfileRepository programHeadProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
@@ -43,20 +43,6 @@ public class AuthService implements UserDetailsService {
     /**
      * Called by Spring Security's filter chain on every authenticated request.
      * Loads user by email — email is the login identifier in TimeCraft.
-     */
-    @Override
-    public UserDetails loadUserByUsername(String email)
-            throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException(
-                        "No user found with email: " + email));
-
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail())
-                .password(user.getPasswordHash())
-                .roles(user.getUserType().name()) // STUDENT, TEACHER, ADMIN
-                .build();
-    }
 
     // ── Login ─────────────────────────────────────────────────────────────────
 
@@ -145,6 +131,8 @@ public class AuthService implements UserDetailsService {
             enrichWithStudentClaims(user, claims);
         } else if (user.getUserType() == UserType.TEACHER) {
             enrichWithTeacherClaims(user, claims);
+        } else if (user.getUserType() == UserType.PROGRAM_HEAD) {
+            enrichWithProgramHeadClaims(user, claims);
         }
         // ADMIN has no profile table — base claims only
 
@@ -173,6 +161,14 @@ public class AuthService implements UserDetailsService {
                 claims.put("preferredCampusId", tp.getPreferredCampus().getId());
                 claims.put("preferredCampusCode", tp.getPreferredCampus().getCode());
             }
+        });
+    }
+
+    private void enrichWithProgramHeadClaims(User user, Map<String, Object> claims) {
+        programHeadProfileRepository.findByUserId(user.getId()).ifPresent(ph -> {
+            claims.put("departmentId",   ph.getDepartment().getId());
+            claims.put("departmentName", ph.getDepartment().getName());
+            claims.put("departmentCode", ph.getDepartment().getCode());
         });
     }
 }

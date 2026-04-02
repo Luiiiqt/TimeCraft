@@ -1,9 +1,4 @@
--- ============================================================
--- V8: Seed data
---     - Sample teachers (one per department)
---     - Sample students (regular + irregular)
---     - Sample sections for BSIT Year 1 and BSCS Year 1
--- ============================================================
+
 
 -- ── Sample Teachers ───────────────────────────────────────────────────────────
 -- All teacher passwords: Teacher@1234
@@ -11,13 +6,13 @@
 --   $2a$12$K8HmVkIJoNUyR5tFc3eYd.9GfVqPzLwXmD2YsBbJ4N6uReA7sO1Oi
 
 INSERT INTO users (user_type, full_name, school_id, email, password_hash) VALUES
-    ('TEACHER', 'Dr. Maria Santos',     'T-2020-001', 'maria.santos@school.edu',    '$2a$12$K8HmVkIJoNUyR5tFc3eYd.9GfVqPzLwXmD2YsBbJ4N6uReA7sO1Oi'),
-    ('TEACHER', 'Prof. Juan Reyes',     'T-2020-002', 'juan.reyes@school.edu',      '$2a$12$K8HmVkIJoNUyR5tFc3eYd.9GfVqPzLwXmD2YsBbJ4N6uReA7sO1Oi'),
-    ('TEACHER', 'Dr. Ana Cruz',         'T-2020-003', 'ana.cruz@school.edu',        '$2a$12$K8HmVkIJoNUyR5tFc3eYd.9GfVqPzLwXmD2YsBbJ4N6uReA7sO1Oi'),
-    ('TEACHER', 'Prof. Jose Dela Cruz', 'T-2020-004', 'jose.delacruz@school.edu',   '$2a$12$K8HmVkIJoNUyR5tFc3eYd.9GfVqPzLwXmD2YsBbJ4N6uReA7sO1Oi'),
-    ('TEACHER', 'Dr. Rosa Flores',      'T-2020-005', 'rosa.flores@school.edu',     '$2a$12$K8HmVkIJoNUyR5tFc3eYd.9GfVqPzLwXmD2YsBbJ4N6uReA7sO1Oi'),
-    ('TEACHER', 'Prof. Carlos Tan',     'T-2020-006', 'carlos.tan@school.edu',      '$2a$12$K8HmVkIJoNUyR5tFc3eYd.9GfVqPzLwXmD2YsBbJ4N6uReA7sO1Oi'),
-    ('TEACHER', 'Dr. Liza Mendoza',     'T-2020-007', 'liza.mendoza@school.edu',    '$2a$12$K8HmVkIJoNUyR5tFc3eYd.9GfVqPzLwXmD2YsBbJ4N6uReA7sO1Oi');
+    ('TEACHER', 'Dr. Maria Santos',     'T-2020-001', 'maria.santos@school.edu',    '$2a$12$.jAqbM2qD4mOENChdHf2.u.zksR38wcuIrs4KdmfU8wSmS8WVU3Qm'),
+    ('TEACHER', 'Prof. Juan Reyes',     'T-2020-002', 'juan.reyes@school.edu',      '$2a$12$.jAqbM2qD4mOENChdHf2.u.zksR38wcuIrs4KdmfU8wSmS8WVU3Qm'),
+    ('TEACHER', 'Dr. Ana Cruz',         'T-2020-003', 'ana.cruz@school.edu',        '$2a$12$.jAqbM2qD4mOENChdHf2.u.zksR38wcuIrs4KdmfU8wSmS8WVU3Qm'),
+    ('TEACHER', 'Prof. Jose Dela Cruz', 'T-2020-004', 'jose.delacruz@school.edu',   '$2a$12$.jAqbM2qD4mOENChdHf2.u.zksR38wcuIrs4KdmfU8wSmS8WVU3Qm'),
+    ('TEACHER', 'Dr. Rosa Flores',      'T-2020-005', 'rosa.flores@school.edu',     '$2a$12$.jAqbM2qD4mOENChdHf2.u.zksR38wcuIrs4KdmfU8wSmS8WVU3Qm'),
+    ('TEACHER', 'Prof. Carlos Tan',     'T-2020-006', 'carlos.tan@school.edu',      '$2a$12$.jAqbM2qD4mOENChdHf2.u.zksR38wcuIrs4KdmfU8wSmS8WVU3Qm'),
+    ('TEACHER', 'Dr. Liza Mendoza',     'T-2020-007', 'liza.mendoza@school.edu',    '$2a$12$.jAqbM2qD4mOENChdHf2.u.zksR38wcuIrs4KdmfU8wSmS8WVU3Qm');
 
 -- Assign teachers to departments via teacher_profiles
 INSERT INTO teacher_profiles (user_id, department_id) VALUES

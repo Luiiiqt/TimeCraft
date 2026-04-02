@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.timecraft.timecraft.dto.response.ApiResponse;
-import com.timecraft.timecraft.model.Teacher;
+import com.timecraft.timecraft.model.User;
 import com.timecraft.timecraft.service.TeacherService;
 
 import lombok.RequiredArgsConstructor;
@@ -32,11 +33,11 @@ public class TeacherController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<Teacher>>> findAll(
+    public ResponseEntity<ApiResponse<List<User>>> findAll(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Long departmentId) {
 
-        List<Teacher> teachers;
+        List<User> teachers;
         if (name != null && !name.isBlank()) {
             teachers = teacherService.searchByName(name);
         } else if (departmentId != null) {
@@ -52,7 +53,7 @@ public class TeacherController {
 
     @GetMapping("/flexible")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<Teacher>>> findFlexible() {
+    public ResponseEntity<ApiResponse<List<User>>> findFlexible() {
         return ResponseEntity.ok(
                 ApiResponse.of(teacherService.findAllCampusFlexible()));
     }
@@ -61,16 +62,14 @@ public class TeacherController {
 
     @GetMapping("/me")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<Teacher>> getMyProfile(Principal principal) {
-        Teacher teacher = teacherService.findByEmail(principal.getName());
+    public ResponseEntity<ApiResponse<User>> getMyProfile(Principal principal) {
+        User teacher = teacherService.findByEmail(principal.getName());
         return ResponseEntity.ok(ApiResponse.of(teacher));
     }
 
-    // ── GET /api/v1/teachers/{id} ─────────────────────────────────────────────
-
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Teacher>> findById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<User>> findById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.of(teacherService.findById(id)));
     }
 
@@ -111,6 +110,42 @@ public class TeacherController {
     public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable Long id) {
         teacherService.deactivate(id);
         return ResponseEntity.ok(ApiResponse.success("Teacher deactivated"));
+    }
+
+    // ── GET /api/v1/teachers/subject-preferences ──────────────────────────────
+
+    @GetMapping("/subject-preferences")
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
+    public ResponseEntity<ApiResponse<List<?>>> getMySubjectPreferences(
+            @RequestParam String semester,
+            @RequestParam String schoolYear,
+            Principal principal) {
+        Long teacherId = teacherService.findByEmail(principal.getName()).getId();
+        return ResponseEntity.ok(ApiResponse.of(
+                teacherService.getSubjectPreferences(teacherId, semester, schoolYear)));
+    }
+
+    // ── POST /api/v1/teachers/subject-preferences ─────────────────────────────
+
+    @PostMapping("/subject-preferences")
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> saveSubjectPreferences(
+            @RequestBody Map<String, Object> body,
+            Principal principal) {
+
+        Long teacherId = teacherService.findByEmail(principal.getName()).getId();
+
+        @SuppressWarnings("unchecked")
+        List<Long> subjectIds = ((List<?>) body.get("subjectIds"))
+                .stream().map(o -> Long.valueOf(o.toString())).toList();
+
+        teacherService.saveSubjectPreferences(
+                teacherId,
+                subjectIds,
+                body.get("semester").toString(),
+                body.get("schoolYear").toString());
+
+        return ResponseEntity.ok(ApiResponse.success("Preferences saved"));
     }
 
     // ── GET /api/v1/teachers/{id}/availability ────────────────────────────────

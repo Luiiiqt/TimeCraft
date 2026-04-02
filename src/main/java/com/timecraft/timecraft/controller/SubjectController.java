@@ -75,7 +75,8 @@ public class SubjectController {
             @RequestParam String semester) {
         return ResponseEntity.ok(ApiResponse.of(
                 subjectService.findByCourseYearSemester(
-                        courseId, yearLevel, semester)));
+                        courseId, yearLevel,
+                        com.timecraft.timecraft.model.CourseSubject.Semester.valueOf(semester))));
     }
 
     // ── GET /api/v1/subjects/course/{courseId}/curriculum ─────────────────────

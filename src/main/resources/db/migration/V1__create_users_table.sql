@@ -6,7 +6,7 @@
 
 CREATE TABLE users (
     id              BIGSERIAL       PRIMARY KEY,
-    user_type       VARCHAR(10)     NOT NULL CHECK (user_type IN ('STUDENT', 'TEACHER')),
+    user_type       VARCHAR(20)     NOT NULL CHECK (user_type IN ('STUDENT', 'TEACHER', 'ADMIN', 'PROGRAM_HEAD')),
     full_name       VARCHAR(150)    NOT NULL,
     school_id       VARCHAR(30)     NOT NULL UNIQUE,    -- e.g. 2021-00123
     email           VARCHAR(150)    NOT NULL UNIQUE,

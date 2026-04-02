@@ -22,6 +22,7 @@ import com.timecraft.timecraft.dto.response.ScheduleResponse;
 import com.timecraft.timecraft.model.CourseSubject.Semester;
 import com.timecraft.timecraft.model.Schedule;
 import com.timecraft.timecraft.model.StudentSchedule;
+import com.timecraft.timecraft.repository.UserRepository;
 import com.timecraft.timecraft.service.OllamaScheduleAdvisorService;
 import com.timecraft.timecraft.service.ScheduleService;
 import com.timecraft.timecraft.service.SchedulingEngine;
@@ -37,6 +38,7 @@ public class ScheduleController {
     private final ScheduleService            scheduleService;
     private final SchedulingEngine           schedulingEngine;
     private final OllamaScheduleAdvisorService ollamaAdvisor;
+    private final UserRepository userRepository;
 
     // ── GET /api/v1/schedules ─────────────────────────────────────────────────
 
@@ -302,8 +304,8 @@ public class ScheduleController {
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private Long resolveUserId(String email) {
-        // In a full implementation, inject UserService and look up by email.
-        // Returning 0L as a placeholder — replace with actual lookup.
-        return 0L;
+        return userRepository.findByEmail(email)
+                .orElseThrow()
+                .getId();
     }
 }

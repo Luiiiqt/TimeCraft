@@ -37,7 +37,7 @@ CREATE TABLE course_subjects (
     course_id       BIGINT      NOT NULL,
     subject_id      BIGINT      NOT NULL,
     year_level      SMALLINT    NOT NULL CHECK (year_level BETWEEN 1 AND 5),
-    semester        VARCHAR(10) NOT NULL CHECK (semester IN ('1st', '2nd', 'Summer')),
+    semester        VARCHAR(20) NOT NULL CHECK (semester IN ('1st', '2nd', 'Summer', 'FIRST_SEMESTER', 'SECOND_SEMESTER')),
     is_shared       BOOLEAN     NOT NULL DEFAULT FALSE,   -- TRUE = common with another course
 
     CONSTRAINT fk_course_subjects_course
@@ -207,7 +207,7 @@ INSERT INTO course_subjects (course_id, subject_id, year_level, semester, is_sha
     ((SELECT id FROM courses WHERE code = 'ABPsy'), (SELECT id FROM subjects WHERE code = 'NSTP-2'),  1, '2nd', FALSE),
     ((SELECT id FROM courses WHERE code = 'ABPsy'), (SELECT id FROM subjects WHERE code = 'PSY-SP'),  1, '2nd', TRUE),
     ((SELECT id FROM courses WHERE code = 'ABPsy'), (SELECT id FROM subjects WHERE code = 'ABP-FP'),  1, '2nd', FALSE),
-    ((SELECT id FROM courses WHERE code = 'ABPsy'), (SELECT id FROM subjects WHERE code = 'ABP-CP'),  2, '1st', FALSE);
+    ((SELECT id FROM courses WHERE code = 'ABPsy'), (SELECT id FROM subjects WHERE code = 'ABP-CP'),  1, '2nd', FALSE);
 
 -- ── Wire course_subjects: BS Psychology Year 1, Semester 1 ───────────────────
 INSERT INTO course_subjects (course_id, subject_id, year_level, semester, is_shared) VALUES

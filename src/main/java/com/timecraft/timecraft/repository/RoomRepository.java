@@ -53,7 +53,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                         @Param("roomType") RoomType roomType,
                         @Param("minCapacity") int minCapacity,
                         @Param("timeslotId") Long timeslotId,
-                        @Param("semester") String semester,
+                        @Param("semester") com.timecraft.timecraft.model.CourseSubject.Semester semester,
                         @Param("schoolYear") String schoolYear);
 
         // ── Scheduling engine: campus-flexible room lookup (GE teachers) ──────────
@@ -79,7 +79,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                         @Param("roomType") RoomType roomType,
                         @Param("minCapacity") int minCapacity,
                         @Param("timeslotId") Long timeslotId,
-                        @Param("semester") String semester,
+                        @Param("semester") com.timecraft.timecraft.model.CourseSubject.Semester semester,
                         @Param("schoolYear") String schoolYear,
                         @Param("preferredCampusId") Long preferredCampusId);
 
@@ -92,6 +92,6 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                         "GROUP BY r")
         List<Object[]> getRoomUtilisationByCampusAndTerm(
                         @Param("campusId") Long campusId,
-                        @Param("semester") String semester,
+                        @Param("semester") com.timecraft.timecraft.model.CourseSubject.Semester semester,
                         @Param("schoolYear") String schoolYear);
 }

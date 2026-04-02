@@ -61,7 +61,7 @@ public class SubjectService {
 
     public List<Subject> findByCourseYearSemester(Long courseId,
             short yearLevel,
-            String semester) {
+            com.timecraft.timecraft.model.CourseSubject.Semester semester) {
         return subjectRepository.findByCourseYearAndSemester(
                 courseId, yearLevel, semester);
     }
@@ -92,13 +92,20 @@ public class SubjectService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Department not found: " + departmentId));
 
+        Subject prereqSubject = null;
+        if (prerequisite != null && !prerequisite.isBlank()) {
+            prereqSubject = subjectRepository.findByCode(prerequisite)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Prerequisite subject not found: " + prerequisite));
+        }
+
         return subjectRepository.save(Subject.builder()
                 .name(name)
                 .code(code)
                 .subjectType(subjectType)
                 .sessionType(sessionType)
                 .units(units)
-                .prerequisite(prerequisite)
+                .prerequisite(prereqSubject)
                 .department(dept)
                 .build());
     }
@@ -121,12 +128,19 @@ public class SubjectService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Department not found: " + departmentId));
 
+        Subject prereqSubject = null;
+        if (prerequisite != null && !prerequisite.isBlank()) {
+            prereqSubject = subjectRepository.findByCode(prerequisite)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Prerequisite subject not found: " + prerequisite));
+        }
+
         subject.setName(name);
         subject.setCode(code);
         subject.setSubjectType(subjectType);
         subject.setSessionType(sessionType);
         subject.setUnits(units);
-        subject.setPrerequisite(prerequisite);
+        subject.setPrerequisite(prereqSubject);
         subject.setDepartment(dept);
 
         return subjectRepository.save(subject);

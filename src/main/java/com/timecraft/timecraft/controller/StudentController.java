@@ -15,8 +15,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.timecraft.timecraft.dto.response.ApiResponse;
+import com.timecraft.timecraft.model.CourseSubject.Semester;
+import com.timecraft.timecraft.model.Schedule;
 import com.timecraft.timecraft.model.StudentProfile;
 import com.timecraft.timecraft.model.User;
+import com.timecraft.timecraft.service.ScheduleService;
 import com.timecraft.timecraft.service.StudentService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class StudentController {
 
     private final StudentService studentService;
+    private final ScheduleService scheduleService;
 
     // ── GET /api/v1/students ──────────────────────────────────────────────────
 
@@ -105,6 +109,28 @@ public class StudentController {
         studentService.tagAsIrregular(id);
         return ResponseEntity.ok(
                 ApiResponse.success("Student tagged as irregular"));
+    }
+
+    // ── GET /api/v1/students/my-enrollments ───────────────────────────────────
+
+    @GetMapping("/my-enrollments")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<List<Schedule>>> getMyEnrollments(
+            @RequestParam String semester,
+            @RequestParam String schoolYear,
+            Principal principal) {
+
+        User user = studentService.findAll().stream()
+                .filter(u -> u.getEmail().equals(principal.getName()))
+                .findFirst()
+                .orElseThrow();
+
+        List<Schedule> schedules = scheduleService.findByStudent(
+                user.getId(),
+                Semester.valueOf(semester),
+                schoolYear);
+
+        return ResponseEntity.ok(ApiResponse.of(schedules));
     }
 
     // ── PUT /api/v1/students/{id}/tag-regular ────────────────────────────────

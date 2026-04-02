@@ -36,7 +36,7 @@ public class User {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "user_type", nullable = false, length = 10)
+    @Column(name = "user_type", nullable = false, length = 20)
     private UserType userType;
 
     @Column(name = "full_name", nullable = false, length = 150)
@@ -75,8 +75,12 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private TeacherProfile teacherProfile;
 
+    /** Populated when userType = PROGRAM_HEAD. */
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private ProgramHeadProfile programHeadProfile;
+
     // ── Enum ──────────────────────────────────────────────────────────────────
     public enum UserType {
-        STUDENT, TEACHER, ADMIN
+        STUDENT, TEACHER, ADMIN, PROGRAM_HEAD
     }
 }

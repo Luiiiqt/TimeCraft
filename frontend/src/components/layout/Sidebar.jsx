@@ -5,13 +5,14 @@ import useAuth from "../../hooks/useAuth";
 
 const ADMIN_NAV = [
   { section: "Overview" },
-  { to: "/admin",             icon: "◈",  label: "Dashboard"        },
+  { to: "/admin",               icon: "◈",  label: "Dashboard"           },
   { section: "Schedule" },
-  { to: "/admin/generate",    icon: "⚡",  label: "Generate Schedule" },
-  { to: "/admin/reports",     icon: "↗",  label: "Reports"           },
+  { to: "/admin/generate",      icon: "⚡",  label: "Generate Schedule"   },
+  { to: "/admin/reports",       icon: "↗",  label: "Reports"             },
+  { to: "/admin/availability",  icon: "🕐",  label: "Teacher Availability"},
   { section: "Management" },
-  { to: "/admin/departments", icon: "⬡",  label: "Departments"       },
-  { to: "/admin/rooms",       icon: "▣",  label: "Rooms"             },
+  { to: "/admin/departments",   icon: "⬡",  label: "Departments"         },
+  { to: "/admin/rooms",         icon: "▣",  label: "Rooms"               },
 ];
 
 const TEACHER_NAV = [
@@ -19,34 +20,41 @@ const TEACHER_NAV = [
   { to: "/teacher",              icon: "◈", label: "Dashboard"      },
   { section: "My Schedule" },
   { to: "/teacher/schedule",     icon: "▦", label: "View Schedule"  },
+  { to: "/teacher/availability", icon: "🕐", label: "Set Availability"},
 ];
 
 const STUDENT_NAV = [
   { section: "Overview" },
-  { to: "/student",           icon: "◈", label: "Dashboard"     },
+  { to: "/student",             icon: "◈", label: "Dashboard"          },
   { section: "My Timetable" },
-  { to: "/student/timetable", icon: "▦", label: "View Timetable" },
+  { to: "/student/timetable",   icon: "▦", label: "View Timetable"     },
+  { to: "/student/enrollment",  icon: "📋", label: "Back Subject Enroll"},
+];
+
+const PROGRAM_HEAD_NAV = [
+  { section: "Overview" },
+  { to: "/program-head",             icon: "◈",  label: "Dashboard"           },
+  { section: "Assignments" },
+  { to: "/program-head/assignments", icon: "📋", label: "Subject Assignments" },
+  { to: "/program-head/preferences", icon: "✅", label: "Teacher Preferences" },
+  { section: "Schedule" },
+  { to: "/program-head/generate",    icon: "⚡", label: "Generate Schedule"   },
 ];
 
 function getNav(role) {
-  if (role === "ADMIN")   return ADMIN_NAV;
-  if (role === "TEACHER") return TEACHER_NAV;
+  if (role === "ADMIN")        return ADMIN_NAV;
+  if (role === "TEACHER")      return TEACHER_NAV;
+  if (role === "PROGRAM_HEAD") return PROGRAM_HEAD_NAV;
   return STUDENT_NAV;
 }
 
 // ── Role → sidebar gradient ───────────────────────────────────────────────────
 
 function getSidebarStyle(role) {
-  if (role === "ADMIN") return {
-    background: "linear-gradient(180deg, #1E2875 0%, #16205E 100%)",
-  };
-  if (role === "TEACHER") return {
-    background: "linear-gradient(180deg, #14432A 0%, #0D3020 100%)",
-  };
-  // STUDENT
-  return {
-    background: "linear-gradient(180deg, #2D1B69 0%, #1E1149 100%)",
-  };
+  if (role === "ADMIN")        return { background: "linear-gradient(180deg, #1E2875 0%, #16205E 100%)" };
+  if (role === "TEACHER")      return { background: "linear-gradient(180deg, #14432A 0%, #0D3020 100%)" };
+  if (role === "PROGRAM_HEAD") return { background: "linear-gradient(180deg, #7C2D12 0%, #5C1A05 100%)" };
+  return                              { background: "linear-gradient(180deg, #2D1B69 0%, #1E1149 100%)" };
 }
 
 function getAvatarStyle(role) {

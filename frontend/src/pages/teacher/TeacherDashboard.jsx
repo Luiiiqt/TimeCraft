@@ -265,7 +265,8 @@ export default function TeacherDashboard() {
               <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, color: "#111827", marginBottom: 14 }}>Quick Links</h3>
               {[
                 { to: "/teacher/schedule",     icon: "📅", label: "View My Schedule", color: "#EEF4FF", textColor: "#2A3FA0" },
-                { to: "/teacher/availability", icon: "🕐", label: "Set Availability",  color: "#F0FBF4", textColor: "#1A5C38" },
+                { to: "/teacher/availability",   icon: "🕐", label: "Set Availability",       color: "#F0FBF4", textColor: "#1A5C38" },
+                { to: "/teacher/preferences",    icon: "📚", label: "Subject Preferences",    color: "#FEF9EE", textColor: "#92400E" },
               ].map(l => (
                 <Link key={l.to} to={l.to} style={{
                   display: "flex", alignItems: "center", gap: 10,

@@ -13,17 +13,19 @@ import com.timecraft.timecraft.exception.DuplicateResourceException;
 import com.timecraft.timecraft.exception.ResourceNotFoundException;
 import com.timecraft.timecraft.model.Campus;
 import com.timecraft.timecraft.model.Department;
-import com.timecraft.timecraft.model.Teacher;
+import com.timecraft.timecraft.model.Subject;
 import com.timecraft.timecraft.model.TeacherAvailability;
 import com.timecraft.timecraft.model.TeacherProfile;
+import com.timecraft.timecraft.model.TeacherSubjectPreference;
 import com.timecraft.timecraft.model.Timeslot;
 import com.timecraft.timecraft.model.User;
 import com.timecraft.timecraft.model.User.UserType;
 import com.timecraft.timecraft.repository.CampusRepository;
 import com.timecraft.timecraft.repository.DepartmentRepository;
+import com.timecraft.timecraft.repository.SubjectRepository;
 import com.timecraft.timecraft.repository.TeacherAvailabilityRepository;
 import com.timecraft.timecraft.repository.TeacherProfileRepository;
-import com.timecraft.timecraft.repository.TeacherRepository;
+import com.timecraft.timecraft.repository.TeacherSubjectPreferenceRepository;
 import com.timecraft.timecraft.repository.TimeslotRepository;
 import com.timecraft.timecraft.repository.UserRepository;
 
@@ -34,7 +36,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class TeacherService {
 
-    private final TeacherRepository teacherRepository;
     private final TeacherProfileRepository teacherProfileRepository;
 
     private final UserRepository userRepository;
@@ -42,25 +43,27 @@ public class TeacherService {
     private final CampusRepository campusRepository;
 
     private final PasswordEncoder passwordEncoder;
-    private final TeacherAvailabilityRepository availabilityRepository;
-    private final TimeslotRepository timeslotRepository;
+    private final TeacherAvailabilityRepository      availabilityRepository;
+    private final TimeslotRepository                 timeslotRepository;
+    private final TeacherSubjectPreferenceRepository subjectPreferenceRepository;
+    private final SubjectRepository                  subjectRepository;
 
     // ── Lookup ────────────────────────────────────────────────────────────────
 
-    public Teacher findById(Long id) {
-        return teacherRepository.findById(id)
+    public User findById(Long id) {
+        return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Teacher not found with id: " + id));
     }
 
-    public Teacher findByEmail(String email) {
-        return teacherRepository.findByEmail(email)
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Teacher not found with email: " + email));
     }
 
-    public Teacher findBySchoolId(String schoolId) {
-        return teacherRepository.findBySchoolId(schoolId)
+    public User findBySchoolId(String schoolId) {
+        return userRepository.findBySchoolId(schoolId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Teacher not found with school ID: " + schoolId));
     }
@@ -73,26 +76,32 @@ public class TeacherService {
 
     // ── List ──────────────────────────────────────────────────────────────────
 
-    public List<Teacher> findAll() {
-        return teacherRepository.findByIsActiveTrue();
+    public List<User> findAll() {
+        return userRepository.findByUserTypeAndIsActiveTrue(UserType.TEACHER);
     }
 
-    public List<Teacher> findByDepartment(Long departmentId) {
-        return teacherRepository.findActiveByDepartmentId(departmentId);
+    public List<User> findByDepartment(Long departmentId) {
+        return teacherProfileRepository.findByDepartmentId(departmentId)
+                .stream()
+                .map(TeacherProfile::getUser)
+                .toList();
     }
 
-    public List<Teacher> findAllCampusFlexible() {
-        return teacherRepository.findAllCampusFlexible();
+    public List<User> findAllCampusFlexible() {
+        return teacherProfileRepository.findByCampusFlexibleTrue()
+                .stream()
+                .map(TeacherProfile::getUser)
+                .toList();
     }
 
-    public List<Teacher> searchByName(String name) {
-        return teacherRepository.searchByName(name);
+    public List<User> searchByName(String name) {
+        return userRepository.searchByTypeAndName(UserType.TEACHER, name);
     }
 
     // ── Create ────────────────────────────────────────────────────────────────
 
     @Transactional
-    public Teacher createTeacher(String fullName, String schoolId, String email,
+    public User createTeacher(String fullName, String schoolId, String email,
             String rawPassword, Long departmentId,
             boolean campusFlexible, Long preferredCampusId) {
 
@@ -134,10 +143,7 @@ public class TeacherService {
 
         teacherProfileRepository.save(profileBuilder.build());
 
-        // 3. Return as Teacher view (same row, different entity mapping)
-        return teacherRepository.findById(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Failed to reload teacher after creation"));
+        return user;
     }
 
     // ── Update ────────────────────────────────────────────────────────────────
@@ -176,7 +182,44 @@ public class TeacherService {
         return teacherProfileRepository.save(profile);
     }
 
-       // ── Availability ──────────────────────────────────────────────────────────
+       // ── Subject preferences ───────────────────────────────────────────────────
+
+    public List<TeacherSubjectPreference> getSubjectPreferences(
+            Long teacherId, String semester, String schoolYear) {
+        return subjectPreferenceRepository
+                .findByTeacherIdAndSemesterAndSchoolYear(
+                        teacherId, semester, schoolYear);
+    }
+
+    @Transactional
+    public void saveSubjectPreferences(Long teacherId,
+            List<Long> subjectIds, String semester, String schoolYear) {
+
+        User teacher = userRepository.findById(teacherId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Teacher not found: " + teacherId));
+
+        for (Long subjectId : subjectIds) {
+            boolean exists = subjectPreferenceRepository
+                    .findByTeacherIdAndSubjectIdAndSemesterAndSchoolYear(
+                            teacherId, subjectId, semester, schoolYear)
+                    .isPresent();
+            if (!exists) {
+                Subject subject = subjectRepository.findById(subjectId)
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Subject not found: " + subjectId));
+                subjectPreferenceRepository.save(
+                        TeacherSubjectPreference.builder()
+                                .teacher(teacher)
+                                .subject(subject)
+                                .semester(semester)
+                                .schoolYear(schoolYear)
+                                .build());
+            }
+        }
+    }
+
+    // ── Availability ──────────────────────────────────────────────────────────
 
     public List<Map<String, Object>> getAvailability(Long teacherId) {
         // Load all timeslots
@@ -242,8 +285,8 @@ public class TeacherService {
 
     @Transactional
     public void deactivate(Long teacherId) {
-        Teacher teacher = findById(teacherId);
+        User teacher = findById(teacherId);
         teacher.setActive(false);
-        teacherRepository.save(teacher);
+        userRepository.save(teacher);
     }
 }

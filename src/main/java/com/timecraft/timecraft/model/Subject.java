@@ -73,12 +73,12 @@ public class Subject {
     private short units = 3;
 
     /**
-     * Name of the prerequisite subject, or null if none.
-     * Stored as plain text to avoid hard FK coupling.
-     * e.g. "IT-DSA" or "Calculus 1"
+     * Self-referencing FK to the prerequisite subject.
+     * NULL = no prerequisite.
      */
-    @Column(name = "prerequisite", length = 200)
-    private String prerequisite;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prerequisite_subject_id")
+    private Subject prerequisite;
 
     /** Owning department. No year-level restriction on teacher assignment. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

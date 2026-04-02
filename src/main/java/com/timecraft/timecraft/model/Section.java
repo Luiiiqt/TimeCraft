@@ -50,7 +50,7 @@ public class Section {
     private String sectionName;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "semester", nullable = false, length = 10)
+    @Column(name = "semester", nullable = false, length = 20)
     private CourseSubject.Semester semester;
 
     /** Academic year e.g. "2024-2025". */

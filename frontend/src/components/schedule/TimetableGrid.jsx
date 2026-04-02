@@ -1,3 +1,4 @@
+import React from 'react'
 import ScheduleSlot from './ScheduleSlot'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -45,7 +46,7 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
 
         {/* Time rows */}
         {TIMESLOTS.map(({ slot, label }) => (
-          <>
+          <React.Fragment key={slot}>
             {/* Time label */}
             <div key={`time-${slot}`} style={styles.timeCell}>
               <span style={styles.timeText}>{label}</span>
@@ -77,7 +78,7 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
                 </div>
               )
             })}
-          </>
+          </React.Fragment>
         ))}
       </div>
     </div>

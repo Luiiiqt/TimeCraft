@@ -44,7 +44,7 @@ public interface TimeslotRepository extends JpaRepository<Timeslot, Long> {
     List<Timeslot> findFreeTimeslotsForTeacher(
             @Param("teacherId") Long teacherId,
             @Param("day") DayOfWeek day,
-            @Param("semester") String semester,
+            @Param("semester") com.timecraft.timecraft.model.CourseSubject.Semester semester,
             @Param("schoolYear") String schoolYear);
 
     @Query("SELECT t FROM Timeslot t " +
@@ -61,7 +61,7 @@ public interface TimeslotRepository extends JpaRepository<Timeslot, Long> {
     List<Timeslot> findFreeTimeslotsForRoom(
             @Param("roomId") Long roomId,
             @Param("day") DayOfWeek day,
-            @Param("semester") String semester,
+            @Param("semester") com.timecraft.timecraft.model.CourseSubject.Semester semester,
             @Param("schoolYear") String schoolYear);
 
     List<Timeslot> findAllByOrderByDayOfWeekAscSlotNumberAsc();

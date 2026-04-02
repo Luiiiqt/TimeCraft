@@ -45,7 +45,7 @@ public interface SubjectRepository extends JpaRepository<Subject, Long> {
                      "AND s.isActive = true")
        List<Subject> findByCourseYearAndSemester(@Param("courseId") Long courseId,
                      @Param("yearLevel") short yearLevel,
-                     @Param("semester") String semester);
+                     @Param("semester") com.timecraft.timecraft.model.CourseSubject.Semester semester);
 
        /** Returns subjects shared between multiple courses e.g. BSIT + BSCS. */
        @Query("SELECT s FROM Subject s " +

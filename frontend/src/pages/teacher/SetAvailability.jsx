@@ -72,11 +72,12 @@ function useTimeslots(teacherId) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function DayColumn({ day, timeslots, selected, onToggle }) {
+function DayColumn({ day, timeslots, selected, onToggle, isSelectedDay, onSelectDay }) {
   const daySlots = timeslots.filter(ts => ts.dayOfWeek === day);
   const allSelected = daySlots.length > 0 && daySlots.every(ts => selected[ts.id]);
 
   const handleSelectAll = () => {
+    if (!isSelectedDay) return;
     const newSelected = { ...selected };
     daySlots.forEach(ts => {
       newSelected[ts.id] = !allSelected;
@@ -88,21 +89,27 @@ function DayColumn({ day, timeslots, selected, onToggle }) {
     <div style={{
       flex: "1 1 140px", minWidth: 130,
       background: "#fff", borderRadius: 12,
-      border: "1.5px solid #E8EBF2",
-      overflow: "hidden",
+      border: isSelectedDay ? "2px solid #2D6A4F" : "1.5px solid #E8EBF2",
+      overflow: "hidden", opacity: isSelectedDay || !Object.values(selected).some(Boolean) ? 1 : 0.45,
+      transition: "all 0.2s",
     }}>
-      {/* Day header */}
-      <div style={{
-        background: "linear-gradient(135deg, #1B4332, #2D6A4F)",
-        padding: "10px 12px",
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-      }}>
-        <span style={{ color: "#fff", fontWeight: 700, fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
+      {/* Day header — click to select this day */}
+      <div
+        onClick={() => onSelectDay(day)}
+        style={{
+          background: isSelectedDay
+            ? "linear-gradient(135deg, #1B4332, #2D6A4F)"
+            : "#F3F4F6",
+          padding: "10px 12px", cursor: "pointer",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+        }}
+      >
+        <span style={{ color: isSelectedDay ? "#fff" : "#374151", fontWeight: 700, fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
           {DAY_LABELS[day]}
         </span>
-        {daySlots.length > 0 && (
+        {isSelectedDay && daySlots.length > 0 && (
           <button
-            onClick={handleSelectAll}
+            onClick={e => { e.stopPropagation(); handleSelectAll(); }}
             title={allSelected ? "Deselect all" : "Select all"}
             style={{
               background: allSelected ? "#52C27E" : "rgba(255,255,255,0.2)",
@@ -114,9 +121,12 @@ function DayColumn({ day, timeslots, selected, onToggle }) {
             {allSelected ? "✓ All" : "All"}
           </button>
         )}
+        {!isSelectedDay && (
+          <span style={{ fontSize: 11, color: "#9CA3AF" }}>click to select</span>
+        )}
       </div>
 
-      {/* Slot list */}
+      {/* Slot list — only interactive if this day is selected */}
       <div style={{ padding: "8px 8px" }}>
         {daySlots.length === 0 ? (
           <div style={{ fontSize: 12, color: "#9CA3AF", padding: "12px 4px", textAlign: "center" }}>No slots</div>
@@ -125,13 +135,17 @@ function DayColumn({ day, timeslots, selected, onToggle }) {
           return (
             <button
               key={ts.id}
-              onClick={() => onToggle({ ...selected, [ts.id]: !isAvail })}
+              onClick={() => {
+                if (!isSelectedDay) return;
+                onToggle({ ...selected, [ts.id]: !isAvail });
+              }}
               style={{
                 display: "block", width: "100%", textAlign: "left",
                 padding: "7px 10px", marginBottom: 5, borderRadius: 8,
                 border: isAvail ? "1.5px solid #52C27E" : "1.5px solid #E8EBF2",
                 background: isAvail ? "#F0FBF4" : "#FAFBFC",
-                cursor: "pointer", transition: "all 0.15s",
+                cursor: isSelectedDay ? "pointer" : "not-allowed",
+                transition: "all 0.15s",
                 fontFamily: "'DM Sans', sans-serif",
               }}
             >
@@ -170,6 +184,7 @@ export default function SetAvailability() {
 
   // Local selected state (timeslotId → boolean)
   const [selected, setSelected] = useState({});
+  const [selectedDay, setSelectedDay] = useState(null);
   const [isDirty,   setIsDirty]   = useState(false);
   const [saving,    setSaving]    = useState(false);
   const [saveMsg,   setSaveMsg]   = useState(null);  // { type: "success"|"error", text }
@@ -179,11 +194,27 @@ export default function SetAvailability() {
     if (Object.keys(availMap).length > 0) {
       setSelected({ ...availMap });
       setIsDirty(false);
+      // Detect which day was previously saved
+      const savedDay = timeslots.find(ts => availMap[ts.id])?.dayOfWeek ?? null;
+      setSelectedDay(savedDay);
     }
-  }, [availMap]);
+  }, [availMap, timeslots]);
 
   const handleToggle = (newSelected) => {
     setSelected(newSelected);
+    setIsDirty(true);
+    setSaveMsg(null);
+  };
+
+  const handleSelectDay = (day) => {
+    if (selectedDay === day) return; // already selected
+    // Clear all slots from other days, keep slots on new day
+    const cleared = {};
+    timeslots.forEach(ts => {
+      cleared[ts.id] = ts.dayOfWeek === day ? (selected[ts.id] ?? false) : false;
+    });
+    setSelected(cleared);
+    setSelectedDay(day);
     setIsDirty(true);
     setSaveMsg(null);
   };
@@ -217,8 +248,11 @@ export default function SetAvailability() {
   // ── Select all / deselect all ───────────────────────────────────────────────
 
   const selectAll = () => {
+    if (!selectedDay) return;
     const all = {};
-    timeslots.forEach(ts => { all[ts.id] = true; });
+    timeslots.forEach(ts => {
+      all[ts.id] = ts.dayOfWeek === selectedDay;
+    });
     setSelected(all);
     setIsDirty(true);
   };
@@ -340,6 +374,17 @@ export default function SetAvailability() {
         ) : (
           <>
             {/* Main grid */}
+            {/* Selected day indicator */}
+            <div style={{
+              background: selectedDay ? "#F0FBF4" : "#FEF9EE",
+              border: `1px solid ${selectedDay ? "#52C27E" : "#FDE68A"}`,
+              borderRadius: 10, padding: "10px 16px", marginBottom: 14,
+              fontSize: 13, color: selectedDay ? "#1A5C38" : "#92400E",
+            }}>
+              {selectedDay
+                ? `Your selected day: ${DAY_LABELS[selectedDay]} — click time slots to set your available hours`
+                : "Click a day header to select your available day (one day only)"}
+            </div>
             <div style={{
               background: "#fff", borderRadius: 16, padding: 20,
               border: "1.5px solid #E8EBF2", boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
@@ -352,6 +397,8 @@ export default function SetAvailability() {
                     timeslots={timeslots}
                     selected={selected}
                     onToggle={handleToggle}
+                    isSelectedDay={selectedDay === day}
+                    onSelectDay={handleSelectDay}
                   />
                 ))}
               </div>
@@ -390,8 +437,8 @@ export default function SetAvailability() {
               fontSize: 13, color: "#1A5C38", lineHeight: 1.7,
             }}>
               <strong>How it works:</strong><br/>
-              • Click any slot to toggle it on/off. Green = available, grey = unavailable.<br/>
-              • Use "All" in a day column to toggle all slots in that day at once.<br/>
+              • Click a day header to select your available day. Only ONE day can be selected.<br/>
+              • Once a day is selected, click individual time slots to mark your available hours.<br/>
               • Click <strong>"Save Availability"</strong> to submit your changes to the system.<br/>
               • The scheduling engine will only assign you to timeslots marked as available.
             </div>

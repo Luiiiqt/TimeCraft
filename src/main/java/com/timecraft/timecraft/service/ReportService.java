@@ -49,7 +49,7 @@ public class ReportService {
             Semester semester,
             String schoolYear) {
         return roomRepository.getRoomUtilisationByCampusAndTerm(
-                campusId, semester.getLabel(), schoolYear);
+                campusId, semester, schoolYear);
     }
 
     /**

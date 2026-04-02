@@ -5,6 +5,7 @@ import useAuth from "../hooks/useAuth";
 import Navbar         from "../components/layout/Navbar";
 import Sidebar        from "../components/layout/Sidebar";
 import ProtectedRoute from "../components/layout/ProtectedRoute";
+import OllamaChat     from "../components/ui/OllamaChat";
 
 // ── Lazy pages ────────────────────────────────────────────────────────────────
 
@@ -19,7 +20,8 @@ const Enrollment        = lazy(() => import("../pages/student/Enrollment"));
 
 const TeacherDashboard  = lazy(() => import("../pages/teacher/TeacherDashboard"));
 const ViewMySchedule    = lazy(() => import("../pages/teacher/ViewMySchedule"));
-const SetAvailability   = lazy(() => import("../pages/teacher/SetAvailability"));
+const SetAvailability      = lazy(() => import("../pages/teacher/SetAvailability"));
+const SubjectPreferences   = lazy(() => import("../pages/teacher/SubjectPreferences"));
 const TeacherAvailabilityReview = lazy(() => import("../pages/admin/TeacherAvailabilityReview"));
 
 const AdminDashboard    = lazy(() => import("../pages/admin/AdminDashboard"));
@@ -27,7 +29,11 @@ const GenerateSchedule  = lazy(() => import("../pages/admin/GenerateSchedule"));
 const ManageDepartments = lazy(() => import("../pages/admin/ManageDepartments"));
 const ManageRooms       = lazy(() => import("../pages/admin/ManageRooms"));
 const ManageSubjects    = lazy(() => import("../pages/admin/ManageSubjects"));
-const Reports           = lazy(() => import("../pages/admin/Reports"));
+const Reports                  = lazy(() => import("../pages/admin/Reports"));
+const ProgramHeadDashboard        = lazy(() => import("../pages/programhead/ProgramHeadDashboard"));
+const SubjectAssignments          = lazy(() => import("../pages/programhead/SubjectAssignments"));
+const PreferenceReview            = lazy(() => import("../pages/programhead/PreferenceReview"));
+const ProgramHeadGenerateSchedule = lazy(() => import("../pages/programhead/GenerateSchedule"));
 
 // ── Loader ────────────────────────────────────────────────────────────────────
 
@@ -59,6 +65,7 @@ function AppShell({ children }) {
           {children}
         </main>
       </div>
+      <OllamaChat />
     </div>
   );
 }
@@ -71,9 +78,10 @@ function HomeRoute() {
   const { isAuthenticated, role, loading } = useAuth();
   if (loading)          return <PageLoader />;
   if (!isAuthenticated) return <LandingPage />;
-  if (role === "ADMIN")   return <Navigate to="/admin"   replace />;
-  if (role === "TEACHER") return <Navigate to="/teacher" replace />;
-  return                         <Navigate to="/student" replace />;
+  if (role === "ADMIN")        return <Navigate to="/admin"        replace />;
+  if (role === "TEACHER")      return <Navigate to="/teacher"      replace />;
+  if (role === "PROGRAM_HEAD") return <Navigate to="/program-head" replace />;
+  return                              <Navigate to="/student"      replace />;
 }
 
 // ── Shorthand: ProtectedRoute + AppShell ─────────────────────────────────────
@@ -111,6 +119,13 @@ export default function AppRouter() {
             <Route path="/teacher"          element={<Page roles={["TEACHER"]}><TeacherDashboard /></Page>} />
             <Route path="/teacher/schedule"      element={<Page roles={["TEACHER"]}><ViewMySchedule /></Page>} />
             <Route path="/teacher/availability"  element={<Page roles={["TEACHER"]}><SetAvailability /></Page>} />
+            <Route path="/teacher/preferences"   element={<Page roles={["TEACHER"]}><SubjectPreferences /></Page>} />
+
+            {/* Program Head */}
+            <Route path="/program-head"             element={<Page roles={["PROGRAM_HEAD","ADMIN"]}><ProgramHeadDashboard /></Page>} />
+            <Route path="/program-head/assignments" element={<Page roles={["PROGRAM_HEAD","ADMIN"]}><SubjectAssignments /></Page>} />
+            <Route path="/program-head/preferences" element={<Page roles={["PROGRAM_HEAD","ADMIN"]}><PreferenceReview /></Page>} />
+            <Route path="/program-head/generate"    element={<Page roles={["PROGRAM_HEAD","ADMIN"]}><ProgramHeadGenerateSchedule /></Page>} />
 
             {/* Admin */}
             <Route path="/admin"             element={<Page roles={["ADMIN"]}><AdminDashboard /></Page>} />

@@ -182,4 +182,43 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
         Optional<Schedule> findBySectionIdAndSubjectIdAndSemesterAndSchoolYear(
                         Long sectionId, Long subjectId,
                         Semester semester, String schoolYear);
+
+        // ── Back subjects ─────────────────────────────────────────────────────────
+
+        @Query("SELECT s FROM Schedule s " +
+                        "WHERE s.status = com.timecraft.timecraft.model.Schedule.ScheduleStatus.PUBLISHED " +
+                        "AND s.semester = :semester " +
+                        "AND s.schoolYear = :schoolYear " +
+                        "AND s.section IS NOT NULL")
+        List<Schedule> findPublishedBySemesterAndSchoolYear(
+                        @Param("semester") Semester semester,
+                        @Param("schoolYear") String schoolYear);
+
+        // ── Student enrollment check ──────────────────────────────────────────────
+
+        @Query("SELECT s FROM Schedule s " +
+                        "JOIN s.section sec " +
+                        "WHERE sec.id IN (" +
+                        "  SELECT sec2.id FROM Section sec2 " +
+                        "  WHERE sec2.course.id IN (" +
+                        "    SELECT sp.course.id FROM StudentProfile sp " +
+                        "    WHERE sp.user.id = :studentId" +
+                        "  )" +
+                        ") " +
+                        "AND s.status = 'PUBLISHED' " +
+                        "AND s.semester = :semester " +
+                        "AND s.schoolYear = :schoolYear")
+        List<Schedule> findEnrollableByStudent(
+                        @Param("studentId") Long studentId,
+                        @Param("semester") Semester semester,
+                        @Param("schoolYear") String schoolYear);
+
+                        /** All schedules that are part of a merged class for a given term. */
+        @Query("SELECT s FROM Schedule s " +
+                        "WHERE s.mergedSection IS NOT NULL " +
+                        "AND s.semester = :semester " +
+                        "AND s.schoolYear = :schoolYear")
+        List<Schedule> findMergedSchedulesByTerm(
+                        @Param("semester") Semester semester,
+                        @Param("schoolYear") String schoolYear);
 }

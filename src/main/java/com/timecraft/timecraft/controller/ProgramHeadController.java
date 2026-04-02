@@ -1,0 +1,135 @@
+package com.timecraft.timecraft.controller;
+
+import java.security.Principal;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.timecraft.timecraft.dto.response.ApiResponse;
+import com.timecraft.timecraft.model.SubjectAssignment;
+import com.timecraft.timecraft.model.TeacherSubjectPreference;
+import com.timecraft.timecraft.model.TeacherSubjectPreference.Status;
+import com.timecraft.timecraft.repository.UserRepository;
+import com.timecraft.timecraft.service.ProgramHeadService;
+
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api/v1/program-head")
+@RequiredArgsConstructor
+public class ProgramHeadController {
+
+    private final ProgramHeadService programHeadService;
+    private final UserRepository     userRepository;
+
+    // ── GET /api/v1/program-head/assignments ──────────────────────────────────
+
+    @GetMapping("/assignments")
+    @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+    public ResponseEntity<ApiResponse<List<SubjectAssignment>>> getAssignments(
+            @RequestParam String semester,
+            @RequestParam String schoolYear,
+            Principal principal) {
+
+        Long userId = resolveUserId(principal);
+        return ResponseEntity.ok(ApiResponse.of(
+                programHeadService.getMyAssignments(userId, semester, schoolYear)));
+    }
+
+    // ── POST /api/v1/program-head/assignments ─────────────────────────────────
+
+    @PostMapping("/assignments")
+    @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+    public ResponseEntity<ApiResponse<SubjectAssignment>> saveAssignment(
+            @RequestBody Map<String, Object> body,
+            Principal principal) {
+
+        Long userId    = resolveUserId(principal);
+        Long subjectId = Long.valueOf(body.get("subjectId").toString());
+        Long sectionId = Long.valueOf(body.get("sectionId").toString());
+        Long teacherId = Long.valueOf(body.get("teacherId").toString());
+        String semester   = body.get("semester").toString();
+        String schoolYear = body.get("schoolYear").toString();
+
+        return ResponseEntity.ok(ApiResponse.success("Assignment saved",
+                programHeadService.saveAssignment(
+                        userId, subjectId, sectionId, teacherId, semester, schoolYear)));
+    }
+
+    // ── PUT /api/v1/program-head/assignments/{id}/finalize ────────────────────
+
+    @PutMapping("/assignments/{id}/finalize")
+    @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+    public ResponseEntity<ApiResponse<SubjectAssignment>> finalize(
+            @PathVariable Long id,
+            Principal principal) {
+
+        Long userId = resolveUserId(principal);
+        return ResponseEntity.ok(ApiResponse.success("Assignment finalized",
+                programHeadService.finalizeAssignment(id, userId)));
+    }
+
+    // ── DELETE /api/v1/program-head/assignments/{id} ──────────────────────────
+
+    @DeleteMapping("/assignments/{id}")
+    @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteAssignment(
+            @PathVariable Long id,
+            Principal principal) {
+
+        Long userId = resolveUserId(principal);
+        programHeadService.deleteAssignment(id, userId);
+        return ResponseEntity.ok(ApiResponse.success("Assignment deleted"));
+    }
+
+    // ── GET /api/v1/program-head/preferences ──────────────────────────────────
+    // View teacher-submitted subject preferences for this department
+
+    @GetMapping("/preferences")
+    @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+    public ResponseEntity<ApiResponse<List<TeacherSubjectPreference>>> getPreferences(
+            @RequestParam String semester,
+            @RequestParam String schoolYear,
+            Principal principal) {
+
+        Long userId = resolveUserId(principal);
+        return ResponseEntity.ok(ApiResponse.of(
+                programHeadService.getPendingPreferences(
+                        userId, semester, schoolYear)));
+    }
+
+    // ── PUT /api/v1/program-head/preferences/{id}/review ─────────────────────
+
+    @PutMapping("/preferences/{id}/review")
+    @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+    public ResponseEntity<ApiResponse<TeacherSubjectPreference>> review(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Principal principal) {
+
+        Long userId  = resolveUserId(principal);
+        Status decision = Status.valueOf(body.get("decision").toUpperCase());
+
+        return ResponseEntity.ok(ApiResponse.success("Preference reviewed",
+                programHeadService.reviewPreference(id, userId, decision)));
+    }
+
+    // ── Helper ────────────────────────────────────────────────────────────────
+
+    private Long resolveUserId(Principal principal) {
+        return userRepository.findByEmail(principal.getName())
+                .orElseThrow()
+                .getId();
+    }
+}

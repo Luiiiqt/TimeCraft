@@ -12,7 +12,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -58,13 +57,15 @@ public class CourseSubject {
     private boolean isShared = false;
 
     public enum Semester {
-        FIRST("1st"), SECOND("2nd"), SUMMER("Summer");
+        FIRST_SEMESTER("1st"), SECOND_SEMESTER("2nd"), SUMMER("Summer");
 
         private final String label;
 
         Semester(String label) {
             this.label = label;
         }
+
+        /** Used by Schedule and Section which reference this enum. */
 
         public String getLabel() {
             return label;

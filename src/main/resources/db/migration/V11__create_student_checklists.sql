@@ -1,5 +1,5 @@
 CREATE TABLE student_checklists (
-    id            BIGINT       NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id            BIGSERIAL    NOT NULL,
     student_id    BIGINT       NOT NULL,
     subject_id    BIGINT       NOT NULL,
     semester      VARCHAR(20)  NOT NULL,
