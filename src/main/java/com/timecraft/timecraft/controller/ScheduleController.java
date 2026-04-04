@@ -68,8 +68,8 @@ public class ScheduleController {
     // Student views their own timetable
 
     @GetMapping("/my")
-    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getMySchedule(
+    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER', 'ADMIN', 'PROGRAM_HEAD')")
+    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSectionSchedule(
             @RequestParam String semester,
             @RequestParam String schoolYear,
             Principal principal) {
@@ -103,7 +103,7 @@ public class ScheduleController {
     // ── GET /api/v1/schedules/section/{sectionId} ─────────────────────────────
 
     @GetMapping("/section/{sectionId}")
-    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER', 'ADMIN', 'PROGRAM_HEAD')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSectionSchedule(
             @PathVariable Long sectionId,
             @RequestParam String semester,
@@ -145,12 +145,11 @@ public class ScheduleController {
     // ── POST /api/v1/schedules/generate ───────────────────────────────────────
 
     @PostMapping("/generate")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PROGRAM_HEAD')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> generate(
             @Valid @RequestBody ScheduleGenerateRequest request) {
 
-        List<Schedule> generated = schedulingEngine.generateForTerm(
-                request.getSemester(), request.getSchoolYear());
+        List<Schedule> generated = schedulingEngine.generateForTerm(request);
 
         long total      = generated.size();
         long conflicted = generated.stream()
@@ -258,6 +257,19 @@ public class ScheduleController {
         scheduleService.removeIrregularStudent(body.get("studentId"), id);
         return ResponseEntity.ok(
                 ApiResponse.success("Student removed from schedule"));
+    }
+
+    // ── GET /api/v1/schedules/is-locked ───────────────────────────────────────
+
+    @GetMapping("/is-locked")
+    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
+    public ResponseEntity<ApiResponse<Boolean>> isLocked(
+            @RequestParam Long courseId,
+            @RequestParam String semester,
+            @RequestParam String schoolYear) {
+        boolean locked = scheduleService.isLockedForCourse(
+                courseId, Semester.valueOf(semester), schoolYear);
+        return ResponseEntity.ok(ApiResponse.of(locked));
     }
 
     // ── Teaching load report ──────────────────────────────────────────────────

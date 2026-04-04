@@ -109,6 +109,7 @@ public class AuthController {
                 .courseName((String) claims.get("courseName"))
                 .yearLevel(toShort(claims.get("yearLevel")))
                 .section((String) claims.get("section"))
+                .sectionId(toLong(claims.get("sectionId")))
                 .isIrregular((Boolean) claims.get("isIrregular"));
         } else if ("TEACHER".equals(role)) {
             builder

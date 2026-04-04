@@ -2,8 +2,16 @@ import { useState, useEffect } from "react";
 import useAuth from "../../hooks/useAuth";
 import api from "../../services/api";
 
-const SEMESTER    = "1st";
-const SCHOOL_YEAR = "2024-2025";
+function getDefaultTerm() {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+  return {
+    semester: month >= 6 && month <= 10 ? "FIRST" : "SECOND",
+    schoolYear: `${year}-${year + 1}`,
+  };
+}
+const { semester: SEMESTER, schoolYear: SCHOOL_YEAR } = getDefaultTerm();
 
 export default function SubjectAssignments() {
   const { user } = useAuth();
@@ -14,18 +22,27 @@ export default function SubjectAssignments() {
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState("");
   const [success,     setSuccess]     = useState("");
-  const [form, setForm] = useState({ subjectId: "", teacherId: "" });
+  const [sections,    setSections]    = useState([]);
+  const [form, setForm] = useState({ subjectId: "", sectionId: "", teacherId: "", courseId: "" });
 
   const load = () => {
     setLoading(true);
+    const courses = user?.courses ?? [];
+    const courseId = courses[0]?.id ?? null;
+
     Promise.all([
       api.get(`/program-head/assignments?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
-      api.get(`/subjects?departmentId=${user?.departmentId}`),
-      api.get(`/teachers?departmentId=${user?.departmentId}`),
-    ]).then(([aRes, sRes, tRes]) => {
+      courseId
+        ? api.get(`/subjects/course/${courseId}/curriculum`)
+        : Promise.resolve({ data: { data: [] } }),
+      api.get(`/teachers`),
+      api.get(`/sections?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
+    ]).then(([aRes, sRes, tRes, secRes]) => {
       setAssignments(aRes.data?.data ?? []);
-      setSubjects(sRes.data?.data   ?? []);
-      setTeachers(tRes.data?.data   ?? []);
+      const curriculum = sRes.data?.data ?? [];
+      setSubjects(curriculum.map(cs => cs.subject ?? cs));
+      setTeachers(tRes.data?.data ?? []);
+      setSections(secRes.data?.data ?? []);
       setLoading(false);
     }).catch(() => setLoading(false));
   };
@@ -33,20 +50,21 @@ export default function SubjectAssignments() {
   useEffect(() => { load(); }, []);
 
   const handleSave = async () => {
-    if (!form.subjectId || !form.teacherId) {
-      setError("Please select both a subject and a teacher.");
+    if (!form.subjectId || !form.sectionId || !form.teacherId) {
+      setError("Please select a subject, section, and teacher.");
       return;
     }
     setSaving(true); setError(""); setSuccess("");
     try {
       await api.post("/program-head/assignments", {
         subjectId:  Number(form.subjectId),
+        sectionId:  Number(form.sectionId),
         teacherId:  Number(form.teacherId),
-        semester:   SEMESTER,
+        semester:   SEMESTER,   // already "FIRST" or "SECOND" from getDefaultTerm()
         schoolYear: SCHOOL_YEAR,
       });
       setSuccess("Assignment saved.");
-      setForm({ subjectId: "", teacherId: "" });
+      setForm({ subjectId: "", sectionId: "", teacherId: "" });
       load();
     } catch (e) {
       setError(e.response?.data?.message ?? "Failed to save.");
@@ -88,13 +106,21 @@ export default function SubjectAssignments() {
       {/* Add form */}
       <div style={{ background: "#fff", borderRadius: 12, padding: "20px 22px", border: "1px solid #e5e7eb", marginBottom: 24 }}>
         <h2 style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 16 }}>Add / Update Assignment</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 12, alignItems: "end" }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>Subject</label>
             <select value={form.subjectId} onChange={e => setForm(f => ({ ...f, subjectId: e.target.value }))}
               style={{ width: "100%", padding: "8px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
               <option value="">Select subject…</option>
               {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>Section</label>
+            <select value={form.sectionId} onChange={e => setForm(f => ({ ...f, sectionId: e.target.value }))}
+              style={{ width: "100%", padding: "8px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
+              <option value="">Select section…</option>
+              {sections.map(s => <option key={s.id} value={s.id}>{s.courseCode} {s.yearLevel}-{s.sectionName}</option>)}
             </select>
           </div>
           <div>

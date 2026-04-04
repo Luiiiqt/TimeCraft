@@ -29,6 +29,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "passwordHash", "hibernateLazyInitializer", "handler" })
 public class User {
 
     @Id
@@ -69,14 +70,17 @@ public class User {
 
     /** Populated when userType = STUDENT. */
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "user", "hibernateLazyInitializer", "handler" })
     private StudentProfile studentProfile;
 
-    /** Populated when userType = TEACHER. */
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "user", "hibernateLazyInitializer", "handler",
+            "department" })
     private TeacherProfile teacherProfile;
 
-    /** Populated when userType = PROGRAM_HEAD. */
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "user", "hibernateLazyInitializer", "handler",
+            "department" })
     private ProgramHeadProfile programHeadProfile;
 
     // ── Enum ──────────────────────────────────────────────────────────────────

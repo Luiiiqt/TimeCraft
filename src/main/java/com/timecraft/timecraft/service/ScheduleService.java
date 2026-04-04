@@ -273,6 +273,15 @@ public class ScheduleService {
         studentScheduleRepository.delete(ss);
     }
 
+    // ── Lock check ────────────────────────────────────────────────────────────
+
+    public boolean isLockedForCourse(Long courseId, Semester semester,
+            String schoolYear) {
+        return scheduleRepository
+                .existsBySectionCourseIdAndSemesterAndSchoolYearAndStatus(
+                        courseId, semester, schoolYear, ScheduleStatus.PUBLISHED);
+    }
+
     // ── Reporting ─────────────────────────────────────────────────────────────
 
     public List<Object[]> getTeachingLoadReport(Semester semester,

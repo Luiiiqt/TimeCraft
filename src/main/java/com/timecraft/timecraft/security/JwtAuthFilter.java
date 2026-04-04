@@ -56,6 +56,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
+            log.info("ROLES for {}: {}", email, userDetails.getAuthorities());
             if (jwtUtil.validateToken(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
@@ -84,7 +85,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path.startsWith("/api/v1/auth/") ||
+        return (path.startsWith("/api/v1/auth/") && !path.equals("/api/v1/auth/me")) ||
                 path.startsWith("/swagger-ui") ||
                 path.startsWith("/api-docs") ||
                 path.equals("/actuator/health");

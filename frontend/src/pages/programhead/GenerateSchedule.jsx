@@ -1,28 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import api from "../../services/api";
 
 const SEMESTER_OPTIONS = [
-  { value: "FIRST",  label: "1st Semester" },
+  { value: "FIRST", label: "1st Semester" },
   { value: "SECOND", label: "2nd Semester" },
-  { value: "SUMMER", label: "Summer"       },
+  { value: "SUMMER", label: "Summer" },
 ];
 const SCHOOL_YEARS = ["2024-2025", "2025-2026", "2026-2027"];
 
 export default function ProgramHeadGenerateSchedule() {
-  const navigate  = useNavigate();
-  const { user }  = useAuth();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [form, setForm] = useState({
-    semester:    "FIRST",
-    schoolYear:  "2024-2025",
+    semester: "FIRST",
+    schoolYear: "2024-2025",
     autoPublish: false,
+    courseId: null,
   });
-  const [result,    setResult]    = useState(null);
-  const [error,     setError]     = useState("");
-  const [loading,   setLoading]   = useState(false);
+  const [courses, setCourses] = useState([]);
+
+  useEffect(() => {
+    api.get("/program-head/my-courses")
+      .then(r => {
+        const list = r.data?.data ?? [];
+        setCourses(list);
+        if (list.length > 0) setForm(f => ({ ...f, courseId: list[0].id }));
+      })
+      .catch(() => { });
+  }, []);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockChecking, setLockChecking] = useState(false);
+
+  const checkLock = async (courseId, semester, schoolYear) => {
+    if (!courseId) return;
+    setLockChecking(true);
+    try {
+      const res = await api.get(`/schedules/is-locked?courseId=${courseId}&semester=${semester}&schoolYear=${schoolYear}`);
+      setIsLocked(res.data?.data ?? false);
+    } catch { setIsLocked(false); }
+    finally { setLockChecking(false); }
+  };
+
+  useEffect(() => {
+    if (form.courseId) checkLock(form.courseId, form.semester, form.schoolYear);
+  }, [form.courseId, form.semester, form.schoolYear]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -33,9 +61,9 @@ export default function ProgramHeadGenerateSchedule() {
   const handleGenerate = async () => {
     setError(""); setResult(null); setLoading(true);
     try {
-      const res = await api.post("/schedules/generate", {
-        semester:    form.semester,
-        schoolYear:  form.schoolYear,
+      const res = await api.post(`/program-head/generate/${form.courseId}`, {
+        semester: form.semester,
+        schoolYear: form.schoolYear,
         autoPublish: form.autoPublish,
       });
       setResult(res.data?.data ?? res.data);
@@ -70,6 +98,15 @@ export default function ProgramHeadGenerateSchedule() {
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 18 }}>Term Configuration</h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
+            {courses.length > 1 && (
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>Course</label>
+                <select name="courseId" value={form.courseId ?? ""} onChange={handleChange}
+                  style={{ width: "100%", padding: "8px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
+                  {courses.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
+                </select>
+              </div>
+            )}
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>Semester</label>
               <select name="semester" value={form.semester} onChange={handleChange}
@@ -96,10 +133,16 @@ export default function ProgramHeadGenerateSchedule() {
             </div>
           </div>
 
+          {isLocked && (
+            <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", color: "#dc2626", fontSize: 13, marginBottom: 12 }}>
+              🔒 A published schedule already exists for this course and term. Generation is locked.
+            </div>
+          )}
+
           {!confirmed ? (
-            <button onClick={() => setConfirmed(true)} disabled={loading}
-              style={{ width: "100%", padding: "10px", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-              Review & Generate
+            <button onClick={() => setConfirmed(true)} disabled={loading || isLocked || lockChecking}
+              style={{ width: "100%", padding: "10px", background: isLocked ? "#9ca3af" : "#7c3aed", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: isLocked ? "not-allowed" : "pointer" }}>
+              {lockChecking ? "Checking…" : "Review & Generate"}
             </button>
           ) : (
             <div style={{ background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8, padding: "14px" }}>
@@ -149,9 +192,9 @@ export default function ProgramHeadGenerateSchedule() {
               {/* Stats */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, textAlign: "center", paddingBottom: 16, borderBottom: "1px solid #f3f4f6" }}>
                 {[
-                  { label: "Total",      value: result.total,      color: "#1a56db" },
+                  { label: "Total", value: result.total, color: "#1a56db" },
                   { label: "Successful", value: result.successful, color: "#16a34a" },
-                  { label: "Conflicts",  value: result.conflicted, color: result.conflicted > 0 ? "#dc2626" : "#16a34a" },
+                  { label: "Conflicts", value: result.conflicted, color: result.conflicted > 0 ? "#dc2626" : "#16a34a" },
                 ].map(s => (
                   <div key={s.label}>
                     <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
@@ -162,7 +205,7 @@ export default function ProgramHeadGenerateSchedule() {
 
               {/* Tags */}
               <div style={{ display: "flex", gap: 8 }}>
-                {[result.semester, result.schoolYear].map(t => (
+                {[result.semester ?? form.semester, result.schoolYear ?? form.schoolYear].map(t => (
                   <span key={t} style={{ padding: "3px 10px", background: "#f3f4f6", borderRadius: 99, fontSize: 12, color: "#374151", fontWeight: 600 }}>{t}</span>
                 ))}
               </div>
@@ -176,6 +219,15 @@ export default function ProgramHeadGenerateSchedule() {
                 <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", color: "#7f1d1d", fontSize: 13 }}>
                   ⚠️ {result.conflicted} conflict(s) detected. Review with your admin.
                 </div>
+              )}
+
+              {/* View Schedule button */}
+              {result.conflicted === 0 && (
+                <button
+                  onClick={() => window.location.href = `/program-head/schedule-view?courseId=${form.courseId}&semester=${form.semester}&schoolYear=${form.schoolYear}`}
+                  style={{ width: "100%", padding: "10px", background: "#1a56db", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", marginTop: 4 }}>
+                  📅 View Generated Schedule
+                </button>
               )}
 
               {/* AI Summary */}

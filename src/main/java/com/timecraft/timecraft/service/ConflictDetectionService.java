@@ -314,6 +314,10 @@ public class ConflictDetectionService {
                 int conflictCount = 0;
 
                 for (Schedule schedule : schedules) {
+                        if (schedule.getTeacher() == null || schedule.getRoom() == null
+                                        || schedule.getTimeslot() == null || schedule.getTimeslot2() == null) {
+                                continue; // CONFLICTED placeholder — skip audit
+                        }
                         List<ConflictResult> conflicts = checkPreAssignment(
                                         schedule.getTeacher().getId(),
                                         schedule.getRoom().getId(),

@@ -70,10 +70,31 @@ function useSchedule() {
     _fetch("/schedules", { semester, schoolYear, ...(status ? { status } : {}) }),
   [_fetch]);
 
-  /** Student: own timetable */
-  const fetchMySchedule = useCallback((semester, schoolYear) =>
-    _fetch("/schedules/my", { semester, schoolYear }),
-  [_fetch]);
+  /** Student: own timetable — uses section if sectionId provided, else /my for irregular */
+  const fetchMySchedule = useCallback(async (semester, schoolYear, sectionId, fallback) => {
+    if (sectionId) {
+      return _fetch(`/schedules/section/${sectionId}`, { semester, schoolYear });
+    }
+    // Resolve sectionId from sections endpoint using course+year+section
+    if (fallback?.courseId && fallback?.yearLevel && fallback?.section) {
+      try {
+        const res = await api.get(`/sections`, {
+          params: { courseId: fallback.courseId }
+        });
+        const sections = res.data?.data ?? [];
+        const match = sections.find(s =>
+          s.yearLevel == fallback.yearLevel &&
+          s.sectionName === fallback.section
+        );
+        if (match?.id) {
+          return _fetch(`/schedules/section/${match.id}`, { semester, schoolYear });
+        }
+      } catch {
+        // fall through
+      }
+    }
+    return _fetch("/schedules/my", { semester, schoolYear });
+  }, [_fetch, api]);
 
   /** Teacher/Admin: teacher's full load */
   const fetchTeacherSchedule = useCallback((teacherId, semester, schoolYear) =>

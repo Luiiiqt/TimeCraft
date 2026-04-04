@@ -95,6 +95,7 @@ public class Subject {
 
     @OneToMany(mappedBy = "subject", fetch = FetchType.LAZY)
     @Builder.Default
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<CourseSubject> courseSubjects = new ArrayList<>();
 
     public enum SubjectType {

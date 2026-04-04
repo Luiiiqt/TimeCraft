@@ -32,7 +32,7 @@ public class TeacherController {
     // ── GET /api/v1/teachers ──────────────────────────────────────────────────
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
     public ResponseEntity<ApiResponse<List<User>>> findAll(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Long departmentId) {
@@ -141,6 +141,49 @@ public class TeacherController {
 
         teacherService.saveSubjectPreferences(
                 teacherId,
+                subjectIds,
+                body.get("semester").toString(),
+                body.get("schoolYear").toString());
+
+        return ResponseEntity.ok(ApiResponse.success("Preferences saved"));
+    }
+
+    // ── GET /api/v1/teachers/{id}/available-subjects ──────────────────────────
+
+    @GetMapping("/{id}/available-subjects")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<?>>> getAvailableSubjects(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(
+                ApiResponse.of(teacherService.getAvailableSubjects(id)));
+    }
+
+    // ── GET /api/v1/teachers/{id}/subject-preferences ────────────────────────
+
+    @GetMapping("/{id}/subject-preferences")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<?>>> getSubjectPreferencesById(
+            @PathVariable Long id,
+            @RequestParam String semester,
+            @RequestParam String schoolYear) {
+        return ResponseEntity.ok(ApiResponse.of(
+                teacherService.getSubjectPreferences(id, semester, schoolYear)));
+    }
+
+    // ── POST /api/v1/teachers/{id}/subject-preferences ───────────────────────
+
+    @PostMapping("/{id}/subject-preferences")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> saveSubjectPreferencesById(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+
+        @SuppressWarnings("unchecked")
+        List<Long> subjectIds = ((List<?>) body.get("subjectIds"))
+                .stream().map(o -> Long.valueOf(o.toString())).toList();
+
+        teacherService.saveSubjectPreferences(
+                id,
                 subjectIds,
                 body.get("semester").toString(),
                 body.get("schoolYear").toString());

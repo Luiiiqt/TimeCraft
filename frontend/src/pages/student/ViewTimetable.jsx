@@ -282,8 +282,8 @@ export default function ViewTimetable() {
   const [view, setView] = useState("list"); // "list" | "grid"
 
   useEffect(() => {
-    fetchMySchedule(term.semester, term.schoolYear);
-  }, [term.semester, term.schoolYear]);
+    fetchMySchedule(term.semester, term.schoolYear, user?.sectionId ?? null);
+  }, [term.semester, term.schoolYear, user?.sectionId]);
 
   const handleTermChange = (newTerm) => setTerm(newTerm);
 

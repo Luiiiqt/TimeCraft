@@ -27,6 +27,7 @@ public class UserResponse {
     private String  courseName;
     private Short   yearLevel;
     private String  section;
+    private Long    sectionId;
     private Boolean isIrregular;
 
     // ── Teacher fields ────────────────────────────────────────────────────────
@@ -56,6 +57,10 @@ public class UserResponse {
                 .yearLevel(sp.getYearLevel())
                 .section(sp.getSection())
                 .isIrregular(sp.isIrregular());
+
+            // Resolve sectionId from sections table
+            // sp.getSection() is a label like "A" — we need the actual Section.id
+            // This is populated by AuthController after login via SectionRepository
         }
 
         if (user.getTeacherProfile() != null) {

@@ -131,8 +131,12 @@ export default function StudentDashboard() {
   const { semester, schoolYear } = getDefaultTerm();
 
   useEffect(() => {
-    fetchMySchedule(semester, schoolYear);
-  }, [semester, schoolYear]);
+    fetchMySchedule(semester, schoolYear, user?.sectionId ?? null, {
+      courseId: user?.courseId,
+      yearLevel: user?.yearLevel,
+      section: user?.section,
+    });
+  }, [semester, schoolYear, user?.sectionId]);
 
   // Derived stats
   const uniqueSubjects = new Set(schedules.map(s => s.subjectId)).size;

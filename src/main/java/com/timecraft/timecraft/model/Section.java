@@ -3,6 +3,8 @@ package com.timecraft.timecraft.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -39,7 +41,8 @@ public class Section {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "course_id", nullable = false)
-    private Course course;
+    @JsonIgnoreProperties({"department", "sections", "programHeadCourses", "courseSubjects"})
+private Course course;
 
     /** Year level this section belongs to (1–5). */
     @Column(name = "year_level", nullable = false)

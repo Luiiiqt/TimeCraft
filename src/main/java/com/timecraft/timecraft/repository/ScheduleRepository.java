@@ -213,7 +213,27 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
                         @Param("semester") Semester semester,
                         @Param("schoolYear") String schoolYear);
 
-                        /** All schedules that are part of a merged class for a given term. */
+                        /**
+         * All DRAFT schedules for a section in a term.
+         * Used by the engine to count day load for spreading subjects.
+         */
+        @Query("SELECT s FROM Schedule s " +
+                        "WHERE s.section.id = :sectionId " +
+                        "AND s.semester = :semester " +
+                        "AND s.schoolYear = :schoolYear " +
+                        "AND s.status = com.timecraft.timecraft.model.Schedule.ScheduleStatus.DRAFT")
+        List<Schedule> findSectionSchedules(
+                        @Param("sectionId") Long sectionId,
+                        @Param("semester") Semester semester,
+                        @Param("schoolYear") String schoolYear);
+
+        // ── Lock check ────────────────────────────────────────────────────────────
+
+        boolean existsBySectionCourseIdAndSemesterAndSchoolYearAndStatus(
+                        Long courseId, Semester semester,
+                        String schoolYear, ScheduleStatus status);
+
+        /** All schedules that are part of a merged class for a given term. */
         @Query("SELECT s FROM Schedule s " +
                         "WHERE s.mergedSection IS NOT NULL " +
                         "AND s.semester = :semester " +

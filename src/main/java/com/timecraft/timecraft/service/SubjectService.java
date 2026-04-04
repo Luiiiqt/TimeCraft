@@ -35,10 +35,8 @@ public class SubjectService {
                         "Subject not found with id: " + id));
     }
 
-    public Subject findByCode(String code) {
-        return subjectRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Subject not found with code: " + code));
+    public java.util.Optional<Subject> findByCode(String code) {
+        return subjectRepository.findByCode(code);
     }
 
     // ── List ──────────────────────────────────────────────────────────────────

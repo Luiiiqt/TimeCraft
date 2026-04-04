@@ -1,6 +1,7 @@
 package com.timecraft.timecraft.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -45,6 +46,7 @@ public class AuthResponse {
     private String  courseName;
     private Short   yearLevel;
     private String  section;
+    private Long    sectionId;
     private Boolean isIrregular;
 
     // ── Teacher-only fields ───────────────────────────────────────────────────

@@ -34,6 +34,7 @@ public class AuthService {
     private final StudentProfileRepository    studentProfileRepository;
     private final TeacherProfileRepository    teacherProfileRepository;
     private final ProgramHeadProfileRepository programHeadProfileRepository;
+    private final com.timecraft.timecraft.repository.SectionRepository sectionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
@@ -149,6 +150,16 @@ public class AuthService {
             claims.put("yearLevel", sp.getYearLevel());
             claims.put("section", sp.getSection());
             claims.put("isIrregular", sp.isIrregular());
+
+            // Resolve sectionId for schedule fetching
+            if (!sp.isIrregular() && sp.getSection() != null) {
+                sectionRepository.findByCourseIdAndYearLevelAndSectionName(
+                        sp.getCourse().getId(),
+                        sp.getYearLevel(),
+                        sp.getSection())
+                    .stream().findFirst()
+                    .ifPresent(sec -> claims.put("sectionId", sec.getId()));
+            }
         });
     }
 

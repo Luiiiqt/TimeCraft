@@ -21,11 +21,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "teacher_subject_preferences",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uq_tsp",
-        columnNames = {"teacher_id", "subject_id", "course_id", "semester", "school_year"}))
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "teacher_subject_preferences", uniqueConstraints = @UniqueConstraint(name = "uq_tsp", columnNames = {
+        "teacher_id", "subject_id", "course_id", "semester", "school_year" }))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"reviewedBy", "hibernateLazyInitializer", "handler"})
 public class TeacherSubjectPreference {
 
     @Id
@@ -45,8 +48,9 @@ public class TeacherSubjectPreference {
     @JoinColumn(name = "course_id")
     private Course course;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "semester", nullable = false, length = 20)
-    private String semester;
+    private CourseSubject.Semester semester;
 
     @Column(name = "school_year", nullable = false, length = 10)
     private String schoolYear;
@@ -56,9 +60,7 @@ public class TeacherSubjectPreference {
     @Builder.Default
     private Status status = Status.PENDING;
 
-    @Column(name = "requested_at", nullable = false,
-            updatable = false,
-            columnDefinition = "TIMESTAMP DEFAULT NOW()")
+    @Column(name = "requested_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT NOW()")
     @Builder.Default
     private LocalDateTime requestedAt = LocalDateTime.now();
 
@@ -69,5 +71,8 @@ public class TeacherSubjectPreference {
     @JoinColumn(name = "reviewed_by")
     private User reviewedBy;
 
-    public enum Status { PENDING, APPROVED, REJECTED }
-}
+    public enum Status {
+        PENDING, APPROVED, REJECTED
+    }
+
+    }

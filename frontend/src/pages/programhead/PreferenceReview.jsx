@@ -1,13 +1,21 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 
-const SEMESTER    = "1st";
-const SCHOOL_YEAR = "2024-2025";
+function getDefaultTerm() {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+  return {
+    semester: month >= 6 && month <= 10 ? "FIRST" : "SECOND",
+    schoolYear: `${year}-${year + 1}`,
+  };
+}
+const { semester: SEMESTER, schoolYear: SCHOOL_YEAR } = getDefaultTerm();
 
 export default function PreferenceReview() {
-  const [prefs,   setPrefs]   = useState([]);
+  const [prefs, setPrefs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState("");
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const load = () => {
@@ -23,7 +31,11 @@ export default function PreferenceReview() {
     setError(""); setSuccess("");
     try {
       await api.put(`/program-head/preferences/${id}/review`, { decision });
-      setSuccess(`Preference ${decision.toLowerCase()}d.`);
+      setSuccess(
+        decision === "APPROVED"
+          ? "Preference approved. Go to Subject Assignments to bind this teacher to a section."
+          : "Preference rejected."
+      );
       load();
     } catch (e) {
       setError(e.response?.data?.message ?? "Failed.");
@@ -31,7 +43,7 @@ export default function PreferenceReview() {
   };
 
   const STATUS_STYLE = {
-    PENDING:  { bg: "#fef3c7", color: "#92400e" },
+    PENDING: { bg: "#fef3c7", color: "#92400e" },
     APPROVED: { bg: "#d1fae5", color: "#065f46" },
     REJECTED: { bg: "#fee2e2", color: "#991b1b" },
   };
@@ -43,14 +55,14 @@ export default function PreferenceReview() {
         Review and approve teacher subject preferences before finalizing assignments.
       </p>
 
-      {error   && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", marginBottom: 16, color: "#dc2626", fontSize: 13 }}>⚠️ {error}</div>}
+      {error && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", marginBottom: 16, color: "#dc2626", fontSize: 13 }}>⚠️ {error}</div>}
       {success && <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 14px", marginBottom: 16, color: "#15803d", fontSize: 13 }}>✅ {success}</div>}
 
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ background: "#f9fafb", borderBottom: "1.5px solid #e5e7eb" }}>
-              {["Teacher","Subject","Code","Requested","Status","Actions"].map(h => (
+              {["Teacher", "Subject", "Code", "Course", "Requested", "Status", "Actions"].map(h => (
                 <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, color: "#374151", fontSize: 12 }}>{h}</th>
               ))}
             </tr>
@@ -59,7 +71,7 @@ export default function PreferenceReview() {
             {loading ? (
               <tr><td colSpan={6} style={{ padding: 32, textAlign: "center", color: "#9ca3af" }}>Loading…</td></tr>
             ) : prefs.length === 0 ? (
-              <tr><td colSpan={6} style={{ padding: 32, textAlign: "center", color: "#9ca3af" }}>No preferences submitted yet.</td></tr>
+              <tr><td colSpan={7} style={{ padding: 32, textAlign: "center", color: "#9ca3af" }}>No preferences submitted yet.</td></tr>
             ) : prefs.map(p => {
               const s = STATUS_STYLE[p.status] || STATUS_STYLE.PENDING;
               return (
@@ -67,6 +79,7 @@ export default function PreferenceReview() {
                   <td style={{ padding: "10px 14px", fontWeight: 500 }}>{p.teacher?.fullName}</td>
                   <td style={{ padding: "10px 14px" }}>{p.subject?.name}</td>
                   <td style={{ padding: "10px 14px", color: "#1a56db", fontWeight: 600 }}>{p.subject?.code}</td>
+                  <td style={{ padding: "10px 14px", color: "#6b7280" }}>—</td>
                   <td style={{ padding: "10px 14px", color: "#6b7280", fontSize: 12 }}>
                     {p.requestedAt ? new Date(p.requestedAt).toLocaleDateString() : "—"}
                   </td>
@@ -75,7 +88,7 @@ export default function PreferenceReview() {
                       {p.status}
                     </span>
                   </td>
-                  <td style={{ padding: "10px 14px", display: "flex", gap: 6 }}>
+                  <td style={{ padding: "10px 14px", display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {p.status === "PENDING" && (
                       <>
                         <button onClick={() => review(p.id, "APPROVED")}
@@ -87,6 +100,12 @@ export default function PreferenceReview() {
                           Reject
                         </button>
                       </>
+                    )}
+                    {p.status === "APPROVED" && (
+                      <a href="/program-head/assignments"
+                        style={{ fontSize: 11, padding: "4px 10px", background: "#dbeafe", color: "#1e40af", borderRadius: 6, fontWeight: 600, textDecoration: "none" }}>
+                        → Assign to Section
+                      </a>
                     )}
                   </td>
                 </tr>

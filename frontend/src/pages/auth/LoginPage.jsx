@@ -4,11 +4,12 @@ import useAuth from "../../hooks/useAuth";
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
 
-  const [form,    setForm]    = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState(null);
+  const [error, setError] = useState(null);
+  const [showPw, setShowPw] = useState(false);
 
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
@@ -17,10 +18,11 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const user = await login(form.email, form.password);
-      if (user.role === "ADMIN")        navigate("/admin");
-      else if (user.role === "TEACHER") navigate("/teacher");
-      else                              navigate("/student");
+      const userData = await login(form.email, form.password);
+      if (userData.role === 'PROGRAM_HEAD') navigate('/program-head');
+      else if (userData.role === 'ADMIN') navigate('/admin');
+      else if (userData.role === 'TEACHER') navigate('/teacher');
+      else navigate('/student');
     } catch (err) {
       setError(err?.response?.data?.message ?? "Invalid email or password.");
     } finally {
@@ -66,13 +68,28 @@ export default function LoginPage() {
             </div>
             <div className="auth-group">
               <label className="auth-label">Password</label>
-              <input
-                className="auth-input"
-                type="password" name="password"
-                value={form.password} onChange={handleChange}
-                placeholder="••••••••"
-                required
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  className="auth-input"
+                  type={showPw ? "text" : "password"} name="password"
+                  value={form.password} onChange={handleChange}
+                  placeholder="••••••••"
+                  required
+                  style={{ paddingRight: 40 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(p => !p)}
+                  style={{
+                    position: "absolute", right: 12, top: "50%",
+                    transform: "translateY(-50%)", background: "none",
+                    border: "none", cursor: "pointer", fontSize: 16,
+                    color: "#9CA3AF", padding: 0, lineHeight: 1,
+                  }}
+                >
+                  {showPw ? "🙈" : "👁️"}
+                </button>
+              </div>
             </div>
             <button type="submit" className="auth-btn" disabled={loading}>
               {loading ? "Signing in…" : "Sign In →"}
@@ -109,14 +126,14 @@ const STYLES = `
   @media (max-width: 640px) { .auth-grid-2 { grid-template-columns: 1fr; } }
 `;
 
-const authShell    = { minHeight: "100vh", display: "flex", fontFamily: "'Outfit', sans-serif" };
-const authLeft     = { width: 420, background: "linear-gradient(150deg,#1A237E 0%,#3949AB 55%,#5C6BC0 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 40px", position: "relative", overflow: "hidden", flexShrink: 0 };
-const authRight    = { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px", background: "#F5F6FA" };
-const authCard     = { background: "#fff", borderRadius: 18, padding: "36px 32px", width: "100%", maxWidth: 420, boxShadow: "0 4px 32px rgba(0,0,0,0.08)", border: "1.5px solid #E4E7F0" };
-const authLogo     = { width: 56, height: 56, borderRadius: 16, background: "rgba(255,255,255,0.18)", margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800 };
-const authBrandName= { fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, marginBottom: 10 };
-const authTagline  = { fontSize: 14, color: "rgba(255,255,255,0.72)", lineHeight: 1.6, maxWidth: 280, margin: "0 auto" };
-const authTitle    = { fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 700, color: "#111827", marginBottom: 6 };
-const authSub      = { fontSize: 13.5, color: "#6B7280", marginBottom: 24 };
-const circle1      = { position: "absolute", width: 300, height: 300, borderRadius: "50%", background: "rgba(255,255,255,0.06)", top: -80, right: -80 };
-const circle2      = { position: "absolute", width: 200, height: 200, borderRadius: "50%", background: "rgba(255,255,255,0.04)", bottom: -60, left: -60 };
+const authShell = { minHeight: "100vh", display: "flex", fontFamily: "'Outfit', sans-serif" };
+const authLeft = { width: 420, background: "linear-gradient(150deg,#1A237E 0%,#3949AB 55%,#5C6BC0 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 40px", position: "relative", overflow: "hidden", flexShrink: 0 };
+const authRight = { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px", background: "#F5F6FA" };
+const authCard = { background: "#fff", borderRadius: 18, padding: "36px 32px", width: "100%", maxWidth: 420, boxShadow: "0 4px 32px rgba(0,0,0,0.08)", border: "1.5px solid #E4E7F0" };
+const authLogo = { width: 56, height: 56, borderRadius: 16, background: "rgba(255,255,255,0.18)", margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800 };
+const authBrandName = { fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, marginBottom: 10 };
+const authTagline = { fontSize: 14, color: "rgba(255,255,255,0.72)", lineHeight: 1.6, maxWidth: 280, margin: "0 auto" };
+const authTitle = { fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 700, color: "#111827", marginBottom: 6 };
+const authSub = { fontSize: 13.5, color: "#6B7280", marginBottom: 24 };
+const circle1 = { position: "absolute", width: 300, height: 300, borderRadius: "50%", background: "rgba(255,255,255,0.06)", top: -80, right: -80 };
+const circle2 = { position: "absolute", width: 200, height: 200, borderRadius: "50%", background: "rgba(255,255,255,0.04)", bottom: -60, left: -60 };

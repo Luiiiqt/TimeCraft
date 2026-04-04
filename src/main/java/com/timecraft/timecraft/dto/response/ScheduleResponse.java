@@ -34,6 +34,8 @@ public class ScheduleResponse {
     /** MAJOR or MINOR */
     private String subjectType;
 
+    private Short units;
+
     /** LECTURE or LABORATORY */
     private String sessionType;
 
@@ -108,6 +110,7 @@ public class ScheduleResponse {
                 .subjectName(schedule.getSubject().getName())
                 .subjectType(schedule.getSubject().getSubjectType().name())
                 .sessionType(schedule.getSubject().getSessionType().name())
+                .units(schedule.getSubject().getUnits())
 
                 // Teacher
                 .teacherId(schedule.getTeacher() != null

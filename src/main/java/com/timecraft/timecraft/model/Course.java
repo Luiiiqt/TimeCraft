@@ -36,6 +36,7 @@ public class Course {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "department_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"courses","subjects","hibernateLazyInitializer"})
     private Department department;
 
     /** Full program name e.g. "Bachelor of Science in Information Technology". */
@@ -60,10 +61,12 @@ public class Course {
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Builder.Default
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<CourseSubject> courseSubjects = new ArrayList<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Builder.Default
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Section> sections = new ArrayList<>();
 
     public enum DegreeLevel {

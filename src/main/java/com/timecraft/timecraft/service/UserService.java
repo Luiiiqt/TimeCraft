@@ -91,6 +91,46 @@ public class UserService {
         return passwordEncoder.encode(rawPassword);
     }
 
+    // ── Teacher creation (Admin) ──────────────────────────────────────────────
+
+    @Transactional
+    public User createTeacher(String fullName, String email, String schoolId,
+            Long departmentId, boolean isGETeacher,
+            com.timecraft.timecraft.repository.DepartmentRepository departmentRepo,
+            com.timecraft.timecraft.repository.TeacherProfileRepository teacherProfileRepo) {
+        validateNewUser(email, schoolId);
+
+        User user = userRepository.save(User.builder()
+                .fullName(fullName)
+                .email(email)
+                .schoolId(schoolId)
+                .passwordHash(passwordEncoder.encode(schoolId)) // default password = schoolId
+                .userType(UserType.TEACHER)
+                .isActive(true)
+                .build());
+
+        com.timecraft.timecraft.model.Department dept = departmentRepo.findById(departmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Department not found: " + departmentId));
+
+        com.timecraft.timecraft.model.TeacherProfile profile =
+                com.timecraft.timecraft.model.TeacherProfile.builder()
+                        .user(user)
+                        .department(dept)
+                        .campusFlexible(isGETeacher)
+                        .build();
+        teacherProfileRepo.save(profile);
+        return user;
+    }
+
+    // ── Delete all teachers (Admin reset) ─────────────────────────────────────
+
+    @Transactional
+    public void deleteAllTeachers() {
+        List<User> teachers = userRepository.findByUserTypeAndIsActiveTrue(UserType.TEACHER);
+        teachers.forEach(t -> t.setActive(false));
+        userRepository.saveAll(teachers);
+    }
+
     // ── Deactivate ────────────────────────────────────────────────────────────
 
     @Transactional

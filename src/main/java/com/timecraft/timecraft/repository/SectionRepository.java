@@ -35,6 +35,9 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
 
         List<Section> findBySemesterAndSchoolYear(Semester semester, String schoolYear);
 
+    List<Section> findByCourseIdAndYearLevelAndSectionName(
+            Long courseId, Short yearLevel, String sectionName);
+
         List<Section> findByIsActiveTrue();
 
         /**

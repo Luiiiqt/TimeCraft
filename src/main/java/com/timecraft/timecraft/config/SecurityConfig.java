@@ -4,8 +4,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.timecraft.timecraft.security.JwtAuthFilter;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import com.timecraft.timecraft.security.UserDetailsServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 
@@ -53,7 +51,7 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
 
                                                 // ── Public endpoints ──────────────────────────────────────────
-                                                .requestMatchers(
+                                                .requestMatchers(HttpMethod.POST,
                                                                 "/api/v1/auth/login",
                                                                 "/api/v1/auth/register")
                                                 .permitAll()
@@ -98,9 +96,18 @@ public class SecurityConfig {
                                                                 "/api/v1/conflicts/**",
                                                                 "/api/v1/rooms/**",
                                                                 "/api/v1/departments/**",
-                                                                "/api/v1/sections/**",
                                                                 "/api/v1/reports/**")
                                                 .hasRole("ADMIN")
+
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/v1/sections/**",
+                                                                "/api/v1/teachers/**",
+                                                                "/api/v1/subjects/**",
+                                                                "/api/v1/courses/**",
+                                                                "/api/v1/schedules/section/**",
+                                                                "/api/v1/schedules/conflicted",
+                                                                "/api/v1/timeslots/**")
+                                                .hasAnyRole("ADMIN", "PROGRAM_HEAD", "TEACHER")
 
                                                 .requestMatchers(HttpMethod.POST,
                                                                 "/api/v1/teachers",
@@ -109,6 +116,12 @@ public class SecurityConfig {
                                                                 "/api/v1/schedules",
                                                                 "/api/v1/conflicts/audit")
                                                 .hasRole("ADMIN")
+
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/subjects")
+                                                .hasAnyRole("ADMIN", "PROGRAM_HEAD")
+
+                                                .requestMatchers(HttpMethod.PUT, "/api/v1/subjects/**")
+                                                .hasAnyRole("ADMIN", "PROGRAM_HEAD")
 
                                                 .requestMatchers(HttpMethod.PUT,
                                                                 "/api/v1/schedules/**")
@@ -119,6 +132,11 @@ public class SecurityConfig {
                                                                 "/api/v1/teachers/**",
                                                                 "/api/v1/students/**")
                                                 .hasRole("ADMIN")
+
+                                                // All other requests require authentication
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/v1/auth/me")
+                                                .authenticated()
 
                                                 // All other requests require authentication
                                                 .anyRequest().authenticated())
@@ -133,9 +151,6 @@ public class SecurityConfig {
                                                         res.getWriter().write("Forbidden: " + e.getMessage());
                                                 }))
 
-                                // Register authentication provider
-                                .authenticationProvider(authenticationProvider())
-
                                 // Insert JWT filter before Spring's username/password filter
                                 .addFilterBefore(jwtAuthFilter,
                                                 UsernamePasswordAuthenticationFilter.class);
@@ -148,14 +163,6 @@ public class SecurityConfig {
         @Bean
         public PasswordEncoder passwordEncoder() {
                 return new BCryptPasswordEncoder(12);
-        }
-
-        @Bean
-        public AuthenticationProvider authenticationProvider() {
-                DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-                provider.setUserDetailsService(userDetailsService);
-                provider.setPasswordEncoder(passwordEncoder());
-                return provider;
         }
 
         @Bean

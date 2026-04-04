@@ -2,38 +2,42 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { AuthProvider } from "../context/AuthContext";
 import useAuth from "../hooks/useAuth";
-import Navbar         from "../components/layout/Navbar";
-import Sidebar        from "../components/layout/Sidebar";
+import Navbar from "../components/layout/Navbar";
+import Sidebar from "../components/layout/Sidebar";
 import ProtectedRoute from "../components/layout/ProtectedRoute";
-import OllamaChat     from "../components/ui/OllamaChat";
+import OllamaChat from "../components/ui/OllamaChat";
 
 // ── Lazy pages ────────────────────────────────────────────────────────────────
 
-const LandingPage       = lazy(() => import("../pages/LandingPage"));
+const LandingPage = lazy(() => import("../pages/LandingPage"));
 
-const LoginPage         = lazy(() => import("../pages/auth/LoginPage"));
-const RegisterPage      = lazy(() => import("../pages/auth/RegisterPage"));
+const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
+const RegisterPage = lazy(() => import("../pages/auth/RegisterPage"));
 
-const StudentDashboard  = lazy(() => import("../pages/student/StudentDashboard"));
-const ViewTimetable     = lazy(() => import("../pages/student/ViewTimetable"));
-const Enrollment        = lazy(() => import("../pages/student/Enrollment"));
+const StudentDashboard = lazy(() => import("../pages/student/StudentDashboard"));
+const ViewTimetable = lazy(() => import("../pages/student/ViewTimetable"));
+const Enrollment = lazy(() => import("../pages/student/Enrollment"));
 
-const TeacherDashboard  = lazy(() => import("../pages/teacher/TeacherDashboard"));
-const ViewMySchedule    = lazy(() => import("../pages/teacher/ViewMySchedule"));
-const SetAvailability      = lazy(() => import("../pages/teacher/SetAvailability"));
-const SubjectPreferences   = lazy(() => import("../pages/teacher/SubjectPreferences"));
+const TeacherDashboard = lazy(() => import("../pages/teacher/TeacherDashboard"));
+const ViewMySchedule = lazy(() => import("../pages/teacher/ViewMySchedule"));
+const SetAvailability = lazy(() => import("../pages/teacher/SetAvailability"));
+const SubjectPreferences = lazy(() => import("../pages/teacher/SubjectPreferences"));
 const TeacherAvailabilityReview = lazy(() => import("../pages/admin/TeacherAvailabilityReview"));
 
-const AdminDashboard    = lazy(() => import("../pages/admin/AdminDashboard"));
-const GenerateSchedule  = lazy(() => import("../pages/admin/GenerateSchedule"));
+const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
+const GenerateSchedule = lazy(() => import("../pages/admin/GenerateSchedule"));
 const ManageDepartments = lazy(() => import("../pages/admin/ManageDepartments"));
-const ManageRooms       = lazy(() => import("../pages/admin/ManageRooms"));
-const ManageSubjects    = lazy(() => import("../pages/admin/ManageSubjects"));
-const Reports                  = lazy(() => import("../pages/admin/Reports"));
-const ProgramHeadDashboard        = lazy(() => import("../pages/programhead/ProgramHeadDashboard"));
-const SubjectAssignments          = lazy(() => import("../pages/programhead/SubjectAssignments"));
-const PreferenceReview            = lazy(() => import("../pages/programhead/PreferenceReview"));
+const ManageRooms = lazy(() => import("../pages/admin/ManageRooms"));
+const ManageSubjects = lazy(() => import("../pages/admin/ManageSubjects"));
+const Reports = lazy(() => import("../pages/admin/Reports"));
+const ProgramHeadDashboard = lazy(() => import("../pages/programhead/ProgramHeadDashboard"));
+const SubjectAssignments = lazy(() => import("../pages/programhead/SubjectAssignments"));
+const PreferenceReview = lazy(() => import("../pages/programhead/PreferenceReview"));
 const ProgramHeadGenerateSchedule = lazy(() => import("../pages/programhead/GenerateSchedule"));
+const ScheduleView = lazy(() => import("../pages/programhead/ScheduleView"));
+const ProgramHeadSubjects = lazy(() => import("../pages/programhead/ManageSubjects"));
+const ManageStudents = lazy(() => import("../pages/admin/ManageStudents"));
+const IrregularEnrollment = lazy(() => import("../pages/admin/IrregularEnrollment"));
 
 // ── Loader ────────────────────────────────────────────────────────────────────
 
@@ -76,17 +80,19 @@ function AppShell({ children }) {
 
 function HomeRoute() {
   const { isAuthenticated, role, loading } = useAuth();
-  if (loading)          return <PageLoader />;
+  if (loading) return <PageLoader />;
   if (!isAuthenticated) return <LandingPage />;
-  if (role === "ADMIN")        return <Navigate to="/admin"        replace />;
-  if (role === "TEACHER")      return <Navigate to="/teacher"      replace />;
+  if (role === "ADMIN") return <Navigate to="/admin" replace />;
+  if (role === "TEACHER") return <Navigate to="/teacher" replace />;
   if (role === "PROGRAM_HEAD") return <Navigate to="/program-head" replace />;
-  return                              <Navigate to="/student"      replace />;
+  return <Navigate to="/student" replace />;
 }
 
 // ── Shorthand: ProtectedRoute + AppShell ─────────────────────────────────────
 
 function Page({ roles, children }) {
+  const { isAuthenticated, role, loading } = useAuth();
+  console.log("PAGE CHECK:", { isAuthenticated, role, loading, roles });
   return (
     <ProtectedRoute allowedRoles={roles}>
       <AppShell>{children}</AppShell>
@@ -98,8 +104,8 @@ function Page({ roles, children }) {
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
+    <AuthProvider>
+      <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
 
@@ -107,41 +113,47 @@ export default function AppRouter() {
             <Route path="/" element={<HomeRoute />} />
 
             {/* Public auth pages */}
-            <Route path="/login"    element={<LoginPage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
             {/* Student */}
-            <Route path="/student"            element={<Page roles={["STUDENT"]}><StudentDashboard /></Page>} />
-            <Route path="/student/timetable"  element={<Page roles={["STUDENT"]}><ViewTimetable /></Page>} />
+            <Route path="/student" element={<Page roles={["STUDENT"]}><StudentDashboard /></Page>} />
+            <Route path="/student/timetable" element={<Page roles={["STUDENT"]}><ViewTimetable /></Page>} />
             <Route path="/student/enrollment" element={<Page roles={["STUDENT"]}><Enrollment /></Page>} />
 
             {/* Teacher */}
-            <Route path="/teacher"          element={<Page roles={["TEACHER"]}><TeacherDashboard /></Page>} />
-            <Route path="/teacher/schedule"      element={<Page roles={["TEACHER"]}><ViewMySchedule /></Page>} />
-            <Route path="/teacher/availability"  element={<Page roles={["TEACHER"]}><SetAvailability /></Page>} />
-            <Route path="/teacher/preferences"   element={<Page roles={["TEACHER"]}><SubjectPreferences /></Page>} />
+            <Route path="/teacher" element={<Page roles={["TEACHER"]}><TeacherDashboard /></Page>} />
+            <Route path="/teacher/schedule" element={<Page roles={["TEACHER"]}><ViewMySchedule /></Page>} />
+            <Route path="/teacher/availability" element={<Page roles={["TEACHER"]}><SetAvailability /></Page>} />
+            <Route path="/teacher/preferences" element={<Page roles={["TEACHER"]}><SubjectPreferences /></Page>} />
 
             {/* Program Head */}
-            <Route path="/program-head"             element={<Page roles={["PROGRAM_HEAD","ADMIN"]}><ProgramHeadDashboard /></Page>} />
-            <Route path="/program-head/assignments" element={<Page roles={["PROGRAM_HEAD","ADMIN"]}><SubjectAssignments /></Page>} />
-            <Route path="/program-head/preferences" element={<Page roles={["PROGRAM_HEAD","ADMIN"]}><PreferenceReview /></Page>} />
-            <Route path="/program-head/generate"    element={<Page roles={["PROGRAM_HEAD","ADMIN"]}><ProgramHeadGenerateSchedule /></Page>} />
+            <Route path="/program-head" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><ProgramHeadDashboard /></Page>} />
+            <Route path="/program-head/subjects" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><ProgramHeadSubjects /></Page>} />
+            <Route path="/program-head/assignments" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><SubjectAssignments /></Page>} />
+            <Route path="/program-head/preferences" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><PreferenceReview /></Page>} />
+            <Route path="/program-head/generate" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><ProgramHeadGenerateSchedule /></Page>} />
+            <Route path="/program-head/schedule-view" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><ScheduleView /></Page>} />
 
             {/* Admin */}
-            <Route path="/admin"             element={<Page roles={["ADMIN"]}><AdminDashboard /></Page>} />
-            <Route path="/admin/generate"    element={<Page roles={["ADMIN"]}><GenerateSchedule /></Page>} />
+            <Route path="/admin" element={<Page roles={["ADMIN"]}><AdminDashboard /></Page>} />
+            <Route path="/admin/generate" element={<Page roles={["ADMIN"]}><GenerateSchedule /></Page>} />
             <Route path="/admin/departments" element={<Page roles={["ADMIN"]}><ManageDepartments /></Page>} />
-            <Route path="/admin/rooms"       element={<Page roles={["ADMIN"]}><ManageRooms /></Page>} />
-            <Route path="/admin/subjects"    element={<Page roles={["ADMIN"]}><ManageSubjects /></Page>} />
-            <Route path="/admin/reports"       element={<Page roles={["ADMIN"]}><Reports /></Page>} />
-            <Route path="/admin/availability"  element={<Page roles={["ADMIN"]}><TeacherAvailabilityReview /></Page>} />
+            <Route path="/admin/rooms" element={<Page roles={["ADMIN"]}><ManageRooms /></Page>} />
+            <Route path="/admin/subjects" element={<Page roles={["ADMIN"]}><ManageSubjects /></Page>} />
+            <Route path="/admin/reports" element={<Page roles={["ADMIN"]}><Reports /></Page>} />
+            <Route path="/admin/availability" element={<Page roles={["ADMIN"]}><TeacherAvailabilityReview /></Page>} />
+            <Route path="/admin/teachers" element={<Page roles={["ADMIN"]}><TeacherAvailabilityReview /></Page>} />
+            <Route path="/admin/students" element={<Page roles={["ADMIN"]}><ManageStudents /></Page>} />
+            <Route path="/admin/irregular-enrollment" element={<Page roles={["ADMIN", "PROGRAM_HEAD"]}><IrregularEnrollment /></Page>} />
+            <Route path="/program-head/irregular-enrollment" element={<Page roles={["ADMIN", "PROGRAM_HEAD"]}><IrregularEnrollment /></Page>} />
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
 
           </Routes>
         </Suspense>
-      </AuthProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

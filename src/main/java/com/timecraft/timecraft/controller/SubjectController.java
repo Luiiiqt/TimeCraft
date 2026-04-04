@@ -87,10 +87,19 @@ public class SubjectController {
         return ResponseEntity.ok(
                 ApiResponse.of(subjectService.findFullCurriculum(courseId)));
     }
+    // ── GET /api/v1/subjects/by-code/{code} ──────────────────────────────────
+
+    @GetMapping("/by-code/{code}")
+    public ResponseEntity<ApiResponse<Subject>> findByCode(@PathVariable String code) {
+        return subjectService.findByCode(code)
+                .map(s -> ResponseEntity.ok(ApiResponse.of(s)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     // ── POST /api/v1/subjects ─────────────────────────────────────────────────
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
     public ResponseEntity<ApiResponse<Subject>> create(
             @Valid @RequestBody SubjectRequest request) {
         Subject subject = subjectService.create(
@@ -107,7 +116,7 @@ public class SubjectController {
     // ── PUT /api/v1/subjects/{id} ─────────────────────────────────────────────
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
     public ResponseEntity<ApiResponse<Subject>> update(
             @PathVariable Long id,
             @Valid @RequestBody SubjectRequest request) {

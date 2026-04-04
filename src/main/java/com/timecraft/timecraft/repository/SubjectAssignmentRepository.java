@@ -14,8 +14,15 @@ public interface SubjectAssignmentRepository
 
     List<SubjectAssignment> findByAssignedByIdAndSemesterAndSchoolYear(
             Long programHeadId, String semester, String schoolYear);
+
     List<SubjectAssignment> findBySemesterAndSchoolYearAndIsFinalizedTrue(
             String semester, String schoolYear);
+
     Optional<SubjectAssignment> findBySubjectIdAndSectionIdAndSemesterAndSchoolYear(
             Long subjectId, Long sectionId, String semester, String schoolYear);
+
+    Optional<SubjectAssignment> findBySubjectIdAndSectionIdAndSemesterAndSchoolYearAndIsFinalizedTrue(
+            Long subjectId, Long sectionId, String semester, String schoolYear);
+
+        List<SubjectAssignment> findBySubjectId(Long subjectId);
 }

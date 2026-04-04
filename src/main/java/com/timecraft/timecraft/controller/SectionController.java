@@ -1,6 +1,7 @@
 package com.timecraft.timecraft.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,8 +21,6 @@ import com.timecraft.timecraft.service.SectionService;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/v1/sections")
 @RequiredArgsConstructor
@@ -32,12 +31,13 @@ public class SectionController {
     // ── GET /api/v1/sections ──────────────────────────────────────────────────
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<Section>>> findAll(
+    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> findAll(
             @RequestParam(required = false) Long courseId,
             @RequestParam(required = false) Short yearLevel,
             @RequestParam(required = false) String semester,
-            @RequestParam(required = false) String schoolYear) {
+            @RequestParam(required = false) String schoolYear,
+            @RequestParam(required = false) Long departmentId) {
 
         List<Section> sections;
 
@@ -50,6 +50,9 @@ public class SectionController {
             sections = sectionService.findByCourseAndYear(courseId, yearLevel);
         } else if (courseId != null) {
             sections = sectionService.findByCourse(courseId);
+        } else if (departmentId != null && semester != null && schoolYear != null) {
+            sections = sectionService.findByDepartmentAndTerm(
+                    departmentId, Semester.valueOf(semester), schoolYear);
         } else if (semester != null && schoolYear != null) {
             sections = sectionService.findByTerm(
                     Semester.valueOf(semester), schoolYear);
@@ -57,7 +60,21 @@ public class SectionController {
             sections = sectionService.findAll();
         }
 
-        return ResponseEntity.ok(ApiResponse.of(sections));
+        List<Map<String, Object>> result = sections.stream().map(s -> {
+            Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("id", s.getId());
+            m.put("sectionName", s.getSectionName());
+            m.put("yearLevel", s.getYearLevel());
+            m.put("maxStudents", s.getMaxStudents());
+            m.put("courseId", s.getCourse().getId());
+            m.put("courseCode", s.getCourse().getCode());
+            m.put("courseName", s.getCourse().getName());
+            m.put("semester", s.getSemester());
+            m.put("schoolYear", s.getSchoolYear());
+            m.put("active", s.isActive());
+            return m;
+        }).toList();
+        return ResponseEntity.ok(ApiResponse.of(result));
     }
 
     // ── GET /api/v1/sections/{id} ─────────────────────────────────────────────
@@ -98,6 +115,41 @@ public class SectionController {
                         : 45);
         return ResponseEntity.ok(
                 ApiResponse.success("Section created", section));
+    }
+
+    // ── POST /api/v1/sections/config ──────────────────────────────────────────
+
+    @PostMapping("/config")
+    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
+    public ResponseEntity<ApiResponse<Void>> setSectionConfig(
+            @RequestBody Map<String, Object> body) {
+        sectionService.setSectionConfig(
+            Long.valueOf(body.get("courseId").toString()),
+            Short.valueOf(body.get("yearLevel").toString()),
+            Short.valueOf(body.get("sectionCount").toString()),
+            Semester.valueOf((String) body.get("semester")),
+            (String) body.get("schoolYear"));
+        return ResponseEntity.ok(ApiResponse.success("Section config saved"));
+    }
+
+    // ── GET /api/v1/sections/config ───────────────────────────────────────────
+
+    @GetMapping("/config")
+    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getSectionConfigs(
+            @RequestParam Long courseId,
+            @RequestParam String semester,
+            @RequestParam String schoolYear) {
+        List<Map<String, Object>> configs = sectionService
+            .getSectionConfigs(courseId, Semester.valueOf(semester), schoolYear)
+            .stream().map(c -> {
+                Map<String, Object> m = new java.util.LinkedHashMap<>();
+                m.put("courseId", c.getCourse().getId());
+                m.put("yearLevel", c.getYearLevel());
+                m.put("sectionCount", c.getSectionCount());
+                return m;
+            }).toList();
+        return ResponseEntity.ok(ApiResponse.of(configs));
     }
 
     // ── PUT /api/v1/sections/{id}/deactivate ──────────────────────────────────

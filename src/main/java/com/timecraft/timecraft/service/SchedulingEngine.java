@@ -3,10 +3,12 @@ package com.timecraft.timecraft.service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.timecraft.timecraft.dto.request.ScheduleGenerateRequest;
 import com.timecraft.timecraft.model.Campus;
 import com.timecraft.timecraft.model.ConflictLog.ConflictType;
 import com.timecraft.timecraft.model.CourseSubject;
@@ -17,6 +19,8 @@ import com.timecraft.timecraft.model.Schedule;
 import com.timecraft.timecraft.model.Schedule.ScheduleStatus;
 import com.timecraft.timecraft.model.Section;
 import com.timecraft.timecraft.model.Subject;
+import com.timecraft.timecraft.model.SubjectAssignment;
+import com.timecraft.timecraft.model.TeacherAvailability;
 import com.timecraft.timecraft.model.TeacherProfile;
 import com.timecraft.timecraft.model.Timeslot;
 import com.timecraft.timecraft.model.User;
@@ -25,6 +29,8 @@ import com.timecraft.timecraft.repository.RoomRepository;
 import com.timecraft.timecraft.repository.ScheduleRepository;
 import com.timecraft.timecraft.repository.SectionRepository;
 import com.timecraft.timecraft.repository.StudentChecklistRepository;
+import com.timecraft.timecraft.repository.SubjectAssignmentRepository;
+import com.timecraft.timecraft.repository.TeacherAvailabilityRepository;
 import com.timecraft.timecraft.repository.TeacherProfileRepository;
 import com.timecraft.timecraft.repository.TimeslotRepository;
 
@@ -73,6 +79,8 @@ public class SchedulingEngine {
         private final StudentChecklistRepository studentChecklistRepository;
         private final ConflictLogService conflictLogService;
         private final OllamaScheduleAdvisorService ollamaAdvisor;
+        private final SubjectAssignmentRepository subjectAssignmentRepository;
+        private final TeacherAvailabilityRepository teacherAvailabilityRepository;
 
         // Max students per section — used to compute how many sections to open
         private static final int MAX_CLASS_SIZE = 40;
@@ -95,18 +103,30 @@ public class SchedulingEngine {
          * @return list of all Schedule entries created (DRAFT + CONFLICTED)
          */
         @Transactional
-        public List<Schedule> generateForTerm(Semester semester, String schoolYear) {
+        public List<Schedule> generateForTerm(ScheduleGenerateRequest request) {
+                Semester semester = request.getSemester();
+                String schoolYear = request.getSchoolYear();
                 log.info("Starting schedule generation for {} {}", semester, schoolYear);
 
                 // Clear previous drafts and conflict logs for this term
-                clearDrafts(semester, schoolYear);
-                conflictLogService.clearAllForTerm(semester, schoolYear);
+                if (request.isClearDraftsFirst()) {
+                        if (request.getCourseId() != null) {
+                                clearDraftsForCourse(request.getCourseId(), semester, schoolYear);
+                        } else {
+                                clearDrafts(semester, schoolYear);
+                        }
+                        conflictLogService.clearAllForTerm(semester, schoolYear);
+                }
 
                 // Fetch all active sections for the term, sorted most-constrained first
                 List<Section> sections = sectionRepository
                                 .findBySemesterAndSchoolYear(semester, schoolYear)
                                 .stream()
                                 .filter(Section::isActive)
+                                .filter(s -> request.getSectionId() == null
+                                                || s.getId().equals(request.getSectionId()))
+                                .filter(s -> request.getCourseId() == null
+                                                || s.getCourse().getId().equals(request.getCourseId()))
                                 .sorted(Comparator
                                                 .comparingInt((Section s) -> isHealthSection(s) ? 0 : 1)
                                                 .thenComparingInt(s -> -s.getMaxStudents()))
@@ -172,17 +192,28 @@ public class SchedulingEngine {
                 for (CourseSubject cs : curriculum) {
                         Subject subject = cs.getSubject();
 
-                        // Skip shared subjects if already scheduled for another section
-                        // that shares it — students will be enrolled across sections
                         if (cs.isShared() && isAlreadyScheduled(subject, semester, schoolYear)) {
                                 log.debug("Subject {} is shared and already scheduled — skipping",
                                                 subject.getCode());
                                 continue;
                         }
 
-                        Schedule schedule = tryScheduleSubject(
-                                        subject, section, campus, semester, schoolYear);
-                        result.add(schedule);
+                        boolean isMajor = subject.getSubjectType() == Subject.SubjectType.MAJOR;
+
+                        if (isMajor && subject.getSessionType() == Subject.SessionType.LECTURE) {
+                                // MAJOR LECTURE: 1hr slot twice a week — use slot pair (same slotNumber, diff
+                                // days)
+                                Schedule lec = tryScheduleSubject(subject, section, campus, semester, schoolYear);
+                                result.add(lec);
+                        } else if (isMajor && subject.getSessionType() == Subject.SessionType.LABORATORY) {
+                                // MAJOR LAB: 1.5hr slot twice a week — normal 90-min slot pair
+                                Schedule lab = tryScheduleSubject(subject, section, campus, semester, schoolYear);
+                                result.add(lab);
+                        } else {
+                                // MINOR: 1.5hr twice a week — normal slot pair
+                                Schedule schedule = tryScheduleSubject(subject, section, campus, semester, schoolYear);
+                                result.add(schedule);
+                        }
                 }
 
                 return result;
@@ -194,7 +225,7 @@ public class SchedulingEngine {
                         Campus campus, Semester semester,
                         String schoolYear) {
                 User teacher = subject.getDepartment() != null
-                                ? resolveTeacher(subject)
+                                ? resolveTeacher(subject, section, semester, schoolYear)
                                 : null;
 
                 if (teacher == null) {
@@ -288,17 +319,33 @@ public class SchedulingEngine {
                                 .findAllByOrderByDayOfWeekAscSlotNumberAsc();
 
                 List<Timeslot> freeSlots = allSlots.stream()
-                                .filter(ts -> isSlotFreeForTeacher(teacher, ts,
-                                                semester, schoolYear))
-                                .filter(ts -> isSlotFreeForSection(section, ts,
-                                                semester, schoolYear))
+                                .filter(ts -> isTeacherAvailableAtSlot(teacher, ts))
+                                .filter(ts -> isSlotFreeForTeacher(teacher, ts, semester, schoolYear))
+                                .filter(ts -> isSlotFreeForSection(section, ts, semester, schoolYear))
                                 .toList();
 
-                // Find two slots on different days
-                for (int i = 0; i < freeSlots.size(); i++) {
-                        for (int j = i + 1; j < freeSlots.size(); j++) {
-                                Timeslot ts1 = freeSlots.get(i);
-                                Timeslot ts2 = freeSlots.get(j);
+                // Count how many classes the section already has per day
+                java.util.Map<Object, Long> dayLoad = new java.util.HashMap<>();
+                freeSlots.forEach(ts -> dayLoad.merge(ts.getDayOfWeek(), 0L, Long::sum));
+                scheduleRepository.findSectionSchedules(section.getId(), semester, schoolYear)
+                                .forEach(s -> {
+                                        if (s.getTimeslot() != null)
+                                                dayLoad.merge(s.getTimeslot().getDayOfWeek(), 1L, Long::sum);
+                                        if (s.getTimeslot2() != null)
+                                                dayLoad.merge(s.getTimeslot2().getDayOfWeek(), 1L, Long::sum);
+                                });
+
+                // Sort free slots by least-loaded day first to spread across the week
+                List<Timeslot> spread = freeSlots.stream()
+                                .sorted(Comparator.comparingLong(
+                                                ts -> dayLoad.getOrDefault(ts.getDayOfWeek(), 0L)))
+                                .toList();
+
+                // Find two slots on different days (least loaded days first)
+                for (int i = 0; i < spread.size(); i++) {
+                        for (int j = i + 1; j < spread.size(); j++) {
+                                Timeslot ts1 = spread.get(i);
+                                Timeslot ts2 = spread.get(j);
                                 if (ts1.getDayOfWeek() != ts2.getDayOfWeek()) {
                                         return new TimeslotPair(ts1, ts2);
                                 }
@@ -313,14 +360,13 @@ public class SchedulingEngine {
                         RoomType roomType, int minCapacity,
                         Long timeslotId, Semester semester, String schoolYear) {
                 if (profile != null && profile.isGETeacher()) {
-                        // GE teacher: search both campuses, preferred campus first
                         Long preferredId = profile.getPreferredCampus() != null
                                         ? profile.getPreferredCampus().getId()
                                         : defaultCampus.getId();
 
-                        List<Room> rooms = roomRepository.findAvailableRooms(
-                                defaultCampus.getId(), roomType, minCapacity,
-                                timeslotId, semester, schoolYear);
+                        List<Room> rooms = roomRepository.findAvailableRoomsFlexible(
+                                        roomType, minCapacity, timeslotId,
+                                        semester, schoolYear, preferredId);
                         return rooms.isEmpty() ? null : rooms.get(0);
                 }
 
@@ -372,18 +418,50 @@ public class SchedulingEngine {
                                 subject.getId(), semester, schoolYear).isEmpty();
         }
 
-        private User resolveTeacher(Subject subject) {
+        // Add this field injection above ^^, then replace the method:
+
+        private User resolveTeacher(Subject subject, Section section,
+                        Semester semester, String schoolYear) {
+                // First: honour Program Head's finalized assignment
+                Optional<User> assigned = subjectAssignmentRepository
+                                .findBySubjectIdAndSectionIdAndSemesterAndSchoolYearAndIsFinalizedTrue(
+                                                subject.getId(), section.getId(),
+                                                semester.name(), schoolYear)
+                                .map(SubjectAssignment::getTeacher)
+                                .filter(u -> u != null && u.isActive());
+                if (assigned.isPresent())
+                        return assigned.get();
+
+                // Fallback: check if subject is GE (MINOR type)
+                boolean isGE = subject.getSubjectType() == Subject.SubjectType.MINOR;
+
+                if (isGE) {
+                        // GE: find any GE teacher available with least load
+                        return teacherProfileRepository.findAll().stream()
+                                        .filter(TeacherProfile::isGETeacher)
+                                        .map(TeacherProfile::getUser)
+                                        .filter(u -> u != null && u.isActive())
+                                        .filter(u -> teacherAvailabilityRepository
+                                                        .existsByTeacherIdAndAvailableTrue(u.getId()))
+                                        .min(Comparator.comparingLong(
+                                                        u -> scheduleRepository.countByTeacherIdAndStatus(
+                                                                        u.getId(), ScheduleStatus.DRAFT)))
+                                        .orElse(null);
+                }
+
+                // Major: least-loaded available teacher in subject's department
                 return teacherProfileRepository
                                 .findByDepartmentId(subject.getDepartment().getId())
                                 .stream()
                                 .map(TeacherProfile::getUser)
                                 .filter(u -> u != null && u.isActive())
-                                .min(Comparator.comparingLong(u -> scheduleRepository.countByTeacherIdAndStatus(
-                                                u.getId(),
-                                                ScheduleStatus.DRAFT)))
+                                .filter(u -> teacherAvailabilityRepository
+                                                .existsByTeacherIdAndAvailableTrue(u.getId()))
+                                .min(Comparator.comparingLong(
+                                                u -> scheduleRepository.countByTeacherIdAndStatus(
+                                                                u.getId(), ScheduleStatus.DRAFT)))
                                 .orElse(null);
         }
-
         // ── Conflict save helper ───────────────────────────────────────────────────
 
         private Schedule logAndSaveConflict(Schedule existing, Subject subject,
@@ -411,6 +489,7 @@ public class SchedulingEngine {
         // ── Draft cleanup ─────────────────────────────────────────────────────────
 
         private void clearDrafts(Semester semester, String schoolYear) {
+                Long courseId = null; // set from request if available
                 List<Schedule> drafts = scheduleRepository
                                 .findBySemesterAndSchoolYearAndStatus(
                                                 semester, schoolYear, ScheduleStatus.DRAFT);
@@ -418,8 +497,26 @@ public class SchedulingEngine {
                 log.info("Cleared {} existing DRAFT entries", drafts.size());
         }
 
+        private void clearDraftsForCourse(Long courseId, Semester semester, String schoolYear) {
+                List<Schedule> drafts = scheduleRepository
+                                .findBySemesterAndSchoolYearAndStatus(semester, schoolYear, ScheduleStatus.DRAFT)
+                                .stream()
+                                .filter(s -> s.getSection() != null &&
+                                             s.getSection().getCourse().getId().equals(courseId))
+                                .toList();
+                scheduleRepository.deleteAll(drafts);
+                log.info("Cleared {} DRAFT entries for courseId={}", drafts.size(), courseId);
+        }
+
         // ── Inner record for timeslot pair ────────────────────────────────────────
 
         private record TimeslotPair(Timeslot ts1, Timeslot ts2) {
+        }
+
+        private boolean isTeacherAvailableAtSlot(User teacher, Timeslot ts) {
+                return teacherAvailabilityRepository
+                                .findByTeacherIdAndTimeslotId(teacher.getId(), ts.getId())
+                                .map(TeacherAvailability::isAvailable)
+                                .orElse(false); // absent = not declared available = skip
         }
 }

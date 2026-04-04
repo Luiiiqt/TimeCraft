@@ -17,10 +17,12 @@ const ADMIN_NAV = [
 
 const TEACHER_NAV = [
   { section: "Overview" },
-  { to: "/teacher",              icon: "◈", label: "Dashboard"      },
+  { to: "/teacher",              icon: "◈", label: "Dashboard"         },
   { section: "My Schedule" },
-  { to: "/teacher/schedule",     icon: "▦", label: "View Schedule"  },
-  { to: "/teacher/availability", icon: "🕐", label: "Set Availability"},
+  { to: "/teacher/schedule",     icon: "▦", label: "View Schedule"     },
+  { to: "/teacher/availability", icon: "🕐", label: "Set Availability"  },
+  { section: "Preferences" },
+  { to: "/teacher/preferences",  icon: "📋", label: "Subject Preferences"},
 ];
 
 const STUDENT_NAV = [
@@ -35,6 +37,7 @@ const PROGRAM_HEAD_NAV = [
   { section: "Overview" },
   { to: "/program-head",             icon: "◈",  label: "Dashboard"           },
   { section: "Assignments" },
+  { to: "/program-head/subjects",    icon: "📚", label: "Subjects"            },
   { to: "/program-head/assignments", icon: "📋", label: "Subject Assignments" },
   { to: "/program-head/preferences", icon: "✅", label: "Teacher Preferences" },
   { section: "Schedule" },

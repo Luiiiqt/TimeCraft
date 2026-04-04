@@ -136,10 +136,11 @@ const getMe = async () => {
  */
 const getHomeRoute = (role) => {
   switch (role) {
-    case "ADMIN":   return "/admin";
-    case "TEACHER": return "/teacher";
-    case "STUDENT": return "/student";
-    default:        return "/login";
+    case "ADMIN":        return "/admin";
+    case "TEACHER":      return "/teacher";
+    case "STUDENT":      return "/student";
+    case "PROGRAM_HEAD": return "/program-head";
+    default:             return "/login";
   }
 };
 
@@ -164,7 +165,8 @@ const isTeacher = (user) => user?.role === "TEACHER";
  * @param {object} user
  * @returns {boolean}
  */
-const isAdmin = (user) => user?.role === "ADMIN";
+const isAdmin       = (user) => user?.role === "ADMIN";
+const isProgramHead = (user) => user?.role === "PROGRAM_HEAD";
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
@@ -176,6 +178,7 @@ const authService = {
   isStudent,
   isTeacher,
   isAdmin,
+  isProgramHead,
 };
 
 export default authService;

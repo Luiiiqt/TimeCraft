@@ -2,8 +2,16 @@ import { useState, useEffect } from "react";
 import useAuth from "../../hooks/useAuth";
 import api from "../../services/api";
 
-const SEMESTER    = "1st";
-const SCHOOL_YEAR = "2024-2025";
+function getCurrentTerm() {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+  return {
+    semester: month >= 6 && month <= 10 ? "FIRST" : "SECOND",
+    schoolYear: `${year}-${year + 1}`,
+  };
+}
+const { semester: SEMESTER, schoolYear: SCHOOL_YEAR } = getCurrentTerm();
 
 export default function SubjectPreferences() {
   const { user } = useAuth();
@@ -18,8 +26,8 @@ export default function SubjectPreferences() {
     setLoading(true);
     try {
       const [sRes, pRes] = await Promise.all([
-        api.get(`/subjects?departmentId=${user?.departmentId}`),
-        api.get(`/teachers/subject-preferences?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
+        api.get(`/teachers/${user?.userId ?? user?.id}/available-subjects`),
+        api.get(`/teachers/${user?.userId ?? user?.id}/subject-preferences?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
       ]);
       const allSubjects = sRes.data?.data ?? [];
       const prefs       = pRes.data?.data ?? [];
@@ -33,7 +41,7 @@ export default function SubjectPreferences() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (user?.id ?? user?.userId) load(); }, [user]);
 
   const toggle = (id) => {
     setSelected(prev => {
@@ -46,7 +54,7 @@ export default function SubjectPreferences() {
   const handleSave = async () => {
     setSaving(true); setMsg(null);
     try {
-      await api.post("/teachers/subject-preferences", {
+      await api.post(`/teachers/${user?.userId ?? user?.id}/subject-preferences`, {
         subjectIds: [...selected],
         semester:   SEMESTER,
         schoolYear: SCHOOL_YEAR,

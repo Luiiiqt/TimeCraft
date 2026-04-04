@@ -10,8 +10,10 @@ import com.timecraft.timecraft.exception.ResourceNotFoundException;
 import com.timecraft.timecraft.model.Course;
 import com.timecraft.timecraft.model.CourseSubject.Semester;
 import com.timecraft.timecraft.model.Section;
+import com.timecraft.timecraft.model.SectionConfig;
 import com.timecraft.timecraft.repository.CourseRepository;
 import com.timecraft.timecraft.repository.SectionRepository;
+import com.timecraft.timecraft.repository.SectionConfigRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +24,7 @@ public class SectionService {
 
     private final SectionRepository sectionRepository;
     private final CourseRepository courseRepository;
+    private final SectionConfigRepository sectionConfigRepository;
 
     // ── Lookup ────────────────────────────────────────────────────────────────
 
@@ -102,5 +105,59 @@ public class SectionService {
         Section section = findById(id);
         section.setActive(false);
         sectionRepository.save(section);
+    }
+
+    public List<Section> findByDepartmentAndTerm(Long departmentId,
+            Semester semester, String schoolYear) {
+        return sectionRepository.findBySemesterAndSchoolYear(semester, schoolYear)
+                .stream()
+                .filter(s -> s.getCourse().getDepartment().getId().equals(departmentId))
+                .filter(Section::isActive)
+                .toList();
+    }
+
+    // ── Section config (PH sets section count) ────────────────────────────────
+
+    @Transactional
+    public void setSectionConfig(Long courseId, short yearLevel,
+            short sectionCount, Semester semester, String schoolYear) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + courseId));
+
+        SectionConfig config = sectionConfigRepository
+                .findByCourseIdAndYearLevelAndSemesterAndSchoolYear(
+                        courseId, yearLevel, semester.name(), schoolYear)
+                .orElse(SectionConfig.builder()
+                        .course(course)
+                        .yearLevel(yearLevel)
+                        .semester(semester.name())
+                        .schoolYear(schoolYear)
+                        .build());
+        config.setSectionCount(sectionCount);
+        sectionConfigRepository.save(config);
+
+        // Auto-create sections A, B, C… up to sectionCount
+        for (int i = 0; i < sectionCount; i++) {
+            String name = String.valueOf((char) ('A' + i));
+            if (!sectionRepository
+                    .existsByCourseIdAndYearLevelAndSectionNameAndSemesterAndSchoolYear(
+                            courseId, yearLevel, name, semester, schoolYear)) {
+                sectionRepository.save(Section.builder()
+                        .course(course)
+                        .yearLevel(yearLevel)
+                        .sectionName(name)
+                        .semester(semester)
+                        .schoolYear(schoolYear)
+                        .maxStudents((short) 45)
+                        .build());
+            }
+        }
+    }
+
+    public List<SectionConfig> getSectionConfigs(Long courseId,
+            Semester semester, String schoolYear) {
+        return sectionConfigRepository
+                .findByCourseIdAndSemesterAndSchoolYear(
+                        courseId, semester.name(), schoolYear);
     }
 }

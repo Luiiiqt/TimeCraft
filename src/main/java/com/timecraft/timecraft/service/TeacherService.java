@@ -188,7 +188,9 @@ public class TeacherService {
             Long teacherId, String semester, String schoolYear) {
         return subjectPreferenceRepository
                 .findByTeacherIdAndSemesterAndSchoolYear(
-                        teacherId, semester, schoolYear);
+                        teacherId,
+                        com.timecraft.timecraft.model.CourseSubject.Semester.valueOf(semester),
+                        schoolYear);
     }
 
     @Transactional
@@ -202,7 +204,9 @@ public class TeacherService {
         for (Long subjectId : subjectIds) {
             boolean exists = subjectPreferenceRepository
                     .findByTeacherIdAndSubjectIdAndSemesterAndSchoolYear(
-                            teacherId, subjectId, semester, schoolYear)
+                            teacherId, subjectId,
+                            com.timecraft.timecraft.model.CourseSubject.Semester.valueOf(semester),
+                            schoolYear)
                     .isPresent();
             if (!exists) {
                 Subject subject = subjectRepository.findById(subjectId)
@@ -212,7 +216,7 @@ public class TeacherService {
                         TeacherSubjectPreference.builder()
                                 .teacher(teacher)
                                 .subject(subject)
-                                .semester(semester)
+                                .semester(com.timecraft.timecraft.model.CourseSubject.Semester.valueOf(semester))
                                 .schoolYear(schoolYear)
                                 .build());
             }
@@ -263,6 +267,10 @@ public class TeacherService {
 
         // Delete all existing availability for this teacher
         availabilityRepository.deleteByTeacherId(teacherId);
+        availabilityRepository.flush();
+
+        // Re-insert all timeslots — available=true only for selected IDs
+        availabilityRepository.flush();
 
         // Re-insert all timeslots — available=true only for selected IDs
         List<Timeslot> allSlots = timeslotRepository
@@ -279,6 +287,19 @@ public class TeacherService {
                     .build());
         }
         availabilityRepository.saveAll(records);
+    }
+
+    // ── Available subjects ────────────────────────────────────────────────────
+
+    public List<Subject> getAvailableSubjects(Long teacherId) {
+        TeacherProfile profile = findProfileByUserId(teacherId);
+        Long departmentId = profile.getDepartment().getId();
+
+        // GE teachers see all subjects; others see only their department's subjects
+        if (profile.isCampusFlexible()) {
+            return subjectRepository.findByIsActiveTrue();
+        }
+        return subjectRepository.findByDepartmentIdAndIsActiveTrue(departmentId);
     }
 
     // ── Deactivate ────────────────────────────────────────────────────────────

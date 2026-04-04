@@ -98,6 +98,11 @@ export default function AdminDashboard() {
 
   const [stats,        setStats]        = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [departments,  setDepartments]  = useState([]);
+  const [teacherForm,  setTeacherForm]  = useState({ fullName: "", email: "", schoolId: "", departmentId: "", isGETeacher: false });
+  const [teacherSaving, setTeacherSaving] = useState(false);
+  const [teacherMsg,   setTeacherMsg]   = useState("");
+  const [showTeacherForm, setShowTeacherForm] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -114,6 +119,7 @@ export default function AdminDashboard() {
         const rooms       = roomRes.data?.data     ?? roomRes.data     ?? [];
         const subjects    = subjectRes.data?.data  ?? subjectRes.data  ?? [];
         const students    = studentRes.data?.data  ?? studentRes.data  ?? [];
+        setDepartments(Array.isArray(departments) ? departments : []);
         setStats({
           departments : Array.isArray(departments) ? departments.length : 0,
           rooms       : Array.isArray(rooms)       ? rooms.length       : 0,
@@ -216,6 +222,61 @@ export default function AdminDashboard() {
         />
       </div>
 
+      {/* Teacher Registration */}
+      <h2 className="section-title" style={{ marginBottom: "var(--space-3)" }}>Register Teacher</h2>
+      <div style={{ background: "var(--surface-card)", borderRadius: 12, border: "1px solid var(--grey-200)", padding: "20px 22px", marginBottom: "var(--space-6)" }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+          {[
+            { key: "fullName", label: "FULL NAME", placeholder: "Juan dela Cruz" },
+            { key: "email", label: "EMAIL", placeholder: "juan@school.edu" },
+            { key: "schoolId", label: "SCHOOL ID", placeholder: "T-2024-001" },
+          ].map(f => (
+            <div key={f.key}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--grey-500)", display: "block", marginBottom: 4 }}>{f.label}</label>
+              <input placeholder={f.placeholder} value={teacherForm[f.key]}
+                onChange={e => setTeacherForm(p => ({ ...p, [f.key]: e.target.value }))}
+                style={{ padding: "7px 10px", borderRadius: 7, border: "1.5px solid var(--grey-200)", fontSize: 13, width: 160 }} />
+            </div>
+          ))}
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, color: "var(--grey-500)", display: "block", marginBottom: 4 }}>DEPARTMENT</label>
+            <select value={teacherForm.departmentId} onChange={e => setTeacherForm(p => ({ ...p, departmentId: e.target.value }))}
+              style={{ padding: "7px 10px", borderRadius: 7, border: "1.5px solid var(--grey-200)", fontSize: 13 }}>
+              <option value="">Select…</option>
+              {departments.map(d => <option key={d.id} value={d.id}>{d.code}</option>)}
+            </select>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBottom: 4 }}>
+            <input type="checkbox" id="isGE" checked={teacherForm.isGETeacher}
+              onChange={e => setTeacherForm(p => ({ ...p, isGETeacher: e.target.checked }))}
+              style={{ width: 14, height: 14 }} />
+            <label htmlFor="isGE" style={{ fontSize: 12, color: "var(--grey-700)", cursor: "pointer" }}>GE Teacher</label>
+          </div>
+          <button disabled={teacherSaving} onClick={async () => {
+            if (!teacherForm.fullName || !teacherForm.email || !teacherForm.schoolId || !teacherForm.departmentId) {
+              setTeacherMsg("✗ All fields required."); return;
+            }
+            setTeacherSaving(true); setTeacherMsg("");
+            try {
+              await api.post("/admin/teachers", {
+                fullName: teacherForm.fullName,
+                email: teacherForm.email,
+                schoolId: teacherForm.schoolId,
+                departmentId: Number(teacherForm.departmentId),
+                isGETeacher: teacherForm.isGETeacher,
+              });
+              setTeacherMsg("✓ Teacher registered. Default password = School ID.");
+              setTeacherForm({ fullName: "", email: "", schoolId: "", departmentId: "", isGETeacher: false });
+            } catch (e) {
+              setTeacherMsg("✗ " + (e.response?.data?.message ?? "Failed"));
+            } finally { setTeacherSaving(false); }
+          }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: teacherSaving ? "#93c5fd" : "#1a56db", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            {teacherSaving ? "Saving…" : "Register"}
+          </button>
+        </div>
+        {teacherMsg && <p style={{ fontSize: 12, marginTop: 8, color: teacherMsg.startsWith("✓") ? "#16a34a" : "#dc2626" }}>{teacherMsg}</p>}
+      </div>
+
       {/* Quick actions */}
       <h2 className="section-title">Quick Actions</h2>
       <div style={{
@@ -264,6 +325,12 @@ export default function AdminDashboard() {
           icon="🕐"
           accentColor="#0369a1"
           onClick={() => navigate("/admin/availability")}
+        />
+        <QuickCard
+          label="Irregular Enrollment"
+          icon="📋"
+          accentColor="#7c3aed"
+          onClick={() => navigate("/admin/irregular-enrollment")}
         />
       </div>
     </div>

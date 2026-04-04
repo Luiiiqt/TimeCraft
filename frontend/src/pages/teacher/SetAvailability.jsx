@@ -90,7 +90,7 @@ function DayColumn({ day, timeslots, selected, onToggle, isSelectedDay, onSelect
       flex: "1 1 140px", minWidth: 130,
       background: "#fff", borderRadius: 12,
       border: isSelectedDay ? "2px solid #2D6A4F" : "1.5px solid #E8EBF2",
-      overflow: "hidden", opacity: isSelectedDay || !Object.values(selected).some(Boolean) ? 1 : 0.45,
+      overflow: "hidden", opacity: 1,
       transition: "all 0.2s",
     }}>
       {/* Day header — click to select this day */}
@@ -121,9 +121,7 @@ function DayColumn({ day, timeslots, selected, onToggle, isSelectedDay, onSelect
             {allSelected ? "✓ All" : "All"}
           </button>
         )}
-        {!isSelectedDay && (
-          <span style={{ fontSize: 11, color: "#9CA3AF" }}>click to select</span>
-        )}
+        {null}
       </div>
 
       {/* Slot list — only interactive if this day is selected */}
@@ -136,7 +134,6 @@ function DayColumn({ day, timeslots, selected, onToggle, isSelectedDay, onSelect
             <button
               key={ts.id}
               onClick={() => {
-                if (!isSelectedDay) return;
                 onToggle({ ...selected, [ts.id]: !isAvail });
               }}
               style={{
@@ -144,7 +141,7 @@ function DayColumn({ day, timeslots, selected, onToggle, isSelectedDay, onSelect
                 padding: "7px 10px", marginBottom: 5, borderRadius: 8,
                 border: isAvail ? "1.5px solid #52C27E" : "1.5px solid #E8EBF2",
                 background: isAvail ? "#F0FBF4" : "#FAFBFC",
-                cursor: isSelectedDay ? "pointer" : "not-allowed",
+                cursor: "pointer",
                 transition: "all 0.15s",
                 fontFamily: "'DM Sans', sans-serif",
               }}
@@ -207,14 +204,8 @@ export default function SetAvailability() {
   };
 
   const handleSelectDay = (day) => {
-    if (selectedDay === day) return; // already selected
-    // Clear all slots from other days, keep slots on new day
-    const cleared = {};
-    timeslots.forEach(ts => {
-      cleared[ts.id] = ts.dayOfWeek === day ? (selected[ts.id] ?? false) : false;
-    });
-    setSelected(cleared);
-    setSelectedDay(day);
+    // Toggle day selection — multiple days allowed
+    setSelectedDay(prev => prev === day ? null : day);
     setIsDirty(true);
     setSaveMsg(null);
   };
@@ -381,9 +372,7 @@ export default function SetAvailability() {
               borderRadius: 10, padding: "10px 16px", marginBottom: 14,
               fontSize: 13, color: selectedDay ? "#1A5C38" : "#92400E",
             }}>
-              {selectedDay
-                ? `Your selected day: ${DAY_LABELS[selectedDay]} — click time slots to set your available hours`
-                : "Click a day header to select your available day (one day only)"}
+              {"Click any day header to expand it, then select your available time slots. Multiple days allowed."}
             </div>
             <div style={{
               background: "#fff", borderRadius: 16, padding: 20,
@@ -437,7 +426,7 @@ export default function SetAvailability() {
               fontSize: 13, color: "#1A5C38", lineHeight: 1.7,
             }}>
               <strong>How it works:</strong><br/>
-              • Click a day header to select your available day. Only ONE day can be selected.<br/>
+              • Click a day header to expand it. You can select slots across multiple days.<br/>
               • Once a day is selected, click individual time slots to mark your available hours.<br/>
               • Click <strong>"Save Availability"</strong> to submit your changes to the system.<br/>
               • The scheduling engine will only assign you to timeslots marked as available.

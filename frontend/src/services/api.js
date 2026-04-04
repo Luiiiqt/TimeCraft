@@ -28,13 +28,18 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.log("API ERROR:", error.config?.url, error.response?.status);
     if (error.response?.status === 401) {
-      localStorage.removeItem("tc_token");
-      localStorage.removeItem("tc_user");
-      delete api.defaults.headers.common["Authorization"];
-      // Avoid pushing to /login if already there
-      if (!window.location.pathname.startsWith("/login")) {
-        window.location.href = "/login";
+      const isAuthEndpoint = error.config?.url?.includes("/auth/");
+      if (!isAuthEndpoint) {
+        localStorage.removeItem("tc_token");
+        localStorage.removeItem("tc_user");
+        delete api.defaults.headers.common["Authorization"];
+        if (!window.location.pathname.startsWith("/login")) {
+          console.trace("REDIRECTING TO LOGIN");
+          debugger;
+          window.location.href = "/login";
+        }
       }
     }
     return Promise.reject(error);

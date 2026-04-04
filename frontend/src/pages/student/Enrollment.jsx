@@ -9,9 +9,14 @@ const CURRENT_YEAR     = "2024-2025";
 export default function Enrollment() {
   const { user } = useAuth();
 
-  // Block regular students entirely
+  // Only irregular students can enroll in back subjects
   if (!user?.isIrregular) {
-    return <Navigate to="/student" replace />;
+    return (
+      <div style={{ padding: "3rem", textAlign: "center", color: "#6b7280" }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>🎓</div>
+        <div style={{ fontWeight: 600, fontSize: 16 }}>Back subject enrollment is for irregular students only.</div>
+      </div>
+    );
   }
 
   const [sections,    setSections]    = useState([]);

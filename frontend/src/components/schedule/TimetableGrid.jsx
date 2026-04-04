@@ -4,13 +4,13 @@ import ScheduleSlot from './ScheduleSlot'
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 const TIMESLOTS = [
-  { slot: 1, label: '7:30 – 9:00' },
-  { slot: 2, label: '9:00 – 10:30' },
-  { slot: 3, label: '10:30 – 12:00' },
-  { slot: 4, label: '12:00 – 1:30' },
-  { slot: 5, label: '1:30 – 3:00' },
-  { slot: 6, label: '3:00 – 4:30' },
-  { slot: 7, label: '4:30 – 6:00' },
+  { slot: 1, label: '7:30 AM – 9:00 AM',    display: '7:30 – 9:00 AM' },
+  { slot: 2, label: '9:00 AM – 10:30 AM',   display: '9:00 – 10:30 AM' },
+  { slot: 3, label: '10:30 AM – 12:00 PM',  display: '10:30 AM – 12:00 PM' },
+  { slot: 4, label: '12:00 PM – 1:30 PM',   display: '12:00 – 1:30 PM' },
+  { slot: 5, label: '1:30 PM – 3:00 PM',    display: '1:30 – 3:00 PM' },
+  { slot: 6, label: '3:00 PM – 4:30 PM',    display: '3:00 – 4:30 PM' },
+  { slot: 7, label: '4:30 PM – 6:00 PM',    display: '4:30 – 6:00 PM' },
 ]
 
 /**
@@ -24,10 +24,15 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
   // Build a lookup map: "DAY-SLOT" -> schedule entry
   const slotMap = {}
   schedules.forEach(entry => {
-    const key1 = `${entry.day1?.toUpperCase()}-${entry.timeslotId}`
-    const key2 = `${entry.day2?.toUpperCase()}-${entry.timeslot2Id}`
-    slotMap[key1] = entry
-    slotMap[key2] = entry
+    if (entry.day1 && entry.timeslotLabel1) {
+      // DB label: "Monday 7:30 AM – 9:00 AM" → extract time part after first space
+      const t1 = entry.timeslotLabel1.replace(/^\w+\s/, '')
+      slotMap[`${entry.day1.toUpperCase()}-${t1}`] = entry
+    }
+    if (entry.day2 && entry.timeslotLabel2) {
+      const t2 = entry.timeslotLabel2.replace(/^\w+\s/, '')
+      slotMap[`${entry.day2.toUpperCase()}-${t2}`] = entry
+    }
   })
 
   return (
@@ -45,23 +50,18 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
         ))}
 
         {/* Time rows */}
-        {TIMESLOTS.map(({ slot, label }) => (
+        {TIMESLOTS.map(({ slot, label, display }) => (
           <React.Fragment key={slot}>
             {/* Time label */}
             <div key={`time-${slot}`} style={styles.timeCell}>
-              <span style={styles.timeText}>{label}</span>
+              <span style={styles.timeText}>{display}</span>
               <span style={styles.slotNum}>S{slot}</span>
             </div>
 
             {/* Cells for each day */}
             {DAYS.map(day => {
               const dayUpper = day.toUpperCase()
-              // Find a schedule that has this day + slot
-              const entry = schedules.find(
-                s =>
-                  (s.day1?.toUpperCase() === dayUpper && s.timeslotId === slot) ||
-                  (s.day2?.toUpperCase() === dayUpper && s.timeslot2Id === slot)
-              )
+              const entry = slotMap[`${dayUpper}-${label}`] // label = display e.g. "7:30 AM – 9:00 AM"
 
               return (
                 <div key={`${day}-${slot}`} style={styles.cell}>
