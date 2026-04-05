@@ -54,71 +54,75 @@ export default function OllamaChat() {
     }
   };
 
+  const CSS = `
+    @keyframes tc-chat-in { from{opacity:0;transform:translateY(10px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+    @keyframes tc-dot { 0%,80%,100%{transform:scale(0.6);opacity:0.4} 40%{transform:scale(1);opacity:1} }
+    .tc-fab:hover { transform: scale(1.08) !important; }
+    .tc-send:hover:not(:disabled) { background: #1A6A2A !important; }
+    .tc-chat-input:focus { border-color: #34C47C !important; outline: none; }
+  `;
+
   return (
     <>
-      {/* Floating button */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          position: "fixed", bottom: 28, right: 28, zIndex: 1000,
-          width: 52, height: 52, borderRadius: "50%",
-          background: "linear-gradient(135deg, #1B4332, #2D6A4F)",
-          border: "none", cursor: "pointer", boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 22, color: "#fff", transition: "transform 0.2s",
-        }}
-        title="Ask AI about the schedule"
-      >
-        {open ? "✕" : "🤖"}
-      </button>
+      <style>{CSS}</style>
 
-      {/* Chat window */}
+      {/* FAB */}
+      <button
+        className="tc-fab"
+        onClick={() => setOpen(o => !o)}
+        title="Ask AI about the schedule"
+        style={{
+          position:"fixed", bottom:28, right:28, zIndex:1000,
+          width:52, height:52, borderRadius:"50%",
+          background:"#112A17", border:"2px solid rgba(52,196,124,0.35)",
+          cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:22, color:"#34C47C", transition:"transform 0.2s",
+          fontFamily:"'DM Sans', sans-serif",
+        }}
+      >{open ? "✕" : "◈"}</button>
+
+      {/* Window */}
       {open && (
         <div style={{
-          position: "fixed", bottom: 92, right: 28, zIndex: 999,
-          width: 360, height: 480, background: "#fff",
-          borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
-          border: "1.5px solid #E8EBF2", display: "flex", flexDirection: "column",
-          fontFamily: "'DM Sans', sans-serif", overflow: "hidden",
+          position:"fixed", bottom:92, right:28, zIndex:999,
+          width:360, height:490, background:"#fff",
+          borderRadius:16, border:"1px solid #D8EAD8",
+          boxShadow:"0 12px 40px rgba(17,42,23,0.15)",
+          display:"flex", flexDirection:"column",
+          fontFamily:"'DM Sans', sans-serif", overflow:"hidden",
+          animation:"tc-chat-in 0.2s ease",
         }}>
 
           {/* Header */}
-          <div style={{
-            background: "linear-gradient(135deg, #1B4332, #2D6A4F)",
-            padding: "14px 18px", color: "#fff",
-            display: "flex", alignItems: "center", gap: 10,
-          }}>
-            <span style={{ fontSize: 20 }}>🤖</span>
+          <div style={{ background:"#112A17", padding:"14px 18px", color:"#fff", display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{ width:34, height:34, borderRadius:"9px", background:"rgba(52,196,124,0.15)", border:"1px solid rgba(52,196,124,0.3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, color:"#34C47C", flexShrink:0 }}>◈</div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>Schedule Assistant</div>
-              <div style={{ fontSize: 11, opacity: 0.8 }}>Powered by Ollama · {CURRENT_SEMESTER} {CURRENT_YEAR}</div>
+              <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:"700", fontSize:14, color:"#fff" }}>Schedule Assistant</div>
+              <div style={{ fontSize:10, color:"rgba(52,196,124,0.6)", letterSpacing:"0.05em" }}>Powered by Ollama · {CURRENT_SEMESTER} {CURRENT_YEAR}</div>
             </div>
           </div>
 
           {/* Messages */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "14px 14px 8px" }}>
+          <div style={{ flex:1, overflowY:"auto", padding:"14px 14px 8px", background:"#FAFCFA" }}>
             {messages.map((m, i) => (
-              <div key={i} style={{
-                display: "flex",
-                justifyContent: m.from === "user" ? "flex-end" : "flex-start",
-                marginBottom: 10,
-              }}>
+              <div key={i} style={{ display:"flex", justifyContent: m.from === "user" ? "flex-end" : "flex-start", marginBottom:10 }}>
                 <div style={{
-                  maxWidth: "80%", padding: "9px 13px", borderRadius: 12,
-                  fontSize: 13, lineHeight: 1.5,
-                  background: m.from === "user" ? "#2D6A4F" : "#F3F4F6",
-                  color: m.from === "user" ? "#fff" : "#111827",
+                  maxWidth:"80%", padding:"9px 13px", borderRadius:12,
+                  fontSize:12.5, lineHeight:1.55,
+                  background: m.from === "user" ? "#112A17" : "#fff",
+                  color: m.from === "user" ? "#fff" : "#112A17",
+                  border: m.from === "ai" ? "1px solid #E0EAE0" : "none",
                   borderBottomRightRadius: m.from === "user" ? 4 : 12,
                   borderBottomLeftRadius:  m.from === "ai"   ? 4 : 12,
-                }}>
-                  {m.text}
-                </div>
+                }}>{m.text}</div>
               </div>
             ))}
             {loading && (
-              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 10 }}>
-                <div style={{ background: "#F3F4F6", borderRadius: 12, borderBottomLeftRadius: 4, padding: "9px 14px", fontSize: 13, color: "#6B7280" }}>
-                  Thinking…
+              <div style={{ display:"flex", justifyContent:"flex-start", marginBottom:10 }}>
+                <div style={{ background:"#fff", border:"1px solid #E0EAE0", borderRadius:12, borderBottomLeftRadius:4, padding:"10px 16px", display:"flex", gap:4, alignItems:"center" }}>
+                  {[0,1,2].map(d => (
+                    <span key={d} style={{ width:6, height:6, borderRadius:"50%", background:"#34C47C", display:"inline-block", animation:`tc-dot 1.2s ease ${d*0.2}s infinite` }} />
+                  ))}
                 </div>
               </div>
             )}
@@ -126,36 +130,28 @@ export default function OllamaChat() {
           </div>
 
           {/* Input */}
-          <div style={{
-            padding: "10px 12px", borderTop: "1px solid #F3F4F6",
-            display: "flex", gap: 8, alignItems: "flex-end",
-          }}>
+          <div style={{ padding:"10px 12px", borderTop:"1px solid #E8EEE8", display:"flex", gap:8, alignItems:"flex-end", background:"#fff" }}>
             <textarea
+              className="tc-chat-input"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
               placeholder="Ask about the schedule…"
               rows={1}
-              style={{
-                flex: 1, resize: "none", border: "1.5px solid #E8EBF2",
-                borderRadius: 10, padding: "8px 12px", fontSize: 13,
-                fontFamily: "'DM Sans', sans-serif", outline: "none",
-                lineHeight: 1.5, maxHeight: 80, overflowY: "auto",
-              }}
+              style={{ flex:1, resize:"none", border:"1.5px solid #D8EAD8", borderRadius:10, padding:"8px 12px", fontSize:13, fontFamily:"'DM Sans', sans-serif", lineHeight:1.5, maxHeight:80, overflowY:"auto", transition:"border-color 0.15s" }}
             />
             <button
+              className="tc-send"
               onClick={send}
               disabled={loading || !input.trim()}
               style={{
-                width: 36, height: 36, borderRadius: "50%", border: "none",
-                background: loading || !input.trim() ? "#E8EBF2" : "#2D6A4F",
-                color: "#fff", cursor: loading || !input.trim() ? "not-allowed" : "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 16, flexShrink: 0,
+                width:36, height:36, borderRadius:"50%", border:"none",
+                background: loading || !input.trim() ? "#E8EEE8" : "#1A6A2A",
+                color:"#fff", cursor: loading || !input.trim() ? "not-allowed" : "pointer",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:16, flexShrink:0, transition:"background 0.15s",
               }}
-            >
-              ↑
-            </button>
+            >↑</button>
           </div>
         </div>
       )}

@@ -98,29 +98,40 @@ export default function Table({
 
 export function StatusBadge({ status }) {
   const map = {
-    PUBLISHED:  { color: '#10b981', bg: 'rgba(16,185,129,0.1)',  label: 'Published' },
-    DRAFT:      { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)', label: 'Draft' },
-    CONFLICTED: { color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   label: 'Conflicted' },
-    ACTIVE:     { color: '#10b981', bg: 'rgba(16,185,129,0.1)',  label: 'Active' },
-    INACTIVE:   { color: '#64748b', bg: 'rgba(100,116,139,0.1)', label: 'Inactive' },
-  }
-  const cfg = map[status] ?? { color: '#94a3b8', bg: 'rgba(148,163,184,0.08)', label: status }
+    PUBLISHED:  { color:"#1A6A2A", bg:"rgba(52,196,124,0.1)",  border:"rgba(52,196,124,0.25)",  label:"Published"  },
+    DRAFT:      { color:"#5F5E5A", bg:"rgba(95,94,90,0.08)",   border:"rgba(95,94,90,0.2)",     label:"Draft"      },
+    CONFLICTED: { color:"#B83030", bg:"rgba(226,75,74,0.08)",  border:"rgba(226,75,74,0.2)",    label:"Conflicted" },
+    ACTIVE:     { color:"#1A6A2A", bg:"rgba(52,196,124,0.1)",  border:"rgba(52,196,124,0.25)",  label:"Active"     },
+    INACTIVE:   { color:"#5F5E5A", bg:"rgba(95,94,90,0.08)",   border:"rgba(95,94,90,0.2)",     label:"Inactive"   },
+  };
+  const cfg = map[status] ?? { color:"#888780", bg:"rgba(136,135,128,0.08)", border:"rgba(136,135,128,0.2)", label: status };
   return (
     <span style={{
-      fontFamily: '"DM Sans", sans-serif',
-      fontSize: '11px',
-      fontWeight: 700,
-      color: cfg.color,
-      background: cfg.bg,
-      padding: '2px 8px',
-      borderRadius: '4px',
-      textTransform: 'uppercase',
-      letterSpacing: '0.4px',
-      whiteSpace: 'nowrap',
-    }}>
-      {cfg.label}
-    </span>
-  )
+      fontSize:"10.5px", fontWeight:"700", color: cfg.color,
+      background: cfg.bg, border:`1px solid ${cfg.border}`,
+      padding:"2px 8px", borderRadius:"5px",
+      textTransform:"uppercase", letterSpacing:"0.4px", whiteSpace:"nowrap",
+      fontFamily:"'DM Sans', sans-serif",
+    }}>{cfg.label}</span>
+  );
+}
+
+export function RoleTag({ role }) {
+  const map = {
+    ADMIN:        { color:"#BA7517", bg:"rgba(186,117,23,0.08)",  border:"rgba(186,117,23,0.2)",  label:"Admin"        },
+    TEACHER:      { color:"#185FA5", bg:"rgba(24,95,165,0.08)",   border:"rgba(24,95,165,0.2)",   label:"Teacher"      },
+    STUDENT:      { color:"#1A6A2A", bg:"rgba(26,106,42,0.08)",   border:"rgba(26,106,42,0.2)",   label:"Student"      },
+    PROGRAM_HEAD: { color:"#534AB7", bg:"rgba(83,74,183,0.08)",   border:"rgba(83,74,183,0.2)",   label:"Program Head" },
+  };
+  const cfg = map[role] ?? { color:"#888780", bg:"rgba(136,135,128,0.08)", border:"rgba(136,135,128,0.2)", label: role };
+  return (
+    <span style={{
+      fontSize:"10.5px", fontWeight:"600", color: cfg.color,
+      background: cfg.bg, border:`1px solid ${cfg.border}`,
+      padding:"2px 8px", borderRadius:"5px",
+      fontFamily:"'DM Sans', sans-serif",
+    }}>{cfg.label}</span>
+  );
 }
 
 export function RoleTag({ role }) {
@@ -144,66 +155,30 @@ export function RoleTag({ role }) {
 
 const styles = {
   wrapper: {
-    overflowX: 'auto',
-    borderRadius: '12px',
-    border: '1px solid rgba(255,255,255,0.06)',
-    background: '#0f172a',
+    overflowX: "auto",
+    borderRadius: "12px",
+    border: "1px solid #E0EAE0",
+    background: "#fff",
+    fontFamily: "'DM Sans', sans-serif",
   },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    minWidth: '480px',
-  },
+  table: { width: "100%", borderCollapse: "collapse", minWidth: "480px" },
   th: {
-    fontFamily: '"DM Sans", sans-serif',
-    fontSize: '11px',
-    fontWeight: 700,
-    color: '#475569',
-    textTransform: 'uppercase',
-    letterSpacing: '0.6px',
-    padding: '12px 16px',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
-    whiteSpace: 'nowrap',
-    background: '#0f172a',
+    fontSize: "10.5px", fontWeight: "700", color: "#3B6D3B",
+    textTransform: "uppercase", letterSpacing: "0.6px",
+    padding: "12px 16px", borderBottom: "1px solid #E0EAE0",
+    whiteSpace: "nowrap", background: "#F4FAF6",
+    fontFamily: "'DM Sans', sans-serif",
   },
-  tr: {
-    borderBottom: '1px solid rgba(255,255,255,0.04)',
-    transition: 'background 0.1s',
-  },
+  tr: { borderBottom: "1px solid #EEF4EE", transition: "background 0.12s", cursor: "default" },
   td: {
-    fontFamily: '"DM Sans", sans-serif',
-    fontSize: '13px',
-    color: '#cbd5e1',
-    padding: '13px 16px',
-    lineHeight: 1.4,
-    verticalAlign: 'middle',
+    fontSize: "13px", color: "#112A17",
+    padding: "13px 16px", lineHeight: 1.45, verticalAlign: "middle",
+    fontFamily: "'DM Sans', sans-serif",
   },
-  skeletonRow: {
-    borderBottom: '1px solid rgba(255,255,255,0.04)',
-  },
-  skeletonCell: {
-    height: '12px',
-    background: 'rgba(255,255,255,0.05)',
-    borderRadius: '4px',
-  },
-  emptyCell: {
-    padding: '48px 16px',
-    textAlign: 'center',
-  },
-  emptyState: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  emptyIcon: {
-    fontSize: '32px',
-    color: '#1e293b',
-  },
-  emptyText: {
-    fontFamily: '"DM Sans", sans-serif',
-    fontSize: '14px',
-    color: '#334155',
-    margin: 0,
-  },
-}
+  skeletonRow: { borderBottom: "1px solid #EEF4EE" },
+  skeletonCell: { height: "12px", background: "#EAF5EC", borderRadius: "4px" },
+  emptyCell: { padding: "48px 16px", textAlign: "center" },
+  emptyState: { display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" },
+  emptyIcon: { fontSize: "32px", color: "#D8EAD8" },
+  emptyText: { fontSize: "14px", color: "#7AAE7A", margin: 0, fontFamily: "'DM Sans', sans-serif" },
+};

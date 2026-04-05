@@ -29,6 +29,7 @@ export default function SubjectAssignments() {
     setLoading(true);
     const courses = user?.courses ?? [];
     const courseId = courses[0]?.id ?? null;
+    if (!courseId) { setError("No managed course found. Contact admin."); setLoading(false); return; }
 
     Promise.all([
       api.get(`/program-head/assignments?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),

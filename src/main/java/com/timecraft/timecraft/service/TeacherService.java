@@ -270,9 +270,6 @@ public class TeacherService {
         availabilityRepository.flush();
 
         // Re-insert all timeslots — available=true only for selected IDs
-        availabilityRepository.flush();
-
-        // Re-insert all timeslots — available=true only for selected IDs
         List<Timeslot> allSlots = timeslotRepository
                 .findAllByOrderByDayOfWeekAscSlotNumberAsc();
 

@@ -54,7 +54,7 @@ export default function ProgramHeadGenerateSchedule() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm(f => ({ ...f, [name]: type === "checkbox" ? checked : value }));
+    setForm(f => ({ ...f, [name]: type === "checkbox" ? checked : name === "courseId" ? Number(value) : value }));
     setResult(null); setError(""); setConfirmed(false);
   };
 
@@ -224,7 +224,7 @@ export default function ProgramHeadGenerateSchedule() {
               {/* View Schedule button */}
               {result.conflicted === 0 && (
                 <button
-                  onClick={() => window.location.href = `/program-head/schedule-view?courseId=${form.courseId}&semester=${form.semester}&schoolYear=${form.schoolYear}`}
+                  onClick={() => navigate(`/program-head/schedule-view?courseId=${form.courseId}&semester=${form.semester}&schoolYear=${form.schoolYear}`)}
                   style={{ width: "100%", padding: "10px", background: "#1a56db", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", marginTop: 4 }}>
                   📅 View Generated Schedule
                 </button>

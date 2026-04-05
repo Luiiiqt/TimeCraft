@@ -48,59 +48,21 @@ export default function Button({
 
 const styles = {
   base: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    fontFamily: '"DM Sans", sans-serif',
-    fontWeight: 600,
-    borderRadius: '8px',
-    border: 'none',
-    transition: 'all 0.15s',
-    letterSpacing: '0.2px',
-    lineHeight: 1,
+    display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
+    fontFamily: "'DM Sans', sans-serif", fontWeight: "600", borderRadius: "8px",
+    border: "none", transition: "all 0.15s", letterSpacing: "0.2px", lineHeight: 1,
   },
   spinner: {
-    display: 'block',
-    width: '14px',
-    height: '14px',
-    border: '2px solid rgba(255,255,255,0.3)',
-    borderTopColor: 'currentColor',
-    borderRadius: '50%',
-    animation: 'spin 0.6s linear infinite',
-    flexShrink: 0,
+    display: "block", width: "14px", height: "14px",
+    border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "currentColor",
+    borderRadius: "50%", animation: "spin 0.6s linear infinite", flexShrink: 0,
   },
-  icon: {
-    fontSize: '14px',
-    lineHeight: 1,
-    flexShrink: 0,
-  },
-}
-
-const sizeMap = {
-  sm: { fontSize: '12px', padding: '7px 14px' },
-  md: { fontSize: '13.5px', padding: '9px 20px' },
-  lg: { fontSize: '15px', padding: '12px 28px' },
-}
+  icon: { fontSize: "14px", lineHeight: 1, flexShrink: 0 },
+};
 
 const variantMap = {
-  primary: {
-    background: '#f59e0b',
-    color: '#0f172a',
-  },
-  secondary: {
-    background: 'rgba(255,255,255,0.06)',
-    color: '#e2e8f0',
-    border: '1px solid rgba(255,255,255,0.1)',
-  },
-  danger: {
-    background: 'rgba(239,68,68,0.12)',
-    color: '#ef4444',
-    border: '1px solid rgba(239,68,68,0.2)',
-  },
-  ghost: {
-    background: 'transparent',
-    color: '#94a3b8',
-    border: '1px solid rgba(255,255,255,0.08)',
-  },
-}
+  primary:   { background: "#1A6A2A", color: "#fff" },
+  secondary: { background: "#F4FAF6", color: "#112A17", border: "1px solid #D8EAD8" },
+  danger:    { background: "rgba(226,75,74,0.08)", color: "#B83030", border: "1px solid rgba(226,75,74,0.2)" },
+  ghost:     { background: "transparent", color: "#3B6D3B", border: "1px solid #D8EAD8" },
+};

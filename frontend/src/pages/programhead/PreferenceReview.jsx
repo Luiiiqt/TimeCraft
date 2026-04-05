@@ -69,7 +69,7 @@ export default function PreferenceReview() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} style={{ padding: 32, textAlign: "center", color: "#9ca3af" }}>Loading…</td></tr>
+              <tr><td colSpan={7} style={{ padding: 32, textAlign: "center", color: "#9ca3af" }}>Loading…</td></tr>
             ) : prefs.length === 0 ? (
               <tr><td colSpan={7} style={{ padding: 32, textAlign: "center", color: "#9ca3af" }}>No preferences submitted yet.</td></tr>
             ) : prefs.map(p => {

@@ -517,6 +517,6 @@ public class SchedulingEngine {
                 return teacherAvailabilityRepository
                                 .findByTeacherIdAndTimeslotId(teacher.getId(), ts.getId())
                                 .map(TeacherAvailability::isAvailable)
-                                .orElse(false); // absent = not declared available = skip
+                                .orElse(true); // absent = no restriction declared = treat as available
         }
 }
