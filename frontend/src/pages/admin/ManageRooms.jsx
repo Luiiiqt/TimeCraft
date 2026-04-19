@@ -183,8 +183,8 @@ export default function ManageRooms() {
                 <td>
                   <span style={{
                     padding: "3px 9px", borderRadius: 6, fontSize: 11, fontWeight: 700,
-                    background: r.roomType === "LABORATORY" ? "#F0FBF4" : "#EEF4FF",
-                    color: r.roomType === "LABORATORY" ? "var(--green-mid)" : "var(--primary)",
+                    background: r.roomType === "LABORATORY" ? "rgba(52,196,124,0.1)" : "rgba(24,95,165,0.08)",
+                    color: r.roomType === "LABORATORY" ? "#1A6A2A" : "#185FA5",
                   }}>
                     {r.roomType === "LABORATORY" ? "🔬 Lab" : "🎓 Lecture"}
                   </span>

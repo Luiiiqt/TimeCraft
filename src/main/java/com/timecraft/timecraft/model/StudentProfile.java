@@ -2,6 +2,8 @@ package com.timecraft.timecraft.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -9,7 +11,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -60,4 +61,23 @@ public class StudentProfile {
     @Column(name = "is_irregular", nullable = false)
     @Builder.Default
     private boolean isIrregular = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "application_status", nullable = false, length = 20)
+    @Builder.Default
+    private ApplicationStatus applicationStatus = ApplicationStatus.APPROVED;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewed_by")
+    private User reviewedBy;
+
+    @Column(name = "reviewed_at")
+    private java.time.LocalDateTime reviewedAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    public enum ApplicationStatus {
+        PENDING, FOR_INTERVIEW, APPROVED, REJECTED
+    }
 }

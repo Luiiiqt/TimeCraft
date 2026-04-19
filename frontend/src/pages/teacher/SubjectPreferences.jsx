@@ -15,22 +15,23 @@ const { semester: SEMESTER, schoolYear: SCHOOL_YEAR } = getCurrentTerm();
 
 export default function SubjectPreferences() {
   const { user } = useAuth();
-  const [subjects,  setSubjects]  = useState([]);
-  const [saved,     setSaved]     = useState([]);
-  const [selected,  setSelected]  = useState(new Set());
-  const [loading,   setLoading]   = useState(true);
-  const [saving,    setSaving]    = useState(false);
-  const [msg,       setMsg]       = useState(null);
+  const [subjects, setSubjects] = useState([]);
+  const [saved, setSaved] = useState([]);
+  const [selected, setSelected] = useState(new Set());
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState(null);
 
   const load = async () => {
     setLoading(true);
+    console.log("TEACHER USER:", user);
     try {
       const [sRes, pRes] = await Promise.all([
-        api.get(`/teachers/${user?.userId ?? user?.id}/available-subjects`),
-        api.get(`/teachers/${user?.userId ?? user?.id}/subject-preferences?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
+        api.get(`/teachers/${user?.id ?? user?.userId}/available-subjects`),
+        api.get(`/teachers/${user?.id ?? user?.userId}/subject-preferences?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
       ]);
       const allSubjects = sRes.data?.data ?? [];
-      const prefs       = pRes.data?.data ?? [];
+      const prefs = pRes.data?.data ?? [];        
       setSubjects(allSubjects);
       setSaved(prefs);
       setSelected(new Set(prefs.map(p => p.subject?.id)));
@@ -56,7 +57,7 @@ export default function SubjectPreferences() {
     try {
       await api.post(`/teachers/${user?.userId ?? user?.id}/subject-preferences`, {
         subjectIds: [...selected],
-        semester:   SEMESTER,
+        semester: SEMESTER,
         schoolYear: SCHOOL_YEAR,
       });
       setMsg({ type: "success", text: "✅ Preferences saved!" });
@@ -74,7 +75,7 @@ export default function SubjectPreferences() {
   };
 
   const STATUS_COLOR = {
-    PENDING:  { bg: "#fef3c7", color: "#92400e" },
+    PENDING: { bg: "#fef3c7", color: "#92400e" },
     APPROVED: { bg: "#d1fae5", color: "#065f46" },
     REJECTED: { bg: "#fee2e2", color: "#991b1b" },
   };
@@ -97,7 +98,7 @@ export default function SubjectPreferences() {
           <thead>
             <tr style={{ background: "#f9fafb", borderBottom: "1.5px solid #e5e7eb" }}>
               <th style={{ padding: "10px 14px", width: 40 }}></th>
-              {["Subject","Code","Units","Session Type","Status"].map(h => (
+              {["Subject", "Code", "Units", "Session Type", "Status"].map(h => (
                 <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, color: "#374151", fontSize: 12 }}>{h}</th>
               ))}
             </tr>
@@ -107,8 +108,8 @@ export default function SubjectPreferences() {
               <tr><td colSpan={6} style={{ padding: 32, textAlign: "center", color: "#9ca3af" }}>Loading…</td></tr>
             ) : subjects.map(s => {
               const checked = selected.has(s.id);
-              const status  = getStatus(s.id);
-              const sc      = status ? STATUS_COLOR[status] : null;
+              const status = getStatus(s.id);
+              const sc = status ? STATUS_COLOR[status] : null;
               return (
                 <tr key={s.id} onClick={() => toggle(s.id)}
                   style={{ borderBottom: "1px solid #f3f4f6", cursor: "pointer", background: checked ? "#eff6ff" : "transparent" }}>
@@ -121,9 +122,11 @@ export default function SubjectPreferences() {
                   <td style={{ padding: "10px 14px", color: "#1a56db", fontWeight: 600 }}>{s.code}</td>
                   <td style={{ padding: "10px 14px", textAlign: "center" }}>{s.units ?? "—"}</td>
                   <td style={{ padding: "10px 14px" }}>
-                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, fontWeight: 600,
+                    <span style={{
+                      fontSize: 11, padding: "2px 8px", borderRadius: 6, fontWeight: 600,
                       background: s.sessionType === "LABORATORY" ? "#f0fdf4" : "#fef9ee",
-                      color:      s.sessionType === "LABORATORY" ? "#15803d" : "#92400e" }}>
+                      color: s.sessionType === "LABORATORY" ? "#15803d" : "#92400e"
+                    }}>
                       {s.sessionType ?? "LECTURE"}
                     </span>
                   </td>

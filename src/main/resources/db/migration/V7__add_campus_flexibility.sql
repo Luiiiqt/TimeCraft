@@ -1,5 +1,5 @@
 -- ============================================================
--- V9: Campus flexibility for teachers
+-- V7: Campus flexibility for teachers
 --
 --  campus_flexible    : TRUE  = GE teachers who can teach at
 --                               either CLI or CHS
@@ -12,8 +12,12 @@
 -- ============================================================
 
 ALTER TABLE teacher_profiles
-    ADD COLUMN campus_flexible      BOOLEAN NOT NULL DEFAULT FALSE,
-    ADD COLUMN preferred_campus_id  BIGINT,
+    ADD COLUMN IF NOT EXISTS preferred_campus_id BIGINT;
+
+ALTER TABLE teacher_profiles
+    DROP CONSTRAINT IF EXISTS fk_tp_preferred_campus;
+
+ALTER TABLE teacher_profiles
     ADD CONSTRAINT fk_tp_preferred_campus
         FOREIGN KEY (preferred_campus_id)
         REFERENCES campuses (id) ON DELETE SET NULL;

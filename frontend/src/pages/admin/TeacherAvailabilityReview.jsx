@@ -46,10 +46,10 @@ export default function TeacherAvailabilityReview() {
 
   return (
     <div style={{ padding: "2rem 2.5rem", maxWidth: 1100, margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
-      <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#111827", marginBottom: 4 }}>
+      <h1 style={{ fontFamily:"'Playfair Display', Georgia, serif", fontSize:"1.75rem", fontWeight:700, color:"#112A17", marginBottom:4 }}>
         Teacher Availability Review
       </h1>
-      <p style={{ color: "#6b7280", fontSize: "0.9rem", marginBottom: "2rem" }}>
+      <p style={{ color:"#7AAE7A", fontSize:"0.9rem", marginBottom:"2rem", fontFamily:"'DM Sans', sans-serif" }}>
         View and review availability submitted by teachers before generating schedules.
       </p>
 
@@ -57,7 +57,7 @@ export default function TeacherAvailabilityReview() {
 
         {/* Teacher list */}
         <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
-          <div style={{ padding: "14px 16px", borderBottom: "1px solid #e5e7eb", fontSize: 13, fontWeight: 700, color: "#374151" }}>
+          <div style={{ padding:"14px 16px", borderBottom:"1px solid #E0EAE0", fontSize:13, fontWeight:700, color:"#112A17", background:"#F4FAF6", fontFamily:"'DM Sans', sans-serif" }}>
             Teachers ({teachers.length})
           </div>
           {teacherLoading ? (
@@ -68,9 +68,9 @@ export default function TeacherAvailabilityReview() {
             <button key={t.id} onClick={() => setSelected(t)} style={{
               display: "block", width: "100%", textAlign: "left",
               padding: "12px 16px", border: "none", borderBottom: "1px solid #f3f4f6",
-              background: selected?.id === t.id ? "#eff6ff" : "#fff",
-              cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-              borderLeft: selected?.id === t.id ? "3px solid #1a56db" : "3px solid transparent",
+              background: selected?.id === t.id ? "rgba(52,196,124,0.08)" : "#fff",
+              cursor:"pointer", fontFamily:"'DM Sans', sans-serif",
+              borderLeft: selected?.id === t.id ? "3px solid #34C47C" : "3px solid transparent",
             }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{t.fullName}</div>
               <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>
@@ -117,7 +117,7 @@ export default function TeacherAvailabilityReview() {
                   {DAYS.map(day => (
                     <div key={day} style={{ flex: "1 1 130px", minWidth: 120 }}>
                       <div style={{
-                        background: "#1B4332", color: "#fff", borderRadius: "8px 8px 0 0",
+                        background:"#112A17", color:"#fff", borderRadius:"8px 8px 0 0",
                         padding: "7px 12px", fontSize: 12, fontWeight: 700,
                       }}>
                         {DAY_SHORT[day]}
@@ -130,7 +130,7 @@ export default function TeacherAvailabilityReview() {
                           <div key={a.timeslotId} style={{
                             padding: "7px 10px", fontSize: 11,
                             borderBottom: "1px solid #f3f4f6",
-                            background: "#f0fdf4", color: "#15803d", fontWeight: 500,
+                            background:"rgba(52,196,124,0.08)", color:"#1A6A2A", fontWeight:500,
                           }}>
                             {fmt12(a.timeslot.startTime)} – {fmt12(a.timeslot.endTime)}
                           </div>

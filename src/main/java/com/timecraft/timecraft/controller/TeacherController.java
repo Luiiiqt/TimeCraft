@@ -32,7 +32,7 @@ public class TeacherController {
     // ── GET /api/v1/teachers ──────────────────────────────────────────────────
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<List<User>>> findAll(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Long departmentId) {

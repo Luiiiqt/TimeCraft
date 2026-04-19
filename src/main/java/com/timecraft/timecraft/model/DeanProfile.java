@@ -16,9 +16,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "program_head_profiles")
+@Table(name = "dean_profiles")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class ProgramHeadProfile {
+public class DeanProfile {
 
     @Id
     @Column(name = "user_id")

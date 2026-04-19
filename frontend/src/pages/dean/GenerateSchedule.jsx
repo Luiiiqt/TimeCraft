@@ -23,7 +23,7 @@ export default function ProgramHeadGenerateSchedule() {
   const [courses, setCourses] = useState([]);
 
   useEffect(() => {
-    api.get("/program-head/my-courses")
+    api.get("/dean/my-courses")
       .then(r => {
         const list = r.data?.data ?? [];
         setCourses(list);
@@ -37,6 +37,8 @@ export default function ProgramHeadGenerateSchedule() {
   const [confirmed, setConfirmed] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [lockChecking, setLockChecking] = useState(false);
+  const [sectionConfigs, setSectionConfigs] = useState({ 1: 1, 2: 1, 3: 1, 4: 1 });
+  const [savingConfig, setSavingConfig] = useState(false);
 
   const checkLock = async (courseId, semester, schoolYear) => {
     if (!courseId) return;
@@ -49,7 +51,17 @@ export default function ProgramHeadGenerateSchedule() {
   };
 
   useEffect(() => {
-    if (form.courseId) checkLock(form.courseId, form.semester, form.schoolYear);
+    if (form.courseId) {
+      checkLock(form.courseId, form.semester, form.schoolYear);
+      api.get(`/sections/config?courseId=${form.courseId}&semester=${form.semester}&schoolYear=${form.schoolYear}`)
+        .then(r => {
+          const list = r.data?.data ?? [];
+          const map = { 1: 1, 2: 1, 3: 1, 4: 1 };
+          list.forEach(c => { map[c.yearLevel] = c.sectionCount; });
+          setSectionConfigs(map);
+        })
+        .catch(() => { });
+    }
   }, [form.courseId, form.semester, form.schoolYear]);
 
   const handleChange = (e) => {
@@ -61,10 +73,11 @@ export default function ProgramHeadGenerateSchedule() {
   const handleGenerate = async () => {
     setError(""); setResult(null); setLoading(true);
     try {
-      const res = await api.post(`/program-head/generate/${form.courseId}`, {
+      const res = await api.post(`/schedules/generate`, {
         semester: form.semester,
         schoolYear: form.schoolYear,
         autoPublish: form.autoPublish,
+        courseId: form.courseId,
       });
       setResult(res.data?.data ?? res.data);
     } catch (e) {
@@ -72,6 +85,25 @@ export default function ProgramHeadGenerateSchedule() {
     } finally {
       setLoading(false);
       setConfirmed(false);
+    }
+  };
+
+  const handleSaveConfigs = async () => {
+    setSavingConfig(true);
+    try {
+      for (const yearLevel of [1, 2, 3, 4]) {
+        await api.post("/sections/config", {
+          courseId: form.courseId,
+          yearLevel,
+          sectionCount: sectionConfigs[yearLevel],
+          semester: form.semester,
+          schoolYear: form.schoolYear,
+        });
+      }
+    } catch (e) {
+      setError(e.response?.data?.message ?? "Failed to save section config.");
+    } finally {
+      setSavingConfig(false);
     }
   };
 
@@ -121,6 +153,24 @@ export default function ProgramHeadGenerateSchedule() {
                 style={{ width: "100%", padding: "8px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
                 {SCHOOL_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
+            </div>
+
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Sections per Year Level</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                {[1, 2, 3, 4].map(y => (
+                  <div key={y} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <label style={{ fontSize: 12, color: "#6b7280", width: 40 }}>Yr {y}</label>
+                    <input type="number" min={1} max={10} value={sectionConfigs[y]}
+                      onChange={e => setSectionConfigs(p => ({ ...p, [y]: Number(e.target.value) }))}
+                      style={{ width: "100%", padding: "6px 8px", border: "1.5px solid #d1d5db", borderRadius: 7, fontSize: 13 }} />
+                  </div>
+                ))}
+              </div>
+              <button onClick={handleSaveConfigs} disabled={savingConfig}
+                style={{ marginTop: 8, width: "100%", padding: "7px", background: savingConfig ? "#93c5fd" : "#0e9f6e", color: "#fff", border: "none", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                {savingConfig ? "Saving…" : "Save Section Config"}
+              </button>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -222,9 +272,9 @@ export default function ProgramHeadGenerateSchedule() {
               )}
 
               {/* View Schedule button */}
-              {result.conflicted === 0 && (
+              {result && (
                 <button
-                  onClick={() => navigate(`/program-head/schedule-view?courseId=${form.courseId}&semester=${form.semester}&schoolYear=${form.schoolYear}`)}
+                  onClick={() => navigate(`/dean/schedule-view?courseId=${form.courseId}&semester=${form.semester}&schoolYear=${form.schoolYear}`)}
                   style={{ width: "100%", padding: "10px", background: "#1a56db", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", marginTop: 4 }}>
                   📅 View Generated Schedule
                 </button>

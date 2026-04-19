@@ -99,7 +99,7 @@ public class SubjectController {
     // ── POST /api/v1/subjects ─────────────────────────────────────────────────
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<Subject>> create(
             @Valid @RequestBody SubjectRequest request) {
         Subject subject = subjectService.create(
@@ -116,7 +116,7 @@ public class SubjectController {
     // ── PUT /api/v1/subjects/{id} ─────────────────────────────────────────────
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<Subject>> update(
             @PathVariable Long id,
             @Valid @RequestBody SubjectRequest request) {

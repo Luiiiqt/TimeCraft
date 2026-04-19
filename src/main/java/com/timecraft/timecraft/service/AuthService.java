@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.timecraft.timecraft.exception.ResourceNotFoundException;
 import com.timecraft.timecraft.model.User;
 import com.timecraft.timecraft.model.User.UserType;
-import com.timecraft.timecraft.repository.ProgramHeadProfileRepository;
+import com.timecraft.timecraft.repository.DeanProfileRepository;
 import com.timecraft.timecraft.repository.StudentProfileRepository;
 import com.timecraft.timecraft.repository.TeacherProfileRepository;
 import com.timecraft.timecraft.repository.UserRepository;
@@ -33,7 +33,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final StudentProfileRepository    studentProfileRepository;
     private final TeacherProfileRepository    teacherProfileRepository;
-    private final ProgramHeadProfileRepository programHeadProfileRepository;
+    private final DeanProfileRepository programHeadProfileRepository;
     private final com.timecraft.timecraft.repository.SectionRepository sectionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
@@ -44,6 +44,7 @@ public class AuthService {
     /**
      * Called by Spring Security's filter chain on every authenticated request.
      * Loads user by email — email is the login identifier in TimeCraft.
+     */
 
     // ── Login ─────────────────────────────────────────────────────────────────
 
@@ -132,8 +133,8 @@ public class AuthService {
             enrichWithStudentClaims(user, claims);
         } else if (user.getUserType() == UserType.TEACHER) {
             enrichWithTeacherClaims(user, claims);
-        } else if (user.getUserType() == UserType.PROGRAM_HEAD) {
-            enrichWithProgramHeadClaims(user, claims);
+        } else if (user.getUserType() == UserType.DEAN) {
+            enrichWithDeanClaims(user, claims);
         }
         // ADMIN has no profile table — base claims only
 
@@ -175,7 +176,7 @@ public class AuthService {
         });
     }
 
-    private void enrichWithProgramHeadClaims(User user, Map<String, Object> claims) {
+    private void enrichWithDeanClaims(User user, Map<String, Object> claims) {
         programHeadProfileRepository.findByUserId(user.getId()).ifPresent(ph -> {
             claims.put("departmentId",   ph.getDepartment().getId());
             claims.put("departmentName", ph.getDepartment().getName());

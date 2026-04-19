@@ -71,7 +71,7 @@ export function AuthProvider({ children }) {
   // ── Internal session helpers ──────────────────────────────────────────────
   const _applySession = async (tok, userData) => {
     let enriched = { ...userData };
-    if (userData.role === "PROGRAM_HEAD") {
+    if (userData.role === "PROGRAM_HEAD" || userData.role === "COORDINATOR") {
       try {
         api.defaults.headers.common["Authorization"] = `Bearer ${tok}`;
         const r = await api.get("/program-head/my-courses");
@@ -125,11 +125,12 @@ export function AuthProvider({ children }) {
 
   // ── Derived helpers ───────────────────────────────────────────────────────
   const isAuthenticated = Boolean(token && user);
-  const role = user?.role ?? null; // "STUDENT" | "TEACHER" | "ADMIN" | "PROGRAM_HEAD"
+  const role = user?.role ?? null; // "STUDENT" | "TEACHER" | "ADMIN" | "DEAN"
   const isAdmin = role === "ADMIN";
   const isTeacher = role === "TEACHER";
   const isStudent = role === "STUDENT";
-  const isProgramHead = role === "PROGRAM_HEAD";
+  const isDean = role === "DEAN";
+  const isProgramHead = role === "DEAN"; // kept for backward compat
 
   const value = {
     user,
@@ -140,6 +141,7 @@ export function AuthProvider({ children }) {
     isAdmin,
     isTeacher,
     isStudent,
+    isDean,
     isProgramHead,
     login,
     register,

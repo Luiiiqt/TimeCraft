@@ -29,9 +29,8 @@ public class SectionController {
     private final SectionService sectionService;
 
     // ── GET /api/v1/sections ──────────────────────────────────────────────────
-
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> findAll(
             @RequestParam(required = false) Long courseId,
             @RequestParam(required = false) Short yearLevel,
@@ -48,6 +47,9 @@ public class SectionController {
                     Semester.valueOf(semester), schoolYear);
         } else if (courseId != null && yearLevel != null) {
             sections = sectionService.findByCourseAndYear(courseId, yearLevel);
+        } else if (courseId != null && semester != null && schoolYear != null) {
+            sections = sectionService.findByCourseAndTerm(courseId,
+                    Semester.valueOf(semester), schoolYear);
         } else if (courseId != null) {
             sections = sectionService.findByCourse(courseId);
         } else if (departmentId != null && semester != null && schoolYear != null) {
@@ -78,7 +80,6 @@ public class SectionController {
     }
 
     // ── GET /api/v1/sections/{id} ─────────────────────────────────────────────
-
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Section>> findById(@PathVariable Long id) {
@@ -87,7 +88,6 @@ public class SectionController {
     }
 
     // ── GET /api/v1/sections/{id}/enrollment-count ────────────────────────────
-
     @GetMapping("/{id}/enrollment-count")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getEnrollmentCount(
@@ -99,7 +99,6 @@ public class SectionController {
     }
 
     // ── POST /api/v1/sections ─────────────────────────────────────────────────
-
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Section>> create(
@@ -118,42 +117,39 @@ public class SectionController {
     }
 
     // ── POST /api/v1/sections/config ──────────────────────────────────────────
-
     @PostMapping("/config")
-    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<Void>> setSectionConfig(
             @RequestBody Map<String, Object> body) {
         sectionService.setSectionConfig(
-            Long.valueOf(body.get("courseId").toString()),
-            Short.valueOf(body.get("yearLevel").toString()),
-            Short.valueOf(body.get("sectionCount").toString()),
-            Semester.valueOf((String) body.get("semester")),
-            (String) body.get("schoolYear"));
+                Long.valueOf(body.get("courseId").toString()),
+                Short.valueOf(body.get("yearLevel").toString()),
+                Short.valueOf(body.get("sectionCount").toString()),
+                Semester.valueOf((String) body.get("semester")),
+                (String) body.get("schoolYear"));
         return ResponseEntity.ok(ApiResponse.success("Section config saved"));
     }
 
     // ── GET /api/v1/sections/config ───────────────────────────────────────────
-
     @GetMapping("/config")
-    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getSectionConfigs(
             @RequestParam Long courseId,
             @RequestParam String semester,
             @RequestParam String schoolYear) {
         List<Map<String, Object>> configs = sectionService
-            .getSectionConfigs(courseId, Semester.valueOf(semester), schoolYear)
-            .stream().map(c -> {
-                Map<String, Object> m = new java.util.LinkedHashMap<>();
-                m.put("courseId", c.getCourse().getId());
-                m.put("yearLevel", c.getYearLevel());
-                m.put("sectionCount", c.getSectionCount());
-                return m;
-            }).toList();
+                .getSectionConfigs(courseId, Semester.valueOf(semester), schoolYear)
+                .stream().map(c -> {
+                    Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("courseId", c.getCourse().getId());
+                    m.put("yearLevel", c.getYearLevel());
+                    m.put("sectionCount", c.getSectionCount());
+                    return m;
+                }).toList();
         return ResponseEntity.ok(ApiResponse.of(configs));
     }
 
     // ── PUT /api/v1/sections/{id}/deactivate ──────────────────────────────────
-
     @PutMapping("/{id}/deactivate")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable Long id) {

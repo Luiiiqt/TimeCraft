@@ -2,6 +2,7 @@ package com.timecraft.timecraft.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.timecraft.timecraft.exception.ResourceNotFoundException;
 import com.timecraft.timecraft.model.Course;
 import com.timecraft.timecraft.model.CourseSubject;
-import com.timecraft.timecraft.model.ProgramHeadProfile;
+import com.timecraft.timecraft.model.DeanProfile;
 import com.timecraft.timecraft.model.Section;
 import com.timecraft.timecraft.model.Subject;
 import com.timecraft.timecraft.model.SubjectAssignment;
@@ -18,7 +19,7 @@ import com.timecraft.timecraft.model.TeacherSubjectPreference.Status;
 import com.timecraft.timecraft.model.User;
 import com.timecraft.timecraft.repository.CourseRepository;
 import com.timecraft.timecraft.repository.CourseSubjectRepository;
-import com.timecraft.timecraft.repository.ProgramHeadProfileRepository;
+import com.timecraft.timecraft.repository.DeanProfileRepository;
 import com.timecraft.timecraft.repository.SectionRepository;
 import com.timecraft.timecraft.repository.SubjectAssignmentRepository;
 import com.timecraft.timecraft.repository.SubjectRepository;
@@ -32,9 +33,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ProgramHeadService {
+public class DeanService {
 
-        private final ProgramHeadProfileRepository programHeadProfileRepository;
+        private final DeanProfileRepository programHeadProfileRepository;
         private final SubjectAssignmentRepository subjectAssignmentRepository;
         private final TeacherSubjectPreferenceRepository preferenceRepository;
         private final SubjectRepository subjectRepository;
@@ -42,11 +43,11 @@ public class ProgramHeadService {
         private final SectionRepository sectionRepository;
         private final CourseSubjectRepository courseSubjectRepository;
         private final CourseRepository courseRepository;
-        private final com.timecraft.timecraft.repository.ProgramHeadCourseRepository programHeadCourseRepository;
+        private final com.timecraft.timecraft.repository.DeanCourseRepository programHeadCourseRepository;
 
         // ── Profile ───────────────────────────────────────────────────────────────
 
-        public ProgramHeadProfile getProfile(Long userId) {
+        public DeanProfile getProfile(Long userId) {
                 return programHeadProfileRepository.findByUserId(userId)
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Program head profile not found: " + userId));
@@ -66,17 +67,14 @@ public class ProgramHeadService {
                         Long subjectId, Long sectionId, Long teacherId,
                         String semester, String schoolYear) {
 
-                ProgramHeadProfile ph = getProfile(programHeadId);
-
                 Subject subject = subjectRepository.findById(subjectId)
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Subject not found: " + subjectId));
 
-                // Data isolation — subject must belong to program head's department
                 List<Long> managedCourseIds = programHeadCourseRepository
-                                .findByPhUserId(programHeadId)
+                                .findByDeanUserId(programHeadId)
                                 .stream()
-                                .map(phc -> phc.getCourseId())
+                                .map(com.timecraft.timecraft.model.DeanCourse::getCourseId)
                                 .toList();
 
                 boolean subjectInManagedCourse = courseSubjectRepository
@@ -100,7 +98,7 @@ public class ProgramHeadService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Section not found: " + sectionId));
 
-                // Upsert — update if exists, create if not
+                // Upsert for the selected section
                 SubjectAssignment assignment = subjectAssignmentRepository
                                 .findBySubjectIdAndSectionIdAndSemesterAndSchoolYear(
                                                 subjectId, sectionId, semester, schoolYear)
@@ -114,7 +112,38 @@ public class ProgramHeadService {
 
                 assignment.setTeacher(teacher);
                 assignment.setFinalized(false);
-                return subjectAssignmentRepository.save(assignment);
+                SubjectAssignment saved = subjectAssignmentRepository.save(assignment);
+
+                // Also upsert for ALL other sections that share this subject (same course, year
+                // level, semester)
+                courseSubjectRepository.findBySubjectId(subjectId).forEach(cs -> {
+                        List<Section> relatedSections = sectionRepository
+                                        .findByCourseIdAndYearLevelAndSemesterAndSchoolYear(
+                                                        cs.getCourse().getId(),
+                                                        cs.getYearLevel(),
+                                                        com.timecraft.timecraft.model.CourseSubject.Semester
+                                                                        .valueOf(semester),
+                                                        schoolYear);
+                        for (Section sec : relatedSections) {
+                                if (sec.getId().equals(sectionId))
+                                        continue; // already saved above
+                                SubjectAssignment extra = subjectAssignmentRepository
+                                                .findBySubjectIdAndSectionIdAndSemesterAndSchoolYear(
+                                                                subjectId, sec.getId(), semester, schoolYear)
+                                                .orElse(SubjectAssignment.builder()
+                                                                .subject(subject)
+                                                                .section(sec)
+                                                                .assignedBy(phUser)
+                                                                .semester(semester)
+                                                                .schoolYear(schoolYear)
+                                                                .build());
+                                extra.setTeacher(teacher);
+                                extra.setFinalized(false);
+                                subjectAssignmentRepository.save(extra);
+                        }
+                });
+
+                return saved;
         }
 
         @Transactional
@@ -125,14 +154,21 @@ public class ProgramHeadService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Assignment not found: " + assignmentId));
 
-                // Verify ownership
                 if (!assignment.getAssignedBy().getId().equals(programHeadId)) {
                         throw new IllegalStateException(
                                         "You can only finalize your own assignments");
                 }
 
-                assignment.setFinalized(true);
-                return subjectAssignmentRepository.save(assignment);
+                // Finalize all assignments for the same subject in the same term
+                List<SubjectAssignment> all = subjectAssignmentRepository
+                                .findBySubjectIdInAndSemesterAndSchoolYear(
+                                                List.of(assignment.getSubject().getId()),
+                                                assignment.getSemester(),
+                                                assignment.getSchoolYear());
+                all.forEach(a -> a.setFinalized(true));
+                subjectAssignmentRepository.saveAll(all);
+
+                return assignment;
         }
 
         @Transactional
@@ -200,9 +236,9 @@ public class ProgramHeadService {
 
                 // Use managed courses (not department) — supports CCSE multi-PH
                 List<Long> managedCourseIds = programHeadCourseRepository
-                                .findByPhUserId(programHeadId)
+                                .findByDeanUserId(programHeadId)
                                 .stream()
-                                .map(phc -> phc.getCourseId())
+                                .map(com.timecraft.timecraft.model.DeanCourse::getCourseId)
                                 .toList();
 
                 List<Long> subjectIds = courseSubjectRepository
@@ -212,7 +248,8 @@ public class ProgramHeadService {
                                 .distinct()
                                 .toList();
 
-                if (subjectIds.isEmpty()) return List.of();
+                if (subjectIds.isEmpty())
+                        return List.of();
 
                 return preferenceRepository
                                 .findBySubjectIdInAndSemesterAndSchoolYear(
@@ -256,7 +293,7 @@ public class ProgramHeadService {
 
         public void assertManagesCourse(Long programHeadId, Long courseId) {
                 boolean manages = programHeadCourseRepository
-                                .findByPhUserId(programHeadId)
+                                .findByDeanUserId(programHeadId)
                                 .stream()
                                 .anyMatch(phc -> phc.getCourseId().equals(courseId));
                 if (!manages) {
@@ -265,8 +302,61 @@ public class ProgramHeadService {
                 }
         }
 
+        // ── Grouped preferences for PreferenceReview page ─────────────────────────
+
+        public List<Map<String, Object>> getPreferencesGroupedBySubject(
+                        Long programHeadId, String semester, String schoolYear) {
+
+                List<TeacherSubjectPreference> prefs = getPendingPreferences(
+                                programHeadId, semester, schoolYear);
+
+                // Group by subject
+                Map<Long, Map<String, Object>> grouped = new java.util.LinkedHashMap<>();
+
+                for (TeacherSubjectPreference pref : prefs) {
+                        Long subjectId = pref.getSubject().getId();
+                        grouped.computeIfAbsent(subjectId, k -> {
+                                Map<String, Object> entry = new java.util.LinkedHashMap<>();
+                                entry.put("subjectId", subjectId);
+                                entry.put("subjectCode", pref.getSubject().getCode());
+                                entry.put("subjectName", pref.getSubject().getName());
+                                entry.put("teachers", new java.util.ArrayList<>());
+                                return entry;
+                        });
+
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, Object>> teachers = (List<Map<String, Object>>) grouped.get(subjectId)
+                                        .get("teachers");
+
+                        Map<String, Object> teacherEntry = new java.util.LinkedHashMap<>();
+                        teacherEntry.put("preferenceId", pref.getId());
+                        teacherEntry.put("teacherId", pref.getTeacher().getId());
+                        teacherEntry.put("teacherName", pref.getTeacher().getFullName());
+                        teacherEntry.put("status", pref.getStatus());
+                        teachers.add(teacherEntry);
+                }
+
+                // Check existing assignments for this term
+                List<Long> subjectIds = new java.util.ArrayList<>(grouped.keySet());
+                List<SubjectAssignment> existing = subjectAssignmentRepository
+                                .findBySubjectIdInAndSemesterAndSchoolYear(
+                                                subjectIds, semester, schoolYear);
+
+                for (SubjectAssignment sa : existing) {
+                        Map<String, Object> entry = grouped.get(sa.getSubject().getId());
+                        if (entry != null) {
+                                entry.put("assignedTeacherId", sa.getTeacher().getId());
+                                entry.put("assignedTeacherName", sa.getTeacher().getFullName());
+                                entry.put("assignmentId", sa.getId());
+                                entry.put("isFinalized", sa.isFinalized());
+                        }
+                }
+
+                return new java.util.ArrayList<>(grouped.values());
+        }
+
         public List<Course> getManagedCourses(Long programHeadId) {
-                return programHeadCourseRepository.findByPhUserId(programHeadId)
+                return programHeadCourseRepository.findByDeanUserId(programHeadId)
                                 .stream()
                                 .map(phc -> courseRepository.findById(phc.getCourseId()).orElse(null))
                                 .filter(c -> c != null)

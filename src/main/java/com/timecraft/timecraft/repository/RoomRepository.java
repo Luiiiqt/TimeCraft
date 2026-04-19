@@ -45,9 +45,12 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                         "AND r.isActive = true " +
                         "AND r.id NOT IN (" +
                         "  SELECT s.room.id FROM Schedule s " +
-                        "  WHERE (s.timeslot.id = :timeslotId OR s.timeslot2.id = :timeslotId) " +
+                        "  WHERE s.room IS NOT NULL " +
+                        "  AND s.status <> com.timecraft.timecraft.model.Schedule.ScheduleStatus.CONFLICTED " +
+                        "  AND (s.timeslot.id = :timeslotId OR s.timeslot2.id = :timeslotId) " +
                         "  AND s.semester = :semester " +
-                        "  AND s.schoolYear = :schoolYear)")
+                        "  AND s.schoolYear = :schoolYear) " +
+                        "ORDER BY FUNCTION('RANDOM')")
         List<Room> findAvailableRooms(
                         @Param("campusId") Long campusId,
                         @Param("roomType") RoomType roomType,
@@ -71,7 +74,9 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                         "AND r.isActive = true " +
                         "AND r.id NOT IN (" +
                         "  SELECT s.room.id FROM Schedule s " +
-                        "  WHERE (s.timeslot.id = :timeslotId OR s.timeslot2.id = :timeslotId) " +
+                        "  WHERE s.room IS NOT NULL " +
+                        "  AND s.status <> com.timecraft.timecraft.model.Schedule.ScheduleStatus.CONFLICTED " +
+                        "  AND (s.timeslot.id = :timeslotId OR s.timeslot2.id = :timeslotId) " +
                         "  AND s.semester = :semester " +
                         "  AND s.schoolYear = :schoolYear) " +
                         "ORDER BY CASE WHEN r.campus.id = :preferredCampusId THEN 0 ELSE 1 END")

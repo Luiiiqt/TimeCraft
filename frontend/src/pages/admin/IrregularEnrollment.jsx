@@ -64,8 +64,8 @@ function Select({ value, onChange, children, style = {} }) {
 // ── Schedule Slot Card ────────────────────────────────────────────────────────
 
 function SlotCard({ slot, selected, conflict, onToggle }) {
-  const border = conflict ? "#dc2626" : selected ? "#1a56db" : "var(--grey-200)";
-  const bg     = conflict ? "#fee2e2" : selected ? "#eff6ff" : "var(--surface-card)";
+  const border = conflict ? "#E24B4A" : selected ? "#34C47C" : "#E0EAE0";
+  const bg     = conflict ? "rgba(226,75,74,0.07)" : selected ? "rgba(52,196,124,0.08)" : "#fff";
 
   return (
     <div
@@ -92,9 +92,9 @@ function SlotCard({ slot, selected, conflict, onToggle }) {
             {slot.day} · {slot.startTime}–{slot.endTime} · {slot.roomName}
           </div>
           <div style={{ marginTop: 4 }}>
-            {badge(slot.type === "LABORATORY" ? "Lab" : "Lecture", slot.type === "LABORATORY" ? "#7c3aed" : "#0891b2")}
+            {badge(slot.type === "LABORATORY" ? "Lab" : "Lecture", slot.type === "LABORATORY" ? "#534AB7" : "#185FA5")}
             {" "}
-            {badge(slot.section, "#0f766e")}
+            {badge(slot.section, "#1A6A2A")}
           </div>
         </div>
         {conflict ? (
@@ -338,8 +338,8 @@ export default function IrregularEnrollment() {
                       padding     : "11px 16px",
                       borderBottom: "1px solid var(--grey-100)",
                       cursor      : "pointer",
-                      background  : isActive ? "#eff6ff" : "transparent",
-                      borderLeft  : isActive ? "3px solid #1a56db" : "3px solid transparent",
+                      background  : isActive ? "rgba(52,196,124,0.08)" : "transparent",
+                      borderLeft  : isActive ? "3px solid #34C47C" : "3px solid transparent",
                       transition  : "all 0.12s",
                     }}
                     onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "var(--grey-50, #f9fafb)"; }}
@@ -393,8 +393,8 @@ export default function IrregularEnrollment() {
             <div>
               {/* Student summary bar */}
               <div style={{
-                background   : "#eff6ff",
-                border       : "1.5px solid #bfdbfe",
+                background   : "rgba(52,196,124,0.07)",
+                border       : "1.5px solid rgba(52,196,124,0.25)",
                 borderRadius : 10,
                 padding      : "12px 16px",
                 marginBottom : 16,
@@ -405,12 +405,12 @@ export default function IrregularEnrollment() {
                 gap          : 8,
               }}>
                 <div>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#1e40af" }}>{selectedStudent.fullName}</span>
-                  <span style={{ fontSize: 12, color: "#3b82f6", marginLeft: 10 }}>
+                  <span style={{ fontSize:14, fontWeight:700, color:"#112A17" }}>{selectedStudent.fullName}</span>
+                  <span style={{ fontSize:12, color:"#34C47C", marginLeft:10 }}>
                     {selectedStudent.schoolId} · Irregular
                   </span>
                 </div>
-                <div style={{ fontSize: 13, color: "#1d4ed8", fontWeight: 600 }}>
+                <div style={{ fontSize:13, color:"#1A6A2A", fontWeight:600 }}>
                   {chosen.length} subject{chosen.length !== 1 ? "s" : ""} selected
                 </div>
               </div>
@@ -446,8 +446,8 @@ export default function IrregularEnrollment() {
                     padding      : "7px 14px",
                     borderRadius : 7,
                     border       : "none",
-                    background   : !browseCourse ? "#e5e7eb" : "#1a56db",
-                    color        : !browseCourse ? "#9ca3af" : "#fff",
+                    background   : !browseCourse ? "#E8EEE8" : "#1A6A2A",
+                    color        : !browseCourse ? "#AAC8AA" : "#fff",
                     fontSize     : 13,
                     fontWeight   : 600,
                     cursor       : !browseCourse ? "not-allowed" : "pointer",
@@ -500,7 +500,7 @@ export default function IrregularEnrollment() {
                   marginTop    : 20,
                   background   : "var(--surface-card)",
                   borderRadius : 12,
-                  border       : "1.5px solid #bfdbfe",
+                  border       : "1.5px solid rgba(52,196,124,0.25)",
                   padding      : "16px 20px",
                   boxShadow    : "var(--shadow-sm)",
                 }}>
@@ -512,7 +512,7 @@ export default function IrregularEnrollment() {
                       <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
                         <span>
                           <strong>{s.subjectCode}</strong> — {s.day} · {s.startTime}–{s.endTime} · {s.roomName}
-                          {" "}{badge(s.type === "LABORATORY" ? "Lab" : "Lecture", s.type === "LABORATORY" ? "#7c3aed" : "#0891b2")}
+                          {" "}{badge(s.type === "LABORATORY" ? "Lab" : "Lecture", s.type === "LABORATORY" ? "#534AB7" : "#185FA5")}
                         </span>
                         <button
                           onClick={() => setChosen(prev => prev.filter(c => c.id !== s.id))}
@@ -530,7 +530,7 @@ export default function IrregularEnrollment() {
                       padding      : "9px 24px",
                       borderRadius : 8,
                       border       : "none",
-                      background   : saving ? "#93c5fd" : "#1a56db",
+                      background   : saving ? "#AAC8AA" : "#1A6A2A",
                       color        : "#fff",
                       fontWeight   : 700,
                       fontSize     : 13,

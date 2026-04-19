@@ -16,11 +16,12 @@ const PAGE_META = {
   "/student":              { title: "Dashboard",         section: "Overview"   },
   "/student/timetable":    { title: "My Timetable",      section: "Timetable"  },
   "/student/enrollment":   { title: "Enrollment",        section: "Timetable"  },
-  "/program-head":              { title: "Dashboard",    section: "Overview"   },
-  "/program-head/subjects":     { title: "Subjects",     section: "Assignments"},
-  "/program-head/assignments":  { title: "Assignments",  section: "Assignments"},
-  "/program-head/preferences":  { title: "Preferences",  section: "Assignments"},
-  "/program-head/generate":     { title: "Generate",     section: "Schedule"   },
+  "/dean":              { title: "Dashboard",    section: "Overview"   },
+  "/dean/subjects":     { title: "Subjects",     section: "Assignments"},
+  "/dean/assignments":  { title: "Assignments",  section: "Assignments"},
+  "/dean/preferences":  { title: "Preferences",  section: "Assignments"},
+  "/dean/generate":     { title: "Generate",     section: "Schedule"   },
+  "/dean/schedule":     { title: "Schedule",     section: "Schedule"   },
 };
 
 const NAV_LINKS = {
@@ -43,12 +44,13 @@ const NAV_LINKS = {
     { path: "/student/timetable",  label: "Timetable"  },
     { path: "/student/enrollment", label: "Enrollment" },
   ],
-  PROGRAM_HEAD: [
-    { path: "/program-head",             label: "Dashboard"   },
-    { path: "/program-head/subjects",    label: "Subjects"    },
-    { path: "/program-head/assignments", label: "Assignments" },
-    { path: "/program-head/preferences", label: "Preferences" },
-    { path: "/program-head/generate",    label: "Generate"    },
+  DEAN: [
+    { path: "/dean",             label: "Dashboard"   },
+    { path: "/dean/subjects",    label: "Subjects"    },
+    { path: "/dean/assignments", label: "Assignments" },
+    { path: "/dean/preferences", label: "Preferences" },
+    { path: "/dean/generate",    label: "Generate"    },
+    { path: "/dean/schedule",    label: "Schedule"    },
   ],
 };
 

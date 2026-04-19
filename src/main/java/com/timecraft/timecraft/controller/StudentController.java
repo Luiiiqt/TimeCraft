@@ -151,7 +151,7 @@ public class StudentController {
         // "2024-2025" }
 
         @PostMapping("/{id}/irregular-enrollment")
-        @PreAuthorize("hasAnyRole('ADMIN', 'PROGRAM_HEAD')")
+        @PreAuthorize("hasAnyRole('ADMIN', 'DEAN')")
         public ResponseEntity<ApiResponse<Void>> enrollIrregular(
                         @PathVariable Long id,
                         @RequestBody Map<String, Object> body) {
@@ -166,4 +166,36 @@ public class StudentController {
                 return ResponseEntity.ok(
                                 ApiResponse.success("Irregular enrollment saved successfully"));
         }
+
+        // ── PUT /api/v1/students/{id}/application-status ─────────────────────────
+
+    @PutMapping("/{id}/application-status")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
+    public ResponseEntity<ApiResponse<Void>> updateStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Principal principal) {
+
+        User reviewer = studentService.findAll().stream()
+                .filter(u -> u.getEmail().equals(principal.getName()))
+                .findFirst().orElseThrow();
+
+        studentService.updateApplicationStatus(
+                id,
+                com.timecraft.timecraft.model.StudentProfile.ApplicationStatus
+                        .valueOf(body.get("status").toUpperCase()),
+                reviewer.getId(),
+                body.get("notes"));
+
+        return ResponseEntity.ok(ApiResponse.success("Application status updated"));
+    }
+
+    // ── GET /api/v1/students/pending-irregular ────────────────────────────────
+
+    @GetMapping("/pending-irregular")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
+    public ResponseEntity<ApiResponse<List<StudentProfile>>> getPendingIrregular() {
+        return ResponseEntity.ok(ApiResponse.of(
+                studentService.findPendingIrregular()));
+    }
 }

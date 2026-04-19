@@ -2,16 +2,12 @@ import { useState, useEffect } from "react";
 import useAuth from "../../hooks/useAuth";
 import api from "../../services/api";
 
-function getDefaultTerm() {
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const year = now.getFullYear();
-  return {
-    semester: month >= 6 && month <= 10 ? "FIRST" : "SECOND",
-    schoolYear: `${year}-${year + 1}`,
-  };
-}
-const { semester: SEMESTER, schoolYear: SCHOOL_YEAR } = getDefaultTerm();
+const SEMESTER_OPTIONS = [
+  { value: "FIRST", label: "1st Semester" },
+  { value: "SECOND", label: "2nd Semester" },
+  { value: "SUMMER", label: "Summer" },
+];
+const SCHOOL_YEARS = ["2024-2025", "2025-2026", "2026-2027"];
 
 export default function SubjectAssignments() {
   const { user } = useAuth();
@@ -23,6 +19,7 @@ export default function SubjectAssignments() {
   const [error,       setError]       = useState("");
   const [success,     setSuccess]     = useState("");
   const [sections,    setSections]    = useState([]);
+  const [term, setTerm] = useState({ semester: "FIRST", schoolYear: "2026-2027" });
   const [form, setForm] = useState({ subjectId: "", sectionId: "", teacherId: "", courseId: "" });
 
   const load = () => {
@@ -32,12 +29,12 @@ export default function SubjectAssignments() {
     if (!courseId) { setError("No managed course found. Contact admin."); setLoading(false); return; }
 
     Promise.all([
-      api.get(`/program-head/assignments?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
+      api.get(`/dean/assignments?semester=${term.semester}&schoolYear=${term.schoolYear}`),
       courseId
         ? api.get(`/subjects/course/${courseId}/curriculum`)
         : Promise.resolve({ data: { data: [] } }),
       api.get(`/teachers`),
-      api.get(`/sections?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
+      api.get(`/sections?semester=${term.semester}&schoolYear=${term.schoolYear}`),
     ]).then(([aRes, sRes, tRes, secRes]) => {
       setAssignments(aRes.data?.data ?? []);
       const curriculum = sRes.data?.data ?? [];
@@ -48,7 +45,7 @@ export default function SubjectAssignments() {
     }).catch(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [term]);
 
   const handleSave = async () => {
     if (!form.subjectId || !form.sectionId || !form.teacherId) {
@@ -57,12 +54,12 @@ export default function SubjectAssignments() {
     }
     setSaving(true); setError(""); setSuccess("");
     try {
-      await api.post("/program-head/assignments", {
+      await api.post("/dean/assignments", {
         subjectId:  Number(form.subjectId),
         sectionId:  Number(form.sectionId),
         teacherId:  Number(form.teacherId),
-        semester:   SEMESTER,   // already "FIRST" or "SECOND" from getDefaultTerm()
-        schoolYear: SCHOOL_YEAR,
+        semester:   term.semester,
+        schoolYear: term.schoolYear,
       });
       setSuccess("Assignment saved.");
       setForm({ subjectId: "", sectionId: "", teacherId: "" });
@@ -76,7 +73,7 @@ export default function SubjectAssignments() {
 
   const handleFinalize = async (id) => {
     try {
-      await api.put(`/program-head/assignments/${id}/finalize`);
+      await api.put(`/dean/assignments/${id}/finalize`);
       setSuccess("Assignment finalized.");
       load();
     } catch (e) {
@@ -86,7 +83,7 @@ export default function SubjectAssignments() {
 
   const handleDelete = async (id) => {
     try {
-      await api.delete(`/program-head/assignments/${id}`);
+      await api.delete(`/dean/assignments/${id}`);
       setSuccess("Assignment deleted.");
       load();
     } catch (e) {
@@ -97,9 +94,16 @@ export default function SubjectAssignments() {
   return (
     <div style={{ padding: "2rem 2.5rem", maxWidth: 1000, margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
       <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#111827", marginBottom: 4 }}>Subject Assignments</h1>
-      <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 24 }}>
-        Assign teachers to subjects. Finalize before generating the schedule.
-      </p>
+      <div style={{ display: "flex", gap: 12, marginBottom: 24, alignItems: "center" }}>
+        <select value={term.semester} onChange={e => setTerm(t => ({ ...t, semester: e.target.value }))}
+          style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
+          {SEMESTER_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+        <select value={term.schoolYear} onChange={e => setTerm(t => ({ ...t, schoolYear: e.target.value }))}
+          style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
+          {SCHOOL_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+      </div>
 
       {error   && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", marginBottom: 16, color: "#dc2626", fontSize: 13 }}>⚠️ {error}</div>}
       {success && <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 14px", marginBottom: 16, color: "#15803d", fontSize: 13 }}>✅ {success}</div>}

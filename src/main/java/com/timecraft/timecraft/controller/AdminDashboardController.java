@@ -37,8 +37,34 @@ public class AdminDashboardController {
     private final UserService userService;
     private final DepartmentRepository departmentRepository;
     private final TeacherProfileRepository teacherProfileRepository;
+private final com.timecraft.timecraft.repository.DeanProfileRepository programHeadProfileRepository;
+private final com.timecraft.timecraft.repository.DeanCourseRepository programHeadCourseRepository;
+private final com.timecraft.timecraft.repository.CourseRepository courseRepository;
 
-    @PostMapping("/teachers")
+    @PostMapping("/deans")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createDean(
+            @RequestBody Map<String, Object> body) {
+        @SuppressWarnings("unchecked")
+        java.util.List<Long> courseIds = ((java.util.List<?>) body.get("courseIds"))
+                .stream().map(o -> Long.valueOf(o.toString())).toList();
+        User.UserType userType = body.containsKey("userType")
+                ? User.UserType.valueOf(body.get("userType").toString())
+                : User.UserType.DEAN;
+        User user = userService.createProgramHead(
+                body.get("fullName").toString(),
+                body.get("email").toString(),
+                body.get("schoolId").toString(),
+                Long.valueOf(body.get("departmentId").toString()),
+                courseIds, userType,
+                departmentRepository,
+                programHeadProfileRepository,
+                programHeadCourseRepository,
+                courseRepository);
+        return ResponseEntity.ok(ApiResponse.success("Dean registered",
+                Map.of("id", user.getId(), "name", user.getFullName())));
+    }
+
+@PostMapping("/teachers")
     public ResponseEntity<ApiResponse<Map<String, Object>>> createTeacher(
             @RequestBody Map<String, Object> body) {
         User user = userService.createTeacher(

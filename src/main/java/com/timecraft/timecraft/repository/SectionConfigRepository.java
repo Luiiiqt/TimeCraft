@@ -14,4 +14,7 @@ public interface SectionConfigRepository extends JpaRepository<SectionConfig, Lo
 
     List<SectionConfig> findByCourseIdAndSemesterAndSchoolYear(
             Long courseId, String semester, String schoolYear);
+
+    List<SectionConfig> findBySemesterAndSchoolYear(
+            String semester, String schoolYear);
 }

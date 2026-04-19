@@ -1,5 +1,5 @@
 -- ============================================================
--- V6: Sections, Schedules, Student Schedules, Conflict Log
+-- V5: Sections, Schedules, Student Schedules, Conflict Log
 --     + all indexes
 -- ============================================================
 
@@ -7,9 +7,9 @@
 CREATE TABLE sections (
     id           BIGSERIAL    PRIMARY KEY,
     course_id    BIGINT       NOT NULL REFERENCES courses(id) ON DELETE RESTRICT,
-    year_level   SMALLINT     NOT NULL CHECK (year_level BETWEEN 1 AND 5),
+    year_level   SMALLINT     NOT NULL,
     section_name VARCHAR(10)  NOT NULL,
-    semester     VARCHAR(10)  NOT NULL CHECK (semester IN ('1st','2nd','Summer')),
+    semester     VARCHAR(10)  NOT NULL,
     school_year  VARCHAR(10)  NOT NULL,
     max_students SMALLINT     NOT NULL DEFAULT 45,
     is_active    BOOLEAN      NOT NULL DEFAULT TRUE,
@@ -31,7 +31,7 @@ CREATE TABLE schedules (
     timeslot2_id BIGINT                REFERENCES timeslots(id)  ON DELETE RESTRICT,
     section_id   BIGINT                REFERENCES sections(id)   ON DELETE SET NULL,
     campus_id    BIGINT                REFERENCES campuses(id)   ON DELETE RESTRICT,
-    semester     VARCHAR(20)  NOT NULL CHECK (semester IN ('FIRST_SEMESTER','SECOND_SEMESTER','SUMMER')),
+    semester     VARCHAR(20)  NOT NULL CHECK (semester IN ('1st','2nd','Summer')),
     school_year  VARCHAR(10)  NOT NULL,
     status       VARCHAR(15)  NOT NULL DEFAULT 'DRAFT'
                               CHECK (status IN ('DRAFT','PUBLISHED','CONFLICTED')),
@@ -95,6 +95,7 @@ CREATE INDEX idx_cs_shared            ON course_subjects (is_shared) WHERE is_sh
 CREATE INDEX idx_campuses_code        ON campuses (code);
 
 CREATE INDEX idx_rooms_campus_id      ON rooms (campus_id);
+CREATE INDEX idx_rooms_department_id  ON rooms (department_id);
 CREATE INDEX idx_rooms_room_type      ON rooms (room_type);
 CREATE INDEX idx_rooms_capacity       ON rooms (capacity);
 CREATE INDEX idx_rooms_active         ON rooms (is_active);

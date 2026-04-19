@@ -274,8 +274,8 @@ public class ConflictDetectionService {
                 TeacherProfile profile = teacherProfileRepository
                                 .findByUserId(teacherId).orElse(null);
 
-                if (profile == null || profile.isGETeacher()) {
-                        return List.of(); // GE teachers are exempt
+                if (profile == null || profile.isGETeacher() || profile.isCrossDepartment()) {
+                        return List.of(); // GE and cross-department teachers are exempt
                 }
 
                 Long teacherDeptId = profile.getDepartment().getId();

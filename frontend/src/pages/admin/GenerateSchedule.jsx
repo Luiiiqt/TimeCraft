@@ -200,45 +200,63 @@ export default function GenerateSchedule() {
 // ── Sub-component ─────────────────────────────────────────────────────────────
 function ResultStat({ label, value, color }) {
   return (
-    <div style={{ textAlign: "center" }}>
-      <div style={{ fontSize: "2.2rem", fontWeight: "700", color }}>{value}</div>
-      <div style={{ fontSize: "0.8rem", color: "#6b7280", marginTop: "0.2rem" }}>{label}</div>
+    <div style={{ textAlign:"center" }}>
+      <div style={{ fontSize:"2.2rem", fontWeight:"700", color, fontFamily:"'Playfair Display', Georgia, serif" }}>{value}</div>
+      <div style={{ fontSize:"0.8rem", color:"#7AAE7A", marginTop:"0.2rem", fontFamily:"'DM Sans', sans-serif" }}>{label}</div>
     </div>
   );
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
+const C = {
+  green:     "#1A6A2A",
+  greenMid:  "#34C47C",
+  greenLight:"#E8F5EC",
+  greenBorder:"#D8EAD8",
+  text:      "#112A17",
+  muted:     "#7AAE7A",
+  border:    "#E0EAE0",
+  danger:    "#E24B4A",
+  dangerBg:  "rgba(226,75,74,0.07)",
+  dangerBorder:"rgba(226,75,74,0.25)",
+  amber:     "#BA7517",
+  amberBg:   "rgba(186,117,23,0.07)",
+  amberBorder:"rgba(186,117,23,0.2)",
+  blue:      "#185FA5",
+  blueBg:    "rgba(24,95,165,0.07)",
+};
+
 const styles = {
-  page     : { padding: "2rem 2.5rem", maxWidth: "1000px", margin: "0 auto", fontFamily: "'Sora', 'Segoe UI', sans-serif" },
-  backBtn  : { background: "none", border: "none", color: "#1a56db", cursor: "pointer", fontSize: "0.9rem", fontWeight: "600", padding: 0, marginBottom: "1.5rem" },
-  title    : { fontSize: "1.75rem", fontWeight: "700", color: "#111827", margin: "0 0 0.25rem", letterSpacing: "-0.02em" },
-  subtitle : { color: "#6b7280", fontSize: "0.9rem", margin: "0 0 2rem" },
-  layout   : { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" },
-  card     : { backgroundColor: "#fff", borderRadius: "12px", padding: "1.75rem", border: "1px solid #e5e7eb", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
-  cardTitle: { fontSize: "1rem", fontWeight: "700", color: "#111827", margin: "0 0 1.25rem" },
-  fields   : { display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.5rem" },
-  field    : { display: "flex", flexDirection: "column", gap: "0.35rem" },
-  label    : { fontSize: "0.85rem", fontWeight: "600", color: "#374151" },
-  select   : { padding: "0.65rem 0.9rem", border: "1.5px solid #d1d5db", borderRadius: "8px", fontSize: "0.9rem", color: "#111827", backgroundColor: "#fff" },
-  checkRow : { display: "flex", alignItems: "center", gap: "0.5rem" },
-  checkLabel: { fontSize: "0.88rem", color: "#374151", cursor: "pointer" },
-  primaryBtn: { width: "100%", padding: "0.8rem", backgroundColor: "#1a56db", color: "#fff", border: "none", borderRadius: "8px", fontSize: "0.95rem", fontWeight: "600", cursor: "pointer" },
-  cancelBtn : { flex: 1, padding: "0.7rem", backgroundColor: "transparent", border: "1.5px solid #d1d5db", borderRadius: "8px", fontSize: "0.9rem", cursor: "pointer", color: "#6b7280", fontWeight: "600" },
-  dangerBtn : { flex: 1, padding: "0.7rem", backgroundColor: "#dc2626", color: "#fff", border: "none", borderRadius: "8px", fontSize: "0.9rem", fontWeight: "600", cursor: "pointer" },
-  confirmBox: { backgroundColor: "#fff7ed", border: "1px solid #fed7aa", borderRadius: "8px", padding: "1rem" },
-  confirmText: { fontSize: "0.875rem", color: "#92400e", margin: "0 0 0.75rem", lineHeight: "1.5" },
-  confirmBtns: { display: "flex", gap: "0.5rem" },
-  errorBanner: { marginTop: "1rem", padding: "0.75rem 1rem", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", color: "#dc2626", fontSize: "0.875rem" },
-  emptyResult: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "200px", textAlign: "center" },
-  spinner: { width: "36px", height: "36px", border: "3px solid #e5e7eb", borderTop: "3px solid #1a56db", borderRadius: "50%", animation: "spin 0.7s linear infinite" },
-  resultBody: { display: "flex", flexDirection: "column", gap: "1.25rem" },
-  resultGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", textAlign: "center", padding: "1rem 0", borderBottom: "1px solid #f3f4f6" },
-  resultMeta: { display: "flex", gap: "0.5rem" },
-  resultTag : { padding: "0.3rem 0.75rem", backgroundColor: "#f3f4f6", borderRadius: "99px", fontSize: "0.8rem", color: "#374151", fontWeight: "600" },
-  successBanner: { backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "0.85rem 1rem", color: "#14532d", fontSize: "0.875rem" },
-  warnBanner   : { backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "0.85rem 1rem", color: "#7f1d1d", fontSize: "0.875rem" },
-  inlineLink   : { background: "none", border: "none", color: "#dc2626", fontWeight: "700", cursor: "pointer", padding: 0, textDecoration: "underline", fontSize: "0.875rem" },
-  aiBox        : { backgroundColor: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "8px", padding: "1rem" },
-  aiLabel      : { fontSize: "0.8rem", fontWeight: "700", color: "#0369a1", marginBottom: "0.5rem" },
-  aiText       : { fontSize: "0.875rem", color: "#0c4a6e", lineHeight: "1.6", margin: 0 },
+  page     : { padding:"2rem 2.5rem", maxWidth:"1000px", margin:"0 auto", fontFamily:"'DM Sans', sans-serif" },
+  backBtn  : { background:"none", border:"none", color:C.green, cursor:"pointer", fontSize:"0.9rem", fontWeight:"600", padding:0, marginBottom:"1.5rem" },
+  title    : { fontFamily:"'Playfair Display', Georgia, serif", fontSize:"1.75rem", fontWeight:"700", color:C.text, margin:"0 0 0.25rem", letterSpacing:"-0.01em" },
+  subtitle : { color:C.muted, fontSize:"0.9rem", margin:"0 0 2rem" },
+  layout   : { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1.5rem" },
+  card     : { backgroundColor:"#fff", borderRadius:"12px", padding:"1.75rem", border:`1px solid ${C.border}` },
+  cardTitle: { fontFamily:"'Playfair Display', Georgia, serif", fontSize:"1rem", fontWeight:"700", color:C.text, margin:"0 0 1.25rem" },
+  fields   : { display:"flex", flexDirection:"column", gap:"1rem", marginBottom:"1.5rem" },
+  field    : { display:"flex", flexDirection:"column", gap:"0.35rem" },
+  label    : { fontSize:"10.5px", fontWeight:"700", color:C.muted, textTransform:"uppercase", letterSpacing:"0.08em" },
+  select   : { padding:"0.65rem 0.9rem", border:`1.5px solid ${C.border}`, borderRadius:"8px", fontSize:"0.9rem", color:C.text, backgroundColor:"#fff", fontFamily:"'DM Sans', sans-serif" },
+  checkRow : { display:"flex", alignItems:"center", gap:"0.5rem" },
+  checkLabel: { fontSize:"0.88rem", color:C.text, cursor:"pointer" },
+  primaryBtn: { width:"100%", padding:"0.8rem", backgroundColor:C.green, color:"#fff", border:"none", borderRadius:"8px", fontSize:"0.95rem", fontWeight:"600", cursor:"pointer", fontFamily:"'DM Sans', sans-serif" },
+  cancelBtn : { flex:1, padding:"0.7rem", backgroundColor:"transparent", border:`1.5px solid ${C.border}`, borderRadius:"8px", fontSize:"0.9rem", cursor:"pointer", color:C.muted, fontWeight:"600" },
+  dangerBtn : { flex:1, padding:"0.7rem", backgroundColor:C.danger, color:"#fff", border:"none", borderRadius:"8px", fontSize:"0.9rem", fontWeight:"600", cursor:"pointer" },
+  confirmBox: { backgroundColor:C.amberBg, border:`1px solid ${C.amberBorder}`, borderRadius:"8px", padding:"1rem" },
+  confirmText: { fontSize:"0.875rem", color:"#7A4A10", margin:"0 0 0.75rem", lineHeight:"1.5" },
+  confirmBtns: { display:"flex", gap:"0.5rem" },
+  errorBanner: { marginTop:"1rem", padding:"0.75rem 1rem", backgroundColor:C.dangerBg, border:`1px solid ${C.dangerBorder}`, borderRadius:"8px", color:C.danger, fontSize:"0.875rem" },
+  emptyResult: { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"200px", textAlign:"center" },
+  spinner: { width:"36px", height:"36px", border:`3px solid ${C.greenBorder}`, borderTop:`3px solid ${C.greenMid}`, borderRadius:"50%", animation:"spin 0.7s linear infinite" },
+  resultBody: { display:"flex", flexDirection:"column", gap:"1.25rem" },
+  resultGrid: { display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:"1rem", textAlign:"center", padding:"1rem 0", borderBottom:`1px solid ${C.border}` },
+  resultMeta: { display:"flex", gap:"0.5rem" },
+  resultTag : { padding:"0.3rem 0.75rem", backgroundColor:C.greenLight, borderRadius:"99px", fontSize:"0.8rem", color:C.green, fontWeight:"600", border:`1px solid ${C.greenBorder}` },
+  successBanner: { backgroundColor:C.greenLight, border:`1px solid ${C.greenBorder}`, borderRadius:"8px", padding:"0.85rem 1rem", color:C.green, fontSize:"0.875rem" },
+  warnBanner   : { backgroundColor:C.dangerBg, border:`1px solid ${C.dangerBorder}`, borderRadius:"8px", padding:"0.85rem 1rem", color:"#7A1A1A", fontSize:"0.875rem" },
+  inlineLink   : { background:"none", border:"none", color:C.danger, fontWeight:"700", cursor:"pointer", padding:0, textDecoration:"underline", fontSize:"0.875rem" },
+  aiBox        : { backgroundColor:C.greenLight, border:`1px solid ${C.greenBorder}`, borderRadius:"8px", padding:"1rem" },
+  aiLabel      : { fontSize:"0.8rem", fontWeight:"700", color:C.green, marginBottom:"0.5rem" },
+  aiText       : { fontSize:"0.875rem", color:C.text, lineHeight:"1.6", margin:0 },
 };

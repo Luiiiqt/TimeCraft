@@ -120,7 +120,7 @@ export default function ManageDepartments() {
               <tr key={d.id}>
                 <td style={{ fontWeight: 600 }}>{d.name}</td>
                 <td>
-                  <span style={{ background: "var(--primary-xlight)", color: "var(--primary)", padding: "3px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700 }}>
+                  <span style={{ background:"rgba(52,196,124,0.1)", color:"#1A6A2A", padding:"3px 10px", borderRadius:6, fontSize:12, fontWeight:700, border:"1px solid rgba(52,196,124,0.2)" }}>
                     {d.code}
                   </span>
                 </td>

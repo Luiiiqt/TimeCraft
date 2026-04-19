@@ -31,12 +31,14 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
                         String schoolYear);
 
         List<Section> findByCourseIdAndYearLevelAndSemesterAndSchoolYear(
-                        Long courseId, short yearLevel, Semester semester, String schoolYear);
+                        Long courseId, short yearLevel,
+                        com.timecraft.timecraft.model.CourseSubject.Semester semester,
+                        String schoolYear);
 
         List<Section> findBySemesterAndSchoolYear(Semester semester, String schoolYear);
 
-    List<Section> findByCourseIdAndYearLevelAndSectionName(
-            Long courseId, Short yearLevel, String sectionName);
+        List<Section> findByCourseIdAndYearLevelAndSectionName(
+                        Long courseId, Short yearLevel, String sectionName);
 
         List<Section> findByIsActiveTrue();
 
@@ -48,4 +50,5 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
                         "WHERE sc.section.id = :sectionId " +
                         "AND ss.assignmentType = 'REGULAR'")
         long countRegularStudentsBySection(@Param("sectionId") Long sectionId);
+
 }

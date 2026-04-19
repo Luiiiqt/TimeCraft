@@ -26,4 +26,7 @@ public interface TeacherProfileRepository extends JpaRepository<TeacherProfile, 
            "AND tp.preferredCampus.id = :campusId")
     List<TeacherProfile> findFlexibleByPreferredCampus(
             @Param("campusId") Long campusId);
+
+    /** Teachers allowed to teach outside their home department. */
+    List<TeacherProfile> findByIsCrossDepartmentTrue();
 }

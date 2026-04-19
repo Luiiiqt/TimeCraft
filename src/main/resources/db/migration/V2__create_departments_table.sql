@@ -12,6 +12,7 @@ CREATE TABLE departments (
     id          BIGSERIAL       PRIMARY KEY,
     name        VARCHAR(150)    NOT NULL UNIQUE,
     code        VARCHAR(20)     NOT NULL UNIQUE,
+    campus_id   BIGINT,
     is_active   BOOLEAN         NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMP       NOT NULL DEFAULT NOW()
 );
@@ -41,7 +42,8 @@ INSERT INTO departments (name, code) VALUES
     ('College of Physical Therapy',             'COPT'),
     ('College of Psychology',                   'COPSY'),
     ('College of Computer Studies and Engineering', 'CCSE'),
-    ('College of Business',                     'COB');
+    ('College of Business',                     'COB'),
+    ('College of Special Needs Education',       'COL_IE');
 
 -- ── Seed courses ──────────────────────────────────────────────────────────────
 
@@ -64,7 +66,7 @@ INSERT INTO courses (department_id, name, code, degree_level) VALUES
 INSERT INTO courses (department_id, name, code, degree_level) VALUES
     ((SELECT id FROM departments WHERE code = 'CCSE'), 'Bachelor of Science in Information Technology',  'BSIT',  'BACHELOR'),
     ((SELECT id FROM departments WHERE code = 'CCSE'), 'Bachelor of Science in Computer Science',        'BSCS',  'BACHELOR'),
-    ((SELECT id FROM departments WHERE code = 'CCSE'), 'Bachelor of Science in Computer Engineering',    'BSCpE', 'BACHELOR'),
+    ((SELECT id FROM departments WHERE code = 'CCSE'), 'Bachelor of Science in Computer Engineering',    'BSCPE', 'BACHELOR'),
     ((SELECT id FROM departments WHERE code = 'CCSE'), 'Biomedical, Electronics and Computer Technology','BECT',   'BACHELOR'),
     ((SELECT id FROM departments WHERE code = 'CCSE'), 'Digital Imaging Technology',                     'DIT',   'BACHELOR'),
     ((SELECT id FROM departments WHERE code = 'CCSE'), 'Master in Information Systems',                  'MIS',   'MASTER');

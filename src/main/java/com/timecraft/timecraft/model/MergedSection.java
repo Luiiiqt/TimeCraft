@@ -56,7 +56,7 @@ public class MergedSection {
     @Column(name = "school_year", nullable = false, length = 15)
     private String schoolYear;
 
-    /** The Program Head who approved the merge. */
+    /** The Dean who approved the merge. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;

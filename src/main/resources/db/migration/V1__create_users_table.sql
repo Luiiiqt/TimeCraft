@@ -6,7 +6,7 @@
 
 CREATE TABLE users (
     id              BIGSERIAL       PRIMARY KEY,
-    user_type       VARCHAR(20)     NOT NULL CHECK (user_type IN ('STUDENT', 'TEACHER', 'ADMIN', 'PROGRAM_HEAD')),
+    user_type       VARCHAR(20)     NOT NULL CHECK (user_type IN ('STUDENT', 'TEACHER', 'ADMIN', 'DEAN')),
     full_name       VARCHAR(150)    NOT NULL,
     school_id       VARCHAR(30)     NOT NULL UNIQUE,    -- e.g. 2021-00123
     email           VARCHAR(150)    NOT NULL UNIQUE,
@@ -37,8 +37,10 @@ CREATE TABLE student_profiles (
 
 -- ── Teacher profile ───────────────────────────────────────────────────────────
 CREATE TABLE teacher_profiles (
-    user_id         BIGINT          PRIMARY KEY,
-    department_id   BIGINT          NOT NULL,   -- FK wired in V2; includes General Education
+    user_id           BIGINT          PRIMARY KEY,
+    department_id     BIGINT          NOT NULL,   -- FK wired in V2; includes General Education
+    campus_flexible   BOOLEAN         NOT NULL DEFAULT FALSE,
+    is_ge_teacher     BOOLEAN         NOT NULL DEFAULT FALSE,
     CONSTRAINT fk_teacher_profiles_user
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
@@ -58,7 +60,7 @@ CREATE TRIGGER trg_users_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 COMMENT ON TABLE  users                          IS 'All system users — students and teachers';
-COMMENT ON COLUMN users.user_type                IS 'STUDENT | TEACHER';
+COMMENT ON COLUMN users.user_type                IS 'STUDENT | TEACHER | ADMIN | PROGRAM_HEAD';
 COMMENT ON COLUMN users.school_id                IS 'Institutional ID e.g. 2021-00123 — unique system-wide';
 COMMENT ON TABLE  student_profiles               IS '1-to-1 extension of users for student data';
 COMMENT ON COLUMN student_profiles.is_irregular  IS 'TRUE = no fixed section; subjects assigned individually';

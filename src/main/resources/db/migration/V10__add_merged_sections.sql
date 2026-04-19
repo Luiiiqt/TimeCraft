@@ -1,5 +1,5 @@
 -- ============================================================
--- V13: Merged Sections
+-- V10: Merged Sections
 --
 --  Supports BSIT+BSCS and ABPsy+BSPsy class merging
 --  for shared major subjects.
@@ -11,9 +11,9 @@ CREATE TABLE merged_sections (
     primary_section_id    BIGINT      NOT NULL,
     secondary_section_id  BIGINT      NOT NULL,
     subject_id            BIGINT      NOT NULL,
-    semester              VARCHAR(20) NOT NULL,
+    semester              VARCHAR(20) NOT NULL CHECK (semester IN ('1st', '2nd', 'Summer')),
     school_year           VARCHAR(15) NOT NULL,
-    created_by            BIGINT      NOT NULL,   -- program_head user_id
+    created_by            BIGINT      NOT NULL,   -- dean user_id
     created_at            TIMESTAMP   NOT NULL DEFAULT NOW(),
 
     CONSTRAINT fk_ms_primary    FOREIGN KEY (primary_section_id)   REFERENCES sections(id) ON DELETE RESTRICT,

@@ -12,7 +12,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -57,17 +56,28 @@ public class CourseSubject {
     @Builder.Default
     private boolean isShared = false;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "curriculum_id")
+    private Curriculum curriculum;
+
     public enum Semester {
-        FIRST("1st"), SECOND("2nd"), SUMMER("Summer");
+    FIRST("1st"), SECOND("2nd"), SUMMER("Summer");
 
-        private final String label;
+    private final String label;
 
-        Semester(String label) {
-            this.label = label;
+    Semester(String label) { this.label = label; }
+    public String getLabel() { return label; }
+
+    @com.fasterxml.jackson.annotation.JsonValue
+    public String getValue() { return name(); }
+
+    @com.fasterxml.jackson.annotation.JsonCreator
+    public static Semester from(String value) {
+        for (Semester s : values()) {
+            if (s.label.equalsIgnoreCase(value) || s.name().equalsIgnoreCase(value))
+                return s;
         }
-
-        public String getLabel() {
-            return label;
-        }
+        throw new IllegalArgumentException("Unknown semester: " + value);
+        }   
     }
 }

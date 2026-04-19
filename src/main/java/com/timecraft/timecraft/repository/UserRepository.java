@@ -30,4 +30,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
                      "AND LOWER(u.fullName) LIKE LOWER(CONCAT('%', :name, '%'))")
        List<User> searchByTypeAndName(@Param("type") UserType type,
                      @Param("name") String name);
+
+       /** All active Deans — used by the Dean management page. */
+       @Query("SELECT u FROM User u WHERE u.userType = 'DEAN' AND u.isActive = true")
+       List<User> findAllActiveDeans();
 }

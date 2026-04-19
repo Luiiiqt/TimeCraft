@@ -52,7 +52,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     const home =
       role === "ADMIN"        ? "/admin"        :
       role === "TEACHER"      ? "/teacher"      :
-      role === "PROGRAM_HEAD" ? "/program-head" : "/student";
+      role === "DEAN" ? "/dean" : "/student";
     return <Navigate to={home} replace />;
   }
 

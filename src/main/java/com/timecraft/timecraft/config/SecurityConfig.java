@@ -85,9 +85,9 @@ public class SecurityConfig {
                                                                 "/api/v1/teachers/*/availability")
                                                 .hasAnyRole("TEACHER", "ADMIN")
 
-                                                // ── Program Head endpoints ────────────────────────────────────
-                                                .requestMatchers("/api/v1/program-head/**")
-                                                .hasAnyRole("PROGRAM_HEAD", "ADMIN")
+                                                // ── Dean endpoints ────────────────────────────────────────────
+                                                .requestMatchers("/api/v1/dean/**")
+                                                .hasAnyRole("DEAN", "ADMIN")
 
                                                 // ── Admin-only endpoints ──────────────────────────────────────
                                                 .requestMatchers(
@@ -107,25 +107,28 @@ public class SecurityConfig {
                                                                 "/api/v1/schedules/section/**",
                                                                 "/api/v1/schedules/conflicted",
                                                                 "/api/v1/timeslots/**")
-                                                .hasAnyRole("ADMIN", "PROGRAM_HEAD", "TEACHER")
+                                                .hasAnyRole("ADMIN", "DEAN", "TEACHER")
 
                                                 .requestMatchers(HttpMethod.POST,
-                                                                "/api/v1/teachers",
-                                                                "/api/v1/students",
-                                                                "/api/v1/schedules/generate",
-                                                                "/api/v1/schedules",
-                                                                "/api/v1/conflicts/audit")
+                                                "/api/v1/teachers",
+                                                "/api/v1/students",
+                                                "/api/v1/schedules",
+                                                "/api/v1/conflicts/audit")
                                                 .hasRole("ADMIN")
 
+                                                .requestMatchers(HttpMethod.POST,
+                                                "/api/v1/schedules/generate")
+                                                .hasAnyRole("ADMIN", "DEAN")
+
                                                 .requestMatchers(HttpMethod.POST, "/api/v1/subjects")
-                                                .hasAnyRole("ADMIN", "PROGRAM_HEAD")
+                                                .hasAnyRole("ADMIN", "DEAN")
 
                                                 .requestMatchers(HttpMethod.PUT, "/api/v1/subjects/**")
-                                                .hasAnyRole("ADMIN", "PROGRAM_HEAD")
+                                                .hasAnyRole("ADMIN", "DEAN")
 
                                                 .requestMatchers(HttpMethod.PUT,
                                                                 "/api/v1/schedules/**")
-                                                .hasAnyRole("ADMIN", "PROGRAM_HEAD")
+                                                .hasAnyRole("ADMIN", "DEAN")
 
                                                 .requestMatchers(HttpMethod.DELETE,
                                                                 "/api/v1/schedules/**",

@@ -81,10 +81,10 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "user", "hibernateLazyInitializer", "handler",
             "department" })
-    private ProgramHeadProfile programHeadProfile;
+    private DeanProfile deanProfile;
 
     // ── Enum ──────────────────────────────────────────────────────────────────
     public enum UserType {
-        STUDENT, TEACHER, ADMIN, PROGRAM_HEAD
+        STUDENT, TEACHER, ADMIN, DEAN
     }
 }

@@ -8,9 +8,9 @@ const ROLES = [
     key   : "admin",
     label : "Administrator",
     icon  : "◈",
-    color : "#3B4FD8",
-    bg    : "#1E2875",
-    light : "#EEF0FF",
+    color : "#1D9E75",
+    bg    : "#085041",
+    light : "#E1F5EE",
     desc  : "Generate conflict-free timetables in seconds. Manage departments, rooms, and faculty across multiple campuses.",
     perks : ["Auto schedule generation", "Conflict detection", "Department & room management", "Reports & analytics"],
   },
@@ -18,9 +18,9 @@ const ROLES = [
     key   : "teacher",
     label : "Faculty",
     icon  : "◐",
-    color : "#1E6B45",
-    bg    : "#14432A",
-    light : "#DCFCE7",
+    color : "#0F6E56",
+    bg    : "#04342C",
+    light : "#9FE1CB",
     desc  : "Set your availability preferences and let the system build a schedule that fits. View your assigned classes anytime.",
     perks : ["Availability management", "Real-time schedule view", "Cross-campus support", "Section load summary"],
   },
@@ -28,9 +28,9 @@ const ROLES = [
     key   : "student",
     label : "Student",
     icon  : "◑",
-    color : "#5B3FBF",
-    bg    : "#2D1B69",
-    light : "#EDE9FE",
+    color : "#3B6D11",
+    bg    : "#173404",
+    light : "#C0DD97",
     desc  : "Access your personalised timetable the moment it's published. Know exactly when and where your classes are.",
     perks : ["Personal timetable view", "Day-at-a-glance layout", "Subject & room details", "Irregular student support"],
   },
@@ -38,16 +38,16 @@ const ROLES = [
 
 // Decorative mini-timetable data
 const DEMO_SLOTS = [
-  { day: "Mon", time: "7:30",  code: "CS101", type: "LEC", color: "#3B4FD8" },
-  { day: "Mon", time: "10:00", code: "MATH2", type: "LEC", color: "#0891b2" },
-  { day: "Tue", time: "7:30",  code: "CS101", type: "LAB", color: "#1E6B45" },
-  { day: "Tue", time: "13:00", code: "ENG01", type: "LEC", color: "#7c3aed" },
-  { day: "Wed", time: "10:00", code: "PE001", type: "LEC", color: "#d97706" },
-  { day: "Wed", time: "7:30",  code: "PHYS1", type: "LAB", color: "#dc2626" },
-  { day: "Thu", time: "13:00", code: "CS101", type: "LEC", color: "#3B4FD8" },
-  { day: "Thu", time: "10:00", code: "MATH2", type: "LAB", color: "#0891b2" },
-  { day: "Fri", time: "7:30",  code: "ENG01", type: "LEC", color: "#7c3aed" },
-  { day: "Fri", time: "13:00", code: "PHYS1", type: "LEC", color: "#dc2626" },
+  { day: "Mon", time: "7:30",  code: "CS101", type: "LEC", color: "#1D9E75" },
+  { day: "Mon", time: "10:00", code: "MATH2", type: "LEC", color: "#0F6E56" },
+  { day: "Tue", time: "7:30",  code: "CS101", type: "LAB", color: "#3B6D11" },
+  { day: "Tue", time: "13:00", code: "ENG01", type: "LEC", color: "#27500A" },
+  { day: "Wed", time: "10:00", code: "PE001", type: "LEC", color: "#639922" },
+  { day: "Wed", time: "7:30",  code: "PHYS1", type: "LAB", color: "#085041" },
+  { day: "Thu", time: "13:00", code: "CS101", type: "LEC", color: "#1D9E75" },
+  { day: "Thu", time: "10:00", code: "MATH2", type: "LAB", color: "#0F6E56" },
+  { day: "Fri", time: "7:30",  code: "ENG01", type: "LEC", color: "#3B6D11" },
+  { day: "Fri", time: "13:00", code: "PHYS1", type: "LEC", color: "#639922" },
 ];
 
 const DAYS  = ["Mon","Tue","Wed","Thu","Fri"];
@@ -79,9 +79,9 @@ function MiniTimetable() {
           </div>
         </div>
         <div style={{
-          background: "rgba(108,127,255,0.2)",
-          border    : "1px solid rgba(108,127,255,0.35)",
-          color     : "#6C7FFF",
+          background: "rgba(29,158,117,0.2)",
+          border    : "1px solid rgba(29,158,117,0.4)",
+          color     : "#1D9E75",
           borderRadius: 8,
           padding   : "4px 10px",
           fontSize  : 11,
@@ -302,7 +302,7 @@ export default function LandingPage() {
           gap: 8px;
           padding: 13px 28px;
           background: #fff;
-          color: #1E2875;
+          color: #085041;
           border: none;
           border-radius: 10px;
           font-size: 14px;
@@ -316,7 +316,7 @@ export default function LandingPage() {
         .cta-primary:hover {
           background: #EEF0FF;
           transform: translateY(-1px);
-          box-shadow: 0 8px 24px rgba(108,127,255,0.3);
+          box-shadow: 0 8px 24px rgba(29,158,117,0.35);
         }
         .cta-secondary {
           display: inline-flex;
@@ -385,7 +385,7 @@ export default function LandingPage() {
             width      : 34,
             height     : 34,
             borderRadius: 9,
-            background : "linear-gradient(135deg, #3B4FD8, #6C7FFF)",
+            background : "linear-gradient(135deg, #0F6E56, #1D9E75)",
             display    : "flex",
             alignItems : "center",
             justifyContent: "center",
@@ -440,7 +440,7 @@ export default function LandingPage() {
           width      : 600,
           height     : 600,
           borderRadius: "50%",
-          background : "radial-gradient(circle, rgba(59,79,216,0.18) 0%, transparent 70%)",
+          background : "radial-gradient(circle, rgba(29,158,117,0.22) 0%, transparent 70%)",
           filter     : "blur(40px)",
           pointerEvents: "none",
         }} />
@@ -474,19 +474,19 @@ export default function LandingPage() {
               display     : "inline-flex",
               alignItems  : "center",
               gap         : 8,
-              background  : "rgba(108,127,255,0.12)",
-              border      : "1px solid rgba(108,127,255,0.25)",
+              background  : "rgba(29,158,117,0.12)",
+              border      : "1px solid rgba(29,158,117,0.3)",
               borderRadius: 100,
               padding     : "5px 14px",
               marginBottom: 24,
               fontSize    : 12,
               fontWeight  : 700,
-              color       : "#6C7FFF",
+              color       : "#1D9E75",
               letterSpacing: "0.07em",
               textTransform: "uppercase",
               animation   : "fadeIn 0.5s ease 0.1s both",
             }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6C7FFF", animation: "shimmer 2s ease infinite" }} />
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#1D9E75", animation: "shimmer 2s ease infinite" }} />
               Academic Scheduling System
             </div>
 
@@ -504,7 +504,7 @@ export default function LandingPage() {
             }}>
               Schedules that actually{" "}
               <span style={{
-                background         : "linear-gradient(90deg, #6C7FFF, #34C47C)",
+                background         : "linear-gradient(90deg, #1D9E75, #97C459)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip     : "text",
@@ -626,7 +626,7 @@ export default function LandingPage() {
 
       {/* ── CTA Banner ─────────────────────────────────────────────────────── */}
       <section style={{
-        background: "linear-gradient(135deg, #1E2875 0%, #3B4FD8 60%, #6C7FFF 100%)",
+        background: "linear-gradient(135deg, #04342C 0%, #0F6E56 55%, #1D9E75 100%)",
         padding   : "72px 48px",
         textAlign : "center",
         position  : "relative",

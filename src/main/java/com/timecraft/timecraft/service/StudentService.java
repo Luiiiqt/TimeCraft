@@ -17,6 +17,10 @@ import com.timecraft.timecraft.repository.CourseRepository;
 import com.timecraft.timecraft.repository.DepartmentRepository;
 import com.timecraft.timecraft.repository.StudentProfileRepository;
 import com.timecraft.timecraft.repository.UserRepository;
+import com.timecraft.timecraft.model.IrregularStudentDocument;
+import com.timecraft.timecraft.model.StudentProfile.ApplicationStatus;
+import com.timecraft.timecraft.repository.IrregularStudentDocumentRepository;
+import java.time.LocalDateTime;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,6 +34,7 @@ public class StudentService {
     private final DepartmentRepository departmentRepository;
     private final CourseRepository courseRepository;
     private final PasswordEncoder passwordEncoder;
+    private final IrregularStudentDocumentRepository documentRepository;
 
     // ── Lookup ────────────────────────────────────────────────────────────────
 
@@ -162,5 +167,49 @@ public class StudentService {
         profile.setIrregular(false);
         profile.setSection(section);
         return profileRepository.save(profile);
+    }
+
+    // ── Irregular Registration ────────────────────────────────────────────────
+
+    @Transactional
+    public User registerIrregular(String fullName, String schoolId, String email,
+            String rawPassword, Long departmentId, Long courseId,
+            Short yearLevel) {
+        return createStudent(fullName, schoolId, email, rawPassword,
+                departmentId, courseId, yearLevel, null, true);
+    }
+
+    @Transactional
+    public IrregularStudentDocument saveDocument(Long studentId,
+            IrregularStudentDocument.DocumentType documentType,
+            String filePath, String originalName) {
+        User student = findById(studentId);
+        IrregularStudentDocument doc = IrregularStudentDocument.builder()
+                .student(student)
+                .documentType(documentType)
+                .filePath(filePath)
+                .originalName(originalName)
+                .uploadedAt(LocalDateTime.now())
+                .build();
+        return documentRepository.save(doc);
+    }
+
+    @Transactional
+    public StudentProfile updateApplicationStatus(Long studentId,
+            ApplicationStatus status, Long reviewedByUserId, String notes) {
+        StudentProfile profile = findProfileByUserId(studentId);
+        User reviewer = userRepository.findById(reviewedByUserId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Reviewer not found: " + reviewedByUserId));
+        profile.setApplicationStatus(status);
+        profile.setReviewedBy(reviewer);
+        profile.setReviewedAt(LocalDateTime.now());
+        profile.setNotes(notes);
+        return profileRepository.save(profile);
+    }
+
+    public List<StudentProfile> findPendingIrregular() {
+        return profileRepository.findByApplicationStatusIn(
+                List.of(ApplicationStatus.PENDING, ApplicationStatus.FOR_INTERVIEW));
     }
 }

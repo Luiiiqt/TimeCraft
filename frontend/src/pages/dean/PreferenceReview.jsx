@@ -20,7 +20,7 @@ export default function PreferenceReview() {
 
   const load = () => {
     setLoading(true);
-    api.get(`/program-head/preferences?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`)
+    api.get(`/dean/preferences?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`)
       .then(res => { setPrefs(res.data?.data ?? []); setLoading(false); })
       .catch(() => setLoading(false));
   };
@@ -30,7 +30,7 @@ export default function PreferenceReview() {
   const review = async (id, decision) => {
     setError(""); setSuccess("");
     try {
-      await api.put(`/program-head/preferences/${id}/review`, { decision });
+      await api.put(`/dean/preferences/${id}/review`, { decision });
       setSuccess(
         decision === "APPROVED"
           ? "Preference approved. Go to Subject Assignments to bind this teacher to a section."
@@ -102,7 +102,7 @@ export default function PreferenceReview() {
                       </>
                     )}
                     {p.status === "APPROVED" && (
-                      <a href="/program-head/assignments"
+                      <a href="/dean/assignments"
                         style={{ fontSize: 11, padding: "4px 10px", background: "#dbeafe", color: "#1e40af", borderRadius: 6, fontWeight: 600, textDecoration: "none" }}>
                         → Assign to Section
                       </a>

@@ -6,6 +6,7 @@ import Navbar from "../components/layout/Navbar";
 import Sidebar from "../components/layout/Sidebar";
 import ProtectedRoute from "../components/layout/ProtectedRoute";
 import OllamaChat from "../components/ui/OllamaChat";
+import SchedulePrint from "../pages/dean/SchedulePrint";
 
 // ── Lazy pages ────────────────────────────────────────────────────────────────
 
@@ -22,22 +23,24 @@ const TeacherDashboard = lazy(() => import("../pages/teacher/TeacherDashboard"))
 const ViewMySchedule = lazy(() => import("../pages/teacher/ViewMySchedule"));
 const SetAvailability = lazy(() => import("../pages/teacher/SetAvailability"));
 const SubjectPreferences = lazy(() => import("../pages/teacher/SubjectPreferences"));
-const TeacherAvailabilityReview = lazy(() => import("../pages/admin/TeacherAvailabilityReview"));
+const TeacherAvailabilityReview = lazy(() => import("../pages/dean/TeacherAvailabilityReview"));
 
-const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
-const GenerateSchedule = lazy(() => import("../pages/admin/GenerateSchedule"));
-const ManageDepartments = lazy(() => import("../pages/admin/ManageDepartments"));
-const ManageRooms = lazy(() => import("../pages/admin/ManageRooms"));
-const ManageSubjects = lazy(() => import("../pages/admin/ManageSubjects"));
-const Reports = lazy(() => import("../pages/admin/Reports"));
-const ProgramHeadDashboard = lazy(() => import("../pages/programhead/ProgramHeadDashboard"));
-const SubjectAssignments = lazy(() => import("../pages/programhead/SubjectAssignments"));
-const PreferenceReview = lazy(() => import("../pages/programhead/PreferenceReview"));
-const ProgramHeadGenerateSchedule = lazy(() => import("../pages/programhead/GenerateSchedule"));
-const ScheduleView = lazy(() => import("../pages/programhead/ScheduleView"));
-const ProgramHeadSubjects = lazy(() => import("../pages/programhead/ManageSubjects"));
-const ManageStudents = lazy(() => import("../pages/admin/ManageStudents"));
-const IrregularEnrollment = lazy(() => import("../pages/admin/IrregularEnrollment"));
+const AdminDashboard = lazy(() => import("../pages/dean/AdminDashboard"));
+const GenerateSchedule = lazy(() => import("../pages/dean/GenerateSchedule"));
+const ManageDepartments = lazy(() => import("../pages/dean/ManageDepartments"));
+const ManageRooms = lazy(() => import("../pages/dean/ManageRooms"));
+const ManageSubjects = lazy(() => import("../pages/dean/ManageSubjects"));
+const Reports = lazy(() => import("../pages/dean/Reports"));
+const DeanDashboard = lazy(() => import("../pages/dean/DeanDashboard"));
+const SubjectAssignments = lazy(() => import("../pages/dean/SubjectAssignments"));
+const PreferenceReview = lazy(() => import("../pages/dean/PreferenceReview"));
+const DeanGenerateSchedule = GenerateSchedule;
+const ScheduleView = lazy(() => import("../pages/dean/ScheduleView"));
+const DeanSubjects = lazy(() => import("../pages/dean/ManageSubjects"));
+const ManageStudents = lazy(() => import("../pages/dean/ManageStudents"));
+const IrregularEnrollment = lazy(() => import("../pages/dean/IrregularEnrollment"));
+const CurriculumImport = lazy(() => import("../pages/dean/CurriculumImport"));
+const IrregularStudents = lazy(() => import("../pages/dean/IrregularStudents"));
 
 // ── Loader ────────────────────────────────────────────────────────────────────
 
@@ -84,7 +87,7 @@ function HomeRoute() {
   if (!isAuthenticated) return <LandingPage />;
   if (role === "ADMIN") return <Navigate to="/admin" replace />;
   if (role === "TEACHER") return <Navigate to="/teacher" replace />;
-  if (role === "PROGRAM_HEAD") return <Navigate to="/program-head" replace />;
+  if (role === "DEAN") return <Navigate to="/dean" replace />;
   return <Navigate to="/student" replace />;
 }
 
@@ -127,13 +130,15 @@ export default function AppRouter() {
             <Route path="/teacher/availability" element={<Page roles={["TEACHER"]}><SetAvailability /></Page>} />
             <Route path="/teacher/preferences" element={<Page roles={["TEACHER"]}><SubjectPreferences /></Page>} />
 
-            {/* Program Head */}
-            <Route path="/program-head" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><ProgramHeadDashboard /></Page>} />
-            <Route path="/program-head/subjects" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><ProgramHeadSubjects /></Page>} />
-            <Route path="/program-head/assignments" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><SubjectAssignments /></Page>} />
-            <Route path="/program-head/preferences" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><PreferenceReview /></Page>} />
-            <Route path="/program-head/generate" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><ProgramHeadGenerateSchedule /></Page>} />
-            <Route path="/program-head/schedule-view" element={<Page roles={["PROGRAM_HEAD", "ADMIN"]}><ScheduleView /></Page>} />
+            {/* Dean */}
+            <Route path="/dean" element={<Page roles={["DEAN", "ADMIN"]}><DeanDashboard /></Page>} />
+            <Route path="/dean/subjects" element={<Page roles={["DEAN", "ADMIN"]}><DeanSubjects /></Page>} />
+            <Route path="/dean/assignments" element={<Page roles={["DEAN", "ADMIN"]}><SubjectAssignments /></Page>} />
+            <Route path="/dean/preferences" element={<Page roles={["DEAN", "ADMIN"]}><PreferenceReview /></Page>} />
+            <Route path="/dean/generate" element={<Page roles={["DEAN", "ADMIN"]}><DeanGenerateSchedule /></Page>} />
+            <Route path="/dean/schedule-view" element={<Page roles={["DEAN", "ADMIN"]}><ScheduleView /></Page>} />
+            <Route path="/dean/schedule" element={<Page roles={["DEAN", "ADMIN"]}><ScheduleView /></Page>} />
+            <Route path="/dean/schedule-print" element={<SchedulePrint />} />
 
             {/* Admin */}
             <Route path="/admin" element={<Page roles={["ADMIN"]}><AdminDashboard /></Page>} />
@@ -145,8 +150,10 @@ export default function AppRouter() {
             <Route path="/admin/availability" element={<Page roles={["ADMIN"]}><TeacherAvailabilityReview /></Page>} />
             <Route path="/admin/teachers" element={<Page roles={["ADMIN"]}><TeacherAvailabilityReview /></Page>} />
             <Route path="/admin/students" element={<Page roles={["ADMIN"]}><ManageStudents /></Page>} />
-            <Route path="/admin/irregular-enrollment" element={<Page roles={["ADMIN", "PROGRAM_HEAD"]}><IrregularEnrollment /></Page>} />
-            <Route path="/program-head/irregular-enrollment" element={<Page roles={["ADMIN", "PROGRAM_HEAD"]}><IrregularEnrollment /></Page>} />
+            <Route path="/admin/irregular-enrollment" element={<Page roles={["ADMIN", "DEAN"]}><IrregularEnrollment /></Page>} />
+            <Route path="/dean/irregular-enrollment" element={<Page roles={["ADMIN", "DEAN"]}><IrregularEnrollment /></Page>} />
+            <Route path="/dean/curriculum" element={<Page roles={["DEAN", "ADMIN"]}><CurriculumImport /></Page>} />
+            <Route path="/dean/irregular" element={<Page roles={["DEAN", "ADMIN"]}><IrregularStudents /></Page>} />
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />

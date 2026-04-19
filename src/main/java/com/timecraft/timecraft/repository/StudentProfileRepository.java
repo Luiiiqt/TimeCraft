@@ -48,4 +48,13 @@ public interface StudentProfileRepository extends JpaRepository<StudentProfile, 
         long countByCourseIdAndYearLevelAndSection(Long courseId,
                         Short yearLevel,
                         String section);
+
+        List<StudentProfile> findByApplicationStatus(
+                        com.timecraft.timecraft.model.StudentProfile.ApplicationStatus applicationStatus);
+
+        List<StudentProfile> findByIsIrregularTrueAndApplicationStatus(
+                        com.timecraft.timecraft.model.StudentProfile.ApplicationStatus applicationStatus);
+
+        List<StudentProfile> findByApplicationStatusIn(
+                        List<com.timecraft.timecraft.model.StudentProfile.ApplicationStatus> statuses);
 }

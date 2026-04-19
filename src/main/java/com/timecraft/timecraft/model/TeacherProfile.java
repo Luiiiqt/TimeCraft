@@ -63,6 +63,14 @@ public class TeacherProfile {
     private Campus preferredCampus;
 
     /**
+     * TRUE = this teacher can be assigned subjects outside their home department.
+     * Used when a teacher from one course/department also teaches in another.
+     */
+    @Column(name = "is_cross_department", nullable = false)
+    @Builder.Default
+    private boolean isCrossDepartment = false;
+
+    /**
      * Returns true if this teacher is a GE teacher who can be
      * scheduled at either campus.
      */

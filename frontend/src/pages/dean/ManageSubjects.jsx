@@ -13,8 +13,8 @@ const badge = (text, color) => (
   }}>{text}</span>
 );
 
-const TYPE_COLOR  = { MAJOR: { bg: "#dbeafe", text: "#1e40af" }, MINOR: { bg: "#f3f4f6", text: "#374151" } };
-const SES_COLOR   = { LECTURE: { bg: "#f0fdf4", text: "#14532d" }, LABORATORY: { bg: "#fef3c7", text: "#92400e" } };
+const TYPE_COLOR = { MAJOR: { bg: "#dbeafe", text: "#1e40af" }, MINOR: { bg: "#f3f4f6", text: "#374151" } };
+const SES_COLOR = { LECTURE: { bg: "#f0fdf4", text: "#14532d" }, LABORATORY: { bg: "#fef3c7", text: "#92400e" } };
 
 const EMPTY_FORM = { name: "", code: "", subjectType: "MAJOR", sessionType: "LECTURE", units: 3, prerequisite: "", yearLevel: 1, semester: "FIRST", courseId: null };
 
@@ -23,38 +23,41 @@ const isMajor = (form) => form.subjectType === "MAJOR";
 export default function ManageSubjects() {
   const { user } = useAuth();
 
-  const [curriculum, setCurriculum]   = useState([]);   // CourseSubject[]
+  const [curriculum, setCurriculum] = useState([]);   // CourseSubject[]
   const [allSubjects, setAllSubjects] = useState([]);   // Subject[] in dept
-  const [courses, setCourses]         = useState([]);
-  const [courseId, setCourseId]       = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [courseId, setCourseId] = useState(null);
 
-  const [activeYear, setActiveYear]   = useState(1);
-  const [activeSem,  setActiveSem]    = useState("FIRST");
+  const [activeYear, setActiveYear] = useState(1);
+  const [activeSem, setActiveSem] = useState("FIRST");
 
-  const [showForm,  setShowForm]  = useState(false);
-  const [form,      setForm]      = useState(EMPTY_FORM);
-  const [editId,    setEditId]    = useState(null);
-  const [saving,    setSaving]    = useState(false);
-  const [error,     setError]     = useState("");
-  const [search,    setSearch]    = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [editId, setEditId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
 
   // Load courses under this PH's department
   useEffect(() => {
     if (!user) return;
-    api.get(`/program-head/my-courses`)
-  .then(r => {
-    const list = r.data?.data ?? [];
-    setCourses(list);
-    if (list.length > 0) setCourseId(list[0].id);
-  })
-  .catch(() => {});
+    api.get(`/dean/my-courses`)
+      .then(r => {
+        const list = r.data?.data ?? [];
+        setCourses(list);
+        if (list.length > 0) setCourseId(list[0].id);
+      })
+      .catch(() => { });
   }, [user]);
 
   // Load full curriculum when course changes
   useEffect(() => {
     if (!courseId) return;
     api.get(`/subjects/course/${courseId}/curriculum`)
-      .then(r => setCurriculum(r.data?.data ?? []))
+      .then(r => {
+        console.log("CURRICULUM RESPONSE:", JSON.stringify(r.data?.data?.[0]));
+        setCurriculum(r.data?.data ?? []);
+      })
       .catch(() => setCurriculum([]));
   }, [courseId]);
 
@@ -66,13 +69,13 @@ export default function ManageSubjects() {
         const subjects = (r.data?.data ?? []).map(cs => cs.subject);
         setAllSubjects(subjects);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [courseId]);
 
   // Filtered view
   const visible = curriculum.filter(cs =>
-    cs.yearLevel === activeYear &&
-    cs.semester  === activeSem &&
+    Number(cs.yearLevel) === Number(activeYear) &&
+    String(cs.semester) === String(activeSem) &&
     (search === "" ||
       cs.subject.name.toLowerCase().includes(search.toLowerCase()) ||
       cs.subject.code.toLowerCase().includes(search.toLowerCase()))
@@ -127,24 +130,47 @@ export default function ManageSubjects() {
           try {
             const check = await api.get(`/subjects/by-code/${code}`);
             existing = check.data?.data ?? null;
-          } catch (_) {}
+          } catch (e) {
+            if (e.response?.status !== 404) throw e;
+          }
 
           if (existing) {
             subjectId = existing.id;
           } else {
-            const res = await api.post("/subjects", {
-              name: form.name,
-              code,
-              subjectType: form.subjectType,
-              sessionType,
-              units: Number(form.units),
-              prerequisite: form.prerequisite || null,
-              departmentId: user.departmentId,
-            });
-            subjectId = res.data.data.id;
+            try {
+              const res = await api.post("/subjects", {
+                name: form.name,
+                code,
+                subjectType: form.subjectType,
+                sessionType,
+                units: Number(form.units),
+                prerequisite: form.prerequisite || null,
+                departmentId: user.departmentId,
+              });
+              subjectId = res.data.data.id;
+            } catch (e) {
+              if (e.response?.status === 409 || e.response?.data?.message?.toLowerCase().includes("already exists")) {
+                const retry = await api.get(`/subjects/by-code/${code}`);
+                subjectId = retry.data.data.id;
+              } else {
+                throw e;
+              }
+            }
           }
 
-          await api.post("/program-head/curriculum", {
+          try {
+            await api.post("/dean/curriculum", {
+              courseId: Number(form.courseId ?? courseId),
+              subjectId,
+              yearLevel: Number(form.yearLevel),
+              semester: form.semester,
+              isShared: false,
+            });
+          } catch (e) {
+            if (!e.response?.data?.message?.toLowerCase().includes("already")) throw e;
+          }
+
+          console.log("Posting to curriculum:", {
             courseId: Number(form.courseId ?? courseId),
             subjectId,
             yearLevel: Number(form.yearLevel),
@@ -155,12 +181,9 @@ export default function ManageSubjects() {
       }
 
       // Refresh
-      const [currRes, subjRes] = await Promise.all([
-        api.get(`/subjects/course/${courseId}/curriculum`),
-        api.get(`/subjects?departmentId=${user.departmentId}`),
-      ]);
+      const currRes = await api.get(`/subjects/course/${courseId}/curriculum`);
       setCurriculum(currRes.data?.data ?? []);
-      setAllSubjects(subjRes.data?.data ?? []);
+      setAllSubjects((currRes.data?.data ?? []).map(cs => cs.subject));
       setShowForm(false);
     } catch (e) {
       setError(e.response?.data?.message ?? "Failed to save subject.");
@@ -172,7 +195,7 @@ export default function ManageSubjects() {
   const handleRemove = async (cs) => {
     if (!confirm(`Remove ${cs.subject.code} from curriculum?`)) return;
     try {
-      await api.delete("/program-head/curriculum", {
+      await api.delete("/dean/curriculum", {
         data: { courseId, subjectId: cs.subject.id }
       });
       setCurriculum(prev => prev.filter(x => x.id !== cs.id));

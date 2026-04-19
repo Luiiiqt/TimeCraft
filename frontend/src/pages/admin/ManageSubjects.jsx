@@ -124,12 +124,12 @@ export default function ManageSubjects() {
                 <tr key={s.id} style={{ borderBottom: "1px solid var(--grey-100)" }}>
                   <td style={{ padding: "10px 14px", fontWeight: 600, color: "var(--brand-secondary)" }}>{s.code}</td>
                   <td style={{ padding: "10px 14px" }}>{s.name}</td>
-                  <td style={{ padding: "10px 14px" }}><span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, background: "#EEF4FF", color: "#2A3FA0", fontWeight: 600 }}>{s.subjectType}</span></td>
-                  <td style={{ padding: "10px 14px" }}><span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, background: s.sessionType === "LABORATORY" ? "#F0FBF4" : "#FEF9EE", color: s.sessionType === "LABORATORY" ? "#1A6640" : "#92400e", fontWeight: 600 }}>{s.sessionType}</span></td>
+                  <td style={{ padding: "10px 14px" }}><span style={{ fontSize:11, padding:"2px 8px", borderRadius:6, background:"rgba(83,74,183,0.1)", color:"#534AB7", fontWeight:600, border:"1px solid rgba(83,74,183,0.2)" }}>{s.subjectType}</span></td>
+                  <td style={{ padding: "10px 14px" }}><span style={{ fontSize:11, padding:"2px 8px", borderRadius:6, background: s.sessionType === "LABORATORY" ? "rgba(52,196,124,0.1)" : "rgba(186,117,23,0.08)", color: s.sessionType === "LABORATORY" ? "#1A6A2A" : "#BA7517", fontWeight:600, border:`1px solid ${s.sessionType === "LABORATORY" ? "rgba(52,196,124,0.2)" : "rgba(186,117,23,0.2)"}` }}>{s.sessionType}</span></td>
                   <td style={{ padding: "10px 14px", textAlign: "center" }}>{s.units}</td>
                   <td style={{ padding: "10px 14px", color: "var(--grey-500)", fontStyle: s.prerequisite ? "normal" : "italic" }}>{s.prerequisite || "None"}</td>
                   <td style={{ padding: "10px 14px", color: "var(--grey-600)" }}>{s.department?.code}</td>
-                  <td style={{ padding: "10px 14px" }}><span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, background: s.active ? "#F0FBF4" : "#FEE2E2", color: s.active ? "#1A6640" : "#B91C1C", fontWeight: 600 }}>{s.active ? "Active" : "Inactive"}</span></td>
+                  <td style={{ padding: "10px 14px" }}><span style={{ fontSize:11, padding:"2px 8px", borderRadius:6, background: s.active ? "rgba(52,196,124,0.1)" : "rgba(226,75,74,0.08)", color: s.active ? "#1A6A2A" : "#B83030", fontWeight:600, border:`1px solid ${s.active ? "rgba(52,196,124,0.2)" : "rgba(226,75,74,0.2)"}` }}>{s.active ? "Active" : "Inactive"}</span></td>
                   <td style={{ padding: "10px 14px" }}>
                     <div style={{ display: "flex", gap: 6 }}>
                       <button className="btn btn-sm" onClick={() => openEdit(s)}>Edit</button>
@@ -150,8 +150,8 @@ export default function ManageSubjects() {
       {/* Modal */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 32, width: 500, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,0.18)" }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>{editId ? "Edit Subject" : "New Subject"}</h2>
+          <div style={{ background:"#fff", borderRadius:16, padding:32, width:500, maxHeight:"90vh", overflowY:"auto", boxShadow:"0 12px 40px rgba(17,42,23,0.15)", border:"1px solid #D8EAD8" }}>
+            <h2 style={{ fontFamily:"'Playfair Display', Georgia, serif", fontSize:20, fontWeight:700, marginBottom:20, color:"#112A17" }}>{editId ? "Edit Subject" : "New Subject"}</h2>
             {error && <div style={{ background: "#FEE2E2", color: "#B91C1C", padding: "10px 14px", borderRadius: 8, marginBottom: 16, fontSize: 13 }}>{error}</div>}
 
             {[

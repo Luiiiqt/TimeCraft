@@ -17,26 +17,26 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "program_head_courses")
-@IdClass(ProgramHeadCourse.ProgramHeadCourseId.class)
+@Table(name = "dean_courses")
+@IdClass(DeanCourse.DeanCourseId.class)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProgramHeadCourse {
+public class DeanCourse {
 
     @Id
-    @Column(name = "ph_user_id")
-    private Long phUserId;
+    @Column(name = "dean_user_id")
+    private Long deanUserId;
 
     @Id
     @Column(name = "course_id")
     private Long courseId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ph_user_id", insertable = false, updatable = false)
-    private User programHead;
+    @JoinColumn(name = "dean_user_id", insertable = false, updatable = false)
+    private User dean;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "course_id", insertable = false, updatable = false)
@@ -46,8 +46,8 @@ public class ProgramHeadCourse {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProgramHeadCourseId implements Serializable {
-        private Long phUserId;
+    public static class DeanCourseId implements Serializable {
+        private Long deanUserId;
         private Long courseId;
     }
 }

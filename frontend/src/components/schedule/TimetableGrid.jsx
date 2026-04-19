@@ -4,13 +4,13 @@ import ScheduleSlot from './ScheduleSlot'
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 const TIMESLOTS = [
-  { slot: 1, label: '7:30 AM – 9:00 AM',    display: '7:30 – 9:00 AM' },
-  { slot: 2, label: '9:00 AM – 10:30 AM',   display: '9:00 – 10:30 AM' },
-  { slot: 3, label: '10:30 AM – 12:00 PM',  display: '10:30 AM – 12:00 PM' },
-  { slot: 4, label: '12:00 PM – 1:30 PM',   display: '12:00 – 1:30 PM' },
-  { slot: 5, label: '1:30 PM – 3:00 PM',    display: '1:30 – 3:00 PM' },
-  { slot: 6, label: '3:00 PM – 4:30 PM',    display: '3:00 – 4:30 PM' },
-  { slot: 7, label: '4:30 PM – 6:00 PM',    display: '4:30 – 6:00 PM' },
+  { slot: 1, label: '7:30 AM – 9:00 AM',    display: '7:30 – 9:00 AM',      startTime: '07:30' },
+  { slot: 2, label: '9:00 AM – 10:30 AM',   display: '9:00 – 10:30 AM',     startTime: '09:00' },
+  { slot: 3, label: '10:30 AM – 12:00 PM',  display: '10:30 AM – 12:00 PM', startTime: '10:30' },
+  { slot: 4, label: '12:00 PM – 1:30 PM',   display: '12:00 – 1:30 PM',     startTime: '12:00' },
+  { slot: 5, label: '1:30 PM – 3:00 PM',    display: '1:30 – 3:00 PM',      startTime: '13:30' },
+  { slot: 6, label: '3:00 PM – 4:30 PM',    display: '3:00 – 4:30 PM',      startTime: '15:00' },
+  { slot: 7, label: '4:30 PM – 6:00 PM',    display: '4:30 – 6:00 PM',      startTime: '16:30' },
 ]
 
 /**
@@ -24,13 +24,11 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
   // Build a lookup map: "DAY-SLOT" -> schedule entry
   const slotMap = {}
   schedules.forEach(entry => {
-    if (entry.day1 && entry.timeslotLabel1) {
-      // DB label: "Monday 7:30 AM – 9:00 AM" → extract time part after first space
-      const entry = slotMap[`${dayUpper}-${label}`]  // label = "7:30 AM – 9:00 AM"
+    if (entry.day1 && entry.startTime1) {
+      slotMap[`${entry.day1.toUpperCase()}-${entry.startTime1}`] = entry
     }
-    if (entry.day2 && entry.timeslotLabel2) {
-      const t2 = entry.timeslotLabel2.replace(/^\w+\s/, '')
-      slotMap[`${entry.day2.toUpperCase()}-${t2}`] = entry
+    if (entry.day2 && entry.startTime2) {
+      slotMap[`${entry.day2.toUpperCase()}-${entry.startTime2}`] = entry
     }
   })
 
@@ -49,7 +47,7 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
         ))}
 
         {/* Time rows */}
-        {TIMESLOTS.map(({ slot, label, display }) => (
+        {TIMESLOTS.map(({ slot, label, display, startTime }) => (
           <React.Fragment key={slot}>
             {/* Time label */}
             <div key={`time-${slot}`} style={styles.timeCell}>
@@ -60,7 +58,7 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
             {/* Cells for each day */}
             {DAYS.map(day => {
               const dayUpper = day.toUpperCase()
-              const entry = slotMap[`${dayUpper}-${label}`] // label = display e.g. "7:30 AM – 9:00 AM"
+              const entry = slotMap[`${dayUpper}-${startTime}`]
 
               return (
                 <div key={`${day}-${slot}`} style={styles.cell}>

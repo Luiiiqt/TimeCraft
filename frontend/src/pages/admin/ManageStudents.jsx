@@ -236,7 +236,7 @@ export default function ManageStudents() {
             padding      : "9px 18px",
             borderRadius : 8,
             border       : "none",
-            background   : "var(--brand-primary, #1a56db)",
+            background   : "#1A6A2A",
             color        : "#fff",
             fontWeight   : 700,
             fontSize     : 13,
@@ -422,14 +422,14 @@ export default function ManageStudents() {
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "2px solid var(--grey-200)", background: "var(--grey-50, #f9fafb)" }}>
+              <tr style={{ borderBottom:"2px solid #E0EAE0", background:"#F4FAF6" }}>
                 {["School ID", "Full Name", "Email", "Course", "Year", "Section", "Type", "Actions"].map(h => (
                   <th key={h} style={{
                     padding    : "11px 14px",
                     textAlign  : "left",
                     fontSize   : 11,
                     fontWeight : 700,
-                    color      : "var(--grey-500)",
+                    color      : "#3B6D3B",
                     letterSpacing: "0.05em",
                     whiteSpace : "nowrap",
                   }}>
@@ -460,16 +460,16 @@ export default function ManageStudents() {
                     <td style={{ padding: "10px 14px", fontSize: 13 }}>{profile?.yearLevel ? YEAR_LABELS[profile.yearLevel] : "—"}</td>
                     <td style={{ padding: "10px 14px", fontSize: 13 }}>{profile?.section ?? <span style={{ color: "var(--grey-400)" }}>—</span>}</td>
                     <td style={{ padding: "10px 14px" }}>
-                      {isIrr ? badge("Irregular", "#d97706") : badge("Regular", "#0891b2")}
+                      {isIrr ? badge("Irregular", "#BA7517") : badge("Regular", "#185FA5")}
                     </td>
                     <td style={{ padding: "10px 14px" }}>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        <ActionBtn label="Promote" color="#7c3aed" onClick={() => setActionStudent({ id: s.id, name: s.fullName, action: "promote" })} />
+                        <ActionBtn label="Promote" color="#534AB7" onClick={() => setActionStudent({ id: s.id, name: s.fullName, action: "promote" })} />
                         {!isIrr && (
-                          <ActionBtn label="→ Irregular" color="#d97706" onClick={() => setActionStudent({ id: s.id, name: s.fullName, action: "tag-irregular" })} />
+                          <ActionBtn label="→ Irregular" color="#BA7517" onClick={() => setActionStudent({ id: s.id, name: s.fullName, action: "tag-irregular" })} />
                         )}
                         {isIrr && (
-                          <ActionBtn label="→ Regular" color="#0891b2" onClick={() => { setActionStudent({ id: s.id, name: s.fullName, action: "tag-regular" }); setTagSection(""); }} />
+                          <ActionBtn label="→ Regular" color="#185FA5" onClick={() => { setActionStudent({ id: s.id, name: s.fullName, action: "tag-regular" }); setTagSection(""); }} />
                         )}
                       </div>
                     </td>
@@ -544,7 +544,7 @@ export default function ManageStudents() {
                   padding      : "8px 20px",
                   borderRadius : 8,
                   border       : "none",
-                  background   : actionSaving ? "#93c5fd" : "var(--brand-primary, #1a56db)",
+                  background   : saving ? "#AAC8AA" : "#1A6A2A",
                   color        : "#fff",
                   fontWeight   : 700,
                   fontSize     : 13,
@@ -582,19 +582,16 @@ function ActionBtn({ label, color, onClick }) {
   return (
     <button
       onClick={onClick}
+      onMouseEnter={e => e.currentTarget.style.opacity = "0.8"}
+      onMouseLeave={e => e.currentTarget.style.opacity = "1"}
       style={{
-        padding      : "4px 10px",
-        borderRadius : 6,
-        border       : `1.5px solid ${color}40`,
-        background   : color + "12",
-        color,
-        fontSize     : 11,
-        fontWeight   : 700,
-        cursor       : "pointer",
-        whiteSpace   : "nowrap",
+        padding:"4px 10px", borderRadius:6,
+        border:`1px solid ${color}30`,
+        background: color + "12", color,
+        fontSize:11, fontWeight:700, cursor:"pointer",
+        whiteSpace:"nowrap", transition:"opacity 0.15s",
+        fontFamily:"'DM Sans', sans-serif",
       }}
-    >
-      {label}
-    </button>
+    >{label}</button>
   );
 }

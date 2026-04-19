@@ -68,7 +68,7 @@ public class ScheduleController {
     // Student views their own timetable
 
     @GetMapping("/my")
-    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER', 'ADMIN', 'PROGRAM_HEAD')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER', 'ADMIN', 'DEAN')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSectionSchedule(
             @RequestParam String semester,
             @RequestParam String schoolYear,
@@ -103,8 +103,8 @@ public class ScheduleController {
     // ── GET /api/v1/schedules/section/{sectionId} ─────────────────────────────
 
     @GetMapping("/section/{sectionId}")
-    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER', 'ADMIN', 'PROGRAM_HEAD')")
-    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSectionSchedule(
+    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER', 'ADMIN', 'DEAN')")
+    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSectionScheduleById(
             @PathVariable Long sectionId,
             @RequestParam String semester,
             @RequestParam String schoolYear) {
@@ -145,7 +145,7 @@ public class ScheduleController {
     // ── POST /api/v1/schedules/generate ───────────────────────────────────────
 
     @PostMapping("/generate")
-    @PreAuthorize("hasAnyRole('ADMIN', 'PROGRAM_HEAD')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEAN')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> generate(
             @Valid @RequestBody ScheduleGenerateRequest request) {
 
@@ -262,7 +262,7 @@ public class ScheduleController {
     // ── GET /api/v1/schedules/is-locked ───────────────────────────────────────
 
     @GetMapping("/is-locked")
-    @PreAuthorize("hasAnyRole('ADMIN','PROGRAM_HEAD')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<Boolean>> isLocked(
             @RequestParam Long courseId,
             @RequestParam String semester,

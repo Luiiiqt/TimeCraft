@@ -37,7 +37,6 @@ api.interceptors.response.use(
         delete api.defaults.headers.common["Authorization"];
         if (!window.location.pathname.startsWith("/login")) {
           console.trace("REDIRECTING TO LOGIN");
-          debugger;
           window.location.href = "/login";
         }
       }

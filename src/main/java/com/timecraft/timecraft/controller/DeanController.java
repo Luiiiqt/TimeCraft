@@ -23,24 +23,24 @@ import com.timecraft.timecraft.model.SubjectAssignment;
 import com.timecraft.timecraft.model.TeacherSubjectPreference;
 import com.timecraft.timecraft.model.TeacherSubjectPreference.Status;
 import com.timecraft.timecraft.repository.UserRepository;
-import com.timecraft.timecraft.service.ProgramHeadService;
+import com.timecraft.timecraft.service.DeanService;
 import com.timecraft.timecraft.service.SchedulingEngine;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/program-head")
+@RequestMapping("/api/v1/dean")
 @RequiredArgsConstructor
-public class ProgramHeadController {
+public class DeanController {
 
-        private final ProgramHeadService programHeadService;
+        private final DeanService deanService;
         private final SchedulingEngine schedulingEngine;
         private final UserRepository userRepository;
 
         // ── GET /api/v1/program-head/assignments ──────────────────────────────────
 
         @GetMapping("/assignments")
-        @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
         public ResponseEntity<ApiResponse<List<SubjectAssignment>>> getAssignments(
                         @RequestParam String semester,
                         @RequestParam String schoolYear,
@@ -48,13 +48,13 @@ public class ProgramHeadController {
 
                 Long userId = resolveUserId(principal);
                 return ResponseEntity.ok(ApiResponse.of(
-                                programHeadService.getMyAssignments(userId, semester, schoolYear)));
+                                deanService.getMyAssignments(userId, semester, schoolYear)));
         }
 
         // ── POST /api/v1/program-head/assignments ─────────────────────────────────
 
         @PostMapping("/assignments")
-        @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
         public ResponseEntity<ApiResponse<SubjectAssignment>> saveAssignment(
                         @RequestBody Map<String, Object> body,
                         Principal principal) {
@@ -67,33 +67,33 @@ public class ProgramHeadController {
                 String schoolYear = body.get("schoolYear").toString();
 
                 return ResponseEntity.ok(ApiResponse.success("Assignment saved",
-                                programHeadService.saveAssignment(
+                                deanService.saveAssignment(
                                                 userId, subjectId, sectionId, teacherId, semester, schoolYear)));
         }
 
         // ── PUT /api/v1/program-head/assignments/{id}/finalize ────────────────────
 
         @PutMapping("/assignments/{id}/finalize")
-        @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
         public ResponseEntity<ApiResponse<SubjectAssignment>> finalize(
                         @PathVariable Long id,
                         Principal principal) {
 
                 Long userId = resolveUserId(principal);
                 return ResponseEntity.ok(ApiResponse.success("Assignment finalized",
-                                programHeadService.finalizeAssignment(id, userId)));
+                                deanService.finalizeAssignment(id, userId)));
         }
 
         // ── DELETE /api/v1/program-head/assignments/{id} ──────────────────────────
 
         @DeleteMapping("/assignments/{id}")
-        @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
         public ResponseEntity<ApiResponse<Void>> deleteAssignment(
                         @PathVariable Long id,
                         Principal principal) {
 
                 Long userId = resolveUserId(principal);
-                programHeadService.deleteAssignment(id, userId);
+                deanService.deleteAssignment(id, userId);
                 return ResponseEntity.ok(ApiResponse.success("Assignment deleted"));
         }
 
@@ -101,7 +101,7 @@ public class ProgramHeadController {
         // View teacher-submitted subject preferences for this department
 
         @GetMapping("/preferences")
-        @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
         public ResponseEntity<ApiResponse<List<TeacherSubjectPreference>>> getPreferences(
                         @RequestParam String semester,
                         @RequestParam String schoolYear,
@@ -109,14 +109,14 @@ public class ProgramHeadController {
 
                 Long userId = resolveUserId(principal);
                 return ResponseEntity.ok(ApiResponse.of(
-                                programHeadService.getPendingPreferences(
+                                deanService.getPendingPreferences(
                                                 userId, semester, schoolYear)));
         }
 
         // ── PUT /api/v1/program-head/preferences/{id}/review ─────────────────────
 
         @PutMapping("/preferences/{id}/review")
-        @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
         public ResponseEntity<ApiResponse<TeacherSubjectPreference>> review(
                         @PathVariable Long id,
                         @RequestBody Map<String, String> body,
@@ -126,14 +126,14 @@ public class ProgramHeadController {
                 Status decision = Status.valueOf(body.get("decision").toUpperCase());
 
                 return ResponseEntity.ok(ApiResponse.success("Preference reviewed",
-                                programHeadService.reviewPreference(id, userId, decision)));
+                                deanService.reviewPreference(id, userId, decision)));
         }
 
         // ── POST /api/v1/program-head/curriculum ──────────────────────────────────
         // Assign a subject to a course curriculum (year level + semester)
 
         @PostMapping("/curriculum")
-        @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
         public ResponseEntity<ApiResponse<Void>> addToCurriculum(
                         @RequestBody Map<String, Object> body,
                         Principal principal) {
@@ -145,7 +145,7 @@ public class ProgramHeadController {
                 boolean isShared = body.containsKey("isShared")
                                 && Boolean.parseBoolean(body.get("isShared").toString());
 
-                programHeadService.addSubjectToCurriculum(
+                deanService.addSubjectToCurriculum(
                                 courseId, subjectId, yearLevel,
                                 com.timecraft.timecraft.model.CourseSubject.Semester.valueOf(semester),
                                 isShared);
@@ -156,14 +156,14 @@ public class ProgramHeadController {
         // ── DELETE /api/v1/program-head/curriculum ────────────────────────────────
 
         @DeleteMapping("/curriculum")
-        @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
         public ResponseEntity<ApiResponse<Void>> removeFromCurriculum(
                         @RequestBody Map<String, Object> body) {
 
                 Long courseId = Long.valueOf(body.get("courseId").toString());
                 Long subjectId = Long.valueOf(body.get("subjectId").toString());
 
-                programHeadService.removeSubjectFromCurriculum(courseId, subjectId);
+                deanService.removeSubjectFromCurriculum(courseId, subjectId);
                 return ResponseEntity.ok(ApiResponse.success("Subject removed from curriculum"));
         }
 
@@ -176,14 +176,14 @@ public class ProgramHeadController {
         }
 
         @PostMapping("/generate/{courseId}")
-        @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
         public ResponseEntity<ApiResponse<Map<String, Object>>> generateForCourse(
                         @PathVariable Long courseId,
                         @RequestBody ScheduleGenerateRequest request,
                         Principal principal) {
 
                 Long userId = resolveUserId(principal);
-                programHeadService.assertManagesCourse(userId, courseId);
+                deanService.assertManagesCourse(userId, courseId);
                 request.setCourseId(courseId);
 
                 List<com.timecraft.timecraft.model.Schedule> generated =
@@ -205,11 +205,26 @@ public class ProgramHeadController {
                                 "schoolYear", request.getSchoolYear())));
         }
 
+        // ── GET /api/v1/program-head/preferences/grouped ──────────────────────────
+
+        @GetMapping("/preferences/grouped")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
+        public ResponseEntity<ApiResponse<List<java.util.Map<String, Object>>>> getGroupedPreferences(
+                        @RequestParam String semester,
+                        @RequestParam String schoolYear,
+                        Principal principal) {
+
+                Long userId = resolveUserId(principal);
+                return ResponseEntity.ok(ApiResponse.of(
+                                deanService.getPreferencesGroupedBySubject(
+                                                userId, semester, schoolYear)));
+        }
+
         @GetMapping("/my-courses")
-        @PreAuthorize("hasAnyRole('PROGRAM_HEAD','ADMIN')")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
         public ResponseEntity<ApiResponse<List<Course>>> getMyCourses(Principal principal) {
                 Long userId = resolveUserId(principal);
                 return ResponseEntity.ok(ApiResponse.of(
-                                programHeadService.getManagedCourses(userId)));
+                                deanService.getManagedCourses(userId)));
         }
 }

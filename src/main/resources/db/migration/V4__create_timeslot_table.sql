@@ -1,5 +1,5 @@
                                                 -- ============================================================
-                                                -- V5: Timeslots
+                                                -- V4: Timeslots
                                                 --
                                                 --  Window : 7:30 AM – 6:00 PM (Mon–Sat)
                                                 --  Block  : 90 minutes per slot (matches all subject durations)

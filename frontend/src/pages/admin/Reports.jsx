@@ -295,17 +295,17 @@ export default function Reports() {
 // ── Sub-components ────────────────────────────────────────────────────────────
 function SummaryCard({ label, value, color }) {
   return (
-    <div style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "1rem 1.5rem", textAlign: "center" }}>
-      <div style={{ fontSize: "2rem", fontWeight: "700", color }}>{value ?? "—"}</div>
-      <div style={{ fontSize: "0.8rem", color: "#6b7280", marginTop: "0.2rem" }}>{label}</div>
+    <div style={{ backgroundColor:"#fff", border:"1px solid #E0EAE0", borderTop:`3px solid ${color}`, borderRadius:"10px", padding:"1rem 1.5rem", textAlign:"center", fontFamily:"'DM Sans', sans-serif" }}>
+      <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontSize:"2rem", fontWeight:"700", color }}>{value ?? "—"}</div>
+      <div style={{ fontSize:"0.8rem", color:"#7AAE7A", marginTop:"0.2rem" }}>{label}</div>
     </div>
   );
 }
 
 const CONFLICT_COLORS = {
-  TEACHER_OVERLAP : { bg: "#fef2f2", color: "#dc2626" },
-  ROOM_OVERLAP    : { bg: "#fff7ed", color: "#c2410c" },
-  STUDENT_OVERLAP : { bg: "#fdf4ff", color: "#7c3aed" },
+  TEACHER_OVERLAP : { bg:"rgba(226,75,74,0.08)",  color:"#E24B4A" },
+  ROOM_OVERLAP    : { bg:"rgba(186,117,23,0.08)",  color:"#BA7517" },
+  STUDENT_OVERLAP : { bg:"rgba(83,74,183,0.08)",   color:"#534AB7" },
 };
 
 function ConflictBadge({ type }) {
@@ -319,7 +319,7 @@ function ConflictBadge({ type }) {
 
 function UtilBar({ pct }) {
   const num = typeof pct === "number" ? Math.min(100, Math.round(pct)) : 0;
-  const color = num > 80 ? "#dc2626" : num > 50 ? "#f59e0b" : "#16a34a";
+  const color = num > 80 ? "#E24B4A" : num > 50 ? "#BA7517" : "#34C47C";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
       <div style={{ flex: 1, height: "6px", backgroundColor: "#f3f4f6", borderRadius: "3px", overflow: "hidden" }}>
@@ -332,27 +332,27 @@ function UtilBar({ pct }) {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = {
-  page        : { padding: "2rem 2.5rem", maxWidth: "1000px", margin: "0 auto", fontFamily: "'Sora', 'Segoe UI', sans-serif" },
-  backBtn     : { background: "none", border: "none", color: "#1a56db", cursor: "pointer", fontSize: "0.9rem", fontWeight: "600", padding: 0, marginBottom: "1.5rem" },
-  title       : { fontSize: "1.75rem", fontWeight: "700", color: "#111827", margin: "0 0 0.2rem", letterSpacing: "-0.02em" },
-  subtitle    : { color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" },
-  termRow     : { display: "flex", gap: "0.75rem", marginBottom: "1.5rem" },
-  filterSelect: { padding: "0.6rem 0.9rem", border: "1.5px solid #d1d5db", borderRadius: "8px", fontSize: "0.88rem", color: "#374151", backgroundColor: "#fff" },
-  tabs        : { display: "flex", gap: 0, borderBottom: "2px solid #e5e7eb", marginBottom: "1.5rem" },
-  tab         : { padding: "0.7rem 1.25rem", border: "none", background: "none", fontSize: "0.9rem", fontWeight: "600", color: "#6b7280", cursor: "pointer", borderBottom: "2px solid transparent", marginBottom: "-2px", display: "flex", alignItems: "center", gap: "0.4rem", transition: "color 0.15s" },
-  tabActive   : { color: "#1a56db", borderBottomColor: "#1a56db" },
-  badge       : { backgroundColor: "#dc2626", color: "#fff", borderRadius: "99px", padding: "0.1rem 0.45rem", fontSize: "0.72rem", fontWeight: "700" },
-  actionRow   : { display: "flex", gap: "0.75rem", marginBottom: "1.25rem" },
-  primaryBtn  : { padding: "0.65rem 1.2rem", backgroundColor: "#1a56db", color: "#fff", border: "none", borderRadius: "8px", fontSize: "0.9rem", fontWeight: "600", cursor: "pointer" },
-  secondaryBtn: { padding: "0.65rem 1.2rem", backgroundColor: "transparent", border: "1.5px solid #d1d5db", borderRadius: "8px", fontSize: "0.9rem", fontWeight: "600", cursor: "pointer", color: "#374151" },
-  summaryGrid : { display: "grid", gridTemplateColumns: "repeat(2, 180px)", gap: "1rem", marginBottom: "1.25rem" },
-  infoBanner  : { padding: "0.75rem 1rem", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "8px", color: "#1e40af", fontSize: "0.875rem", marginBottom: "1rem" },
-  errorBanner : { padding: "0.75rem 1rem", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", color: "#dc2626", fontSize: "0.875rem", marginBottom: "1rem" },
-  empty       : { textAlign: "center", color: "#9ca3af", padding: "3rem", fontSize: "0.95rem" },
-  tableWrap   : { borderRadius: "12px", border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
-  table       : { width: "100%", borderCollapse: "collapse" },
-  th          : { padding: "0.85rem 1.25rem", textAlign: "left", fontSize: "0.78rem", fontWeight: "700", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", backgroundColor: "#f9fafb", borderBottom: "1px solid #e5e7eb" },
-  td          : { padding: "0.85rem 1.25rem", fontSize: "0.9rem", color: "#111827", borderBottom: "1px solid #f3f4f6" },
-  resolveBtn  : { padding: "0.3rem 0.75rem", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", color: "#15803d", borderRadius: "6px", fontSize: "0.8rem", fontWeight: "600", cursor: "pointer" },
-  resolveAllBtn: { padding: "0.3rem 0.75rem", backgroundColor: "transparent", border: "1px solid #d1d5db", color: "#374151", borderRadius: "6px", fontSize: "0.8rem", fontWeight: "600", cursor: "pointer" },
+  page        : { padding:"2rem 2.5rem", maxWidth:"1000px", margin:"0 auto", fontFamily:"'DM Sans', sans-serif" },
+  backBtn     : { background:"none", border:"none", color:"#1A6A2A", cursor:"pointer", fontSize:"0.9rem", fontWeight:"600", padding:0, marginBottom:"1.5rem" },
+  title       : { fontFamily:"'Playfair Display', Georgia, serif", fontSize:"1.75rem", fontWeight:"700", color:"#112A17", margin:"0 0 0.2rem", letterSpacing:"-0.01em" },
+  subtitle    : { color:"#7AAE7A", fontSize:"0.9rem", margin:"0 0 1.5rem" },
+  termRow     : { display:"flex", gap:"0.75rem", marginBottom:"1.5rem" },
+  filterSelect: { padding:"0.6rem 0.9rem", border:"1.5px solid #D8EAD8", borderRadius:"8px", fontSize:"0.88rem", color:"#112A17", backgroundColor:"#fff", fontFamily:"'DM Sans', sans-serif" },
+  tabs        : { display:"flex", gap:0, borderBottom:"2px solid #E0EAE0", marginBottom:"1.5rem" },
+  tab         : { padding:"0.7rem 1.25rem", border:"none", background:"none", fontSize:"0.9rem", fontWeight:"600", color:"#7AAE7A", cursor:"pointer", borderBottom:"2px solid transparent", marginBottom:"-2px", display:"flex", alignItems:"center", gap:"0.4rem", transition:"color 0.15s", fontFamily:"'DM Sans', sans-serif" },
+  tabActive   : { color:"#1A6A2A", borderBottomColor:"#34C47C" },
+  badge       : { backgroundColor:"#E24B4A", color:"#fff", borderRadius:"99px", padding:"0.1rem 0.45rem", fontSize:"0.72rem", fontWeight:"700" },
+  actionRow   : { display:"flex", gap:"0.75rem", marginBottom:"1.25rem" },
+  primaryBtn  : { padding:"0.65rem 1.2rem", backgroundColor:"#1A6A2A", color:"#fff", border:"none", borderRadius:"8px", fontSize:"0.9rem", fontWeight:"600", cursor:"pointer", fontFamily:"'DM Sans', sans-serif" },
+  secondaryBtn: { padding:"0.65rem 1.2rem", backgroundColor:"transparent", border:"1.5px solid #D8EAD8", borderRadius:"8px", fontSize:"0.9rem", fontWeight:"600", cursor:"pointer", color:"#3B6D3B", fontFamily:"'DM Sans', sans-serif" },
+  summaryGrid : { display:"grid", gridTemplateColumns:"repeat(2, 180px)", gap:"1rem", marginBottom:"1.25rem" },
+  infoBanner  : { padding:"0.75rem 1rem", backgroundColor:"rgba(52,196,124,0.07)", border:"1px solid rgba(52,196,124,0.25)", borderRadius:"8px", color:"#1A6A2A", fontSize:"0.875rem", marginBottom:"1rem" },
+  errorBanner : { padding:"0.75rem 1rem", backgroundColor:"rgba(226,75,74,0.07)", border:"1px solid rgba(226,75,74,0.25)", borderRadius:"8px", color:"#E24B4A", fontSize:"0.875rem", marginBottom:"1rem" },
+  empty       : { textAlign:"center", color:"#AAC8AA", padding:"3rem", fontSize:"0.95rem" },
+  tableWrap   : { borderRadius:"12px", border:"1px solid #E0EAE0", overflow:"hidden" },
+  table       : { width:"100%", borderCollapse:"collapse" },
+  th          : { padding:"0.85rem 1.25rem", textAlign:"left", fontSize:"0.78rem", fontWeight:"700", color:"#3B6D3B", textTransform:"uppercase", letterSpacing:"0.05em", backgroundColor:"#F4FAF6", borderBottom:"1px solid #E0EAE0" },
+  td          : { padding:"0.85rem 1.25rem", fontSize:"0.9rem", color:"#112A17", borderBottom:"1px solid #EEF4EE", fontFamily:"'DM Sans', sans-serif" },
+  resolveBtn  : { padding:"0.3rem 0.75rem", backgroundColor:"rgba(52,196,124,0.1)", border:"1px solid rgba(52,196,124,0.25)", color:"#1A6A2A", borderRadius:"6px", fontSize:"0.8rem", fontWeight:"600", cursor:"pointer" },
+  resolveAllBtn: { padding:"0.3rem 0.75rem", backgroundColor:"transparent", border:"1px solid #D8EAD8", color:"#3B6D3B", borderRadius:"6px", fontSize:"0.8rem", fontWeight:"600", cursor:"pointer" },
 };

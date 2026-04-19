@@ -21,19 +21,21 @@ CREATE TABLE campuses (
 
 -- ── Rooms ─────────────────────────────────────────────────────────────────────
 CREATE TABLE rooms (
-    id          BIGSERIAL       PRIMARY KEY,
-    campus_id   BIGINT          NOT NULL,
-    name        VARCHAR(100)    NOT NULL,
-    room_number VARCHAR(20),
-    capacity    INT             NOT NULL CHECK (capacity > 0),
-    room_type   VARCHAR(15)     NOT NULL CHECK (room_type IN ('LECTURE', 'LABORATORY')),
-    is_active   BOOLEAN         NOT NULL DEFAULT TRUE,
-    created_at  TIMESTAMP       NOT NULL DEFAULT NOW(),
+    id              BIGSERIAL       PRIMARY KEY,
+    campus_id       BIGINT          NOT NULL,
+    department_id   BIGINT,
+    name            VARCHAR(100)    NOT NULL,
+    room_number     VARCHAR(20)     UNIQUE,
+    capacity        INT             NOT NULL CHECK (capacity > 0),
+    room_type       VARCHAR(15)     NOT NULL CHECK (room_type IN ('LECTURE', 'LABORATORY')),
+    is_active       BOOLEAN         NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMP       NOT NULL DEFAULT NOW(),
 
     CONSTRAINT fk_rooms_campus
         FOREIGN KEY (campus_id) REFERENCES campuses (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_rooms_department
+        FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE RESTRICT,
 
-    -- Room name must be unique within a campus
     CONSTRAINT uq_rooms_name_campus
         UNIQUE (campus_id, name)
 );
@@ -43,33 +45,29 @@ INSERT INTO campuses (name, code, address) VALUES
     ('Campus of Learning Innovation',   'CLI', 'Main Campus — Learning Innovation Building'),
     ('Campus of Health and Sciences',   'CHS', 'Health Sciences Campus');
 
--- ── Seed rooms — Campus of Learning Innovation ────────────────────────────────
-INSERT INTO rooms (campus_id, name, room_number, capacity, room_type) VALUES
-    ((SELECT id FROM campuses WHERE code = 'CLI'), 'LI Lecture Room 101',  '101', 45, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CLI'), 'LI Lecture Room 102',  '102', 45, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CLI'), 'LI Lecture Room 103',  '103', 45, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CLI'), 'LI Lecture Room 201',  '201', 50, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CLI'), 'LI Lecture Room 202',  '202', 50, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CLI'), 'LI Lecture Room 203',  '203', 50, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CLI'), 'LI Computer Lab 1',    'CL1', 40, 'LABORATORY'),
-    ((SELECT id FROM campuses WHERE code = 'CLI'), 'LI Computer Lab 2',    'CL2', 40, 'LABORATORY'),
-    ((SELECT id FROM campuses WHERE code = 'CLI'), 'LI Computer Lab 3',    'CL3', 35, 'LABORATORY'),
-    ((SELECT id FROM campuses WHERE code = 'CLI'), 'LI Engineering Lab 1', 'EL1', 35, 'LABORATORY');
+-- ── Seed rooms — CCSE only (CLI) ─────────────────────────────────────────────
+INSERT INTO rooms (campus_id, department_id, name, room_number, capacity, room_type) VALUES
+    -- Computer Labs 301–304 (shared: ITCS + CPE)
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Computer Laboratory 301', '301', 30, 'LABORATORY'),
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Computer Laboratory 302', '302', 30, 'LABORATORY'),
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Computer Laboratory 303', '303', 30, 'LABORATORY'),
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Computer Laboratory 304', '304', 30, 'LABORATORY'),
 
--- ── Seed rooms — Campus of Health and Sciences ────────────────────────────────
-INSERT INTO rooms (campus_id, name, room_number, capacity, room_type) VALUES
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS Lecture Room 101',  '101', 50, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS Lecture Room 102',  '102', 50, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS Lecture Room 103',  '103', 45, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS Lecture Room 201',  '201', 45, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS Lecture Room 202',  '202', 45, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS Nursing Lab 1',     'NL1', 30, 'LABORATORY'),
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS Nursing Lab 2',     'NL2', 30, 'LABORATORY'),
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS Medical Lab 1',     'ML1', 35, 'LABORATORY'),
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS Medical Lab 2',     'ML2', 35, 'LABORATORY'),
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS Pharmacy Lab',      'PL1', 30, 'LABORATORY'),
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS RT Lab',            'RL1', 25, 'LABORATORY'),
-    ((SELECT id FROM campuses WHERE code = 'CHS'), 'HS PT Lab',            'PTL', 25, 'LABORATORY');
+    -- CPE Hardware Lab 305
+    ((SELECT id FROM campuses WHERE code = 'CLI'), (SELECT id FROM departments WHERE code = 'CPE'), 'Hardware Laboratory 305', '305', 30, 'LABORATORY'),
+
+    -- ITCS/CPE Lecture Room 306
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 306', '306', 45, 'LECTURE'),
+
+    -- General Lecture Rooms 401–408
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 401', '401', 45, 'LECTURE'),
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 402', '402', 45, 'LECTURE'),
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 403', '403', 45, 'LECTURE'),
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 404', '404', 45, 'LECTURE'),
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 405', '405', 45, 'LECTURE'),
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 406', '406', 45, 'LECTURE'),
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 407', '407', 45, 'LECTURE'),
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 408', '408', 45, 'LECTURE');
 
 COMMENT ON TABLE  campuses            IS 'Physical campuses — Campus of Learning Innovation and Campus of Health and Sciences';
 COMMENT ON TABLE  rooms               IS 'Schedulable rooms — must be LECTURE or LABORATORY';
