@@ -9,3 +9,7 @@ CREATE TABLE section_config (
     created_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_section_config UNIQUE (course_id, year_level, semester, school_year)
 );
+
+ALTER TABLE section_config DROP CONSTRAINT IF EXISTS section_config_semester_check;
+ALTER TABLE section_config ADD CONSTRAINT section_config_semester_check
+    CHECK (semester IN ('FIRST','SECOND','SUMMER'));

@@ -32,7 +32,7 @@ public class TeacherController {
     // ── GET /api/v1/teachers ──────────────────────────────────────────────────
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN','PROGRAM_HEAD')")
     public ResponseEntity<ApiResponse<List<User>>> findAll(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Long departmentId) {
@@ -139,11 +139,16 @@ public class TeacherController {
         List<Long> subjectIds = ((List<?>) body.get("subjectIds"))
                 .stream().map(o -> Long.valueOf(o.toString())).toList();
 
+        String vacantDay  = body.containsKey("vacantDay")  ? body.get("vacantDay").toString()  : null;
+        String vacantTime = body.containsKey("vacantTime") ? body.get("vacantTime").toString() : null;
+
         teacherService.saveSubjectPreferences(
                 teacherId,
                 subjectIds,
                 body.get("semester").toString(),
-                body.get("schoolYear").toString());
+                body.get("schoolYear").toString(),
+                vacantDay,
+                vacantTime);
 
         return ResponseEntity.ok(ApiResponse.success("Preferences saved"));
     }
@@ -182,11 +187,16 @@ public class TeacherController {
         List<Long> subjectIds = ((List<?>) body.get("subjectIds"))
                 .stream().map(o -> Long.valueOf(o.toString())).toList();
 
+        String vacantDay  = body.containsKey("vacantDay")  ? body.get("vacantDay").toString()  : null;
+        String vacantTime = body.containsKey("vacantTime") ? body.get("vacantTime").toString() : null;
+
         teacherService.saveSubjectPreferences(
                 id,
                 subjectIds,
                 body.get("semester").toString(),
-                body.get("schoolYear").toString());
+                body.get("schoolYear").toString(),
+                vacantDay,
+                vacantTime);
 
         return ResponseEntity.ok(ApiResponse.success("Preferences saved"));
     }

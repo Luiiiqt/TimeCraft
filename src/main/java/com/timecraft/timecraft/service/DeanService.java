@@ -310,46 +310,55 @@ public class DeanService {
                 List<TeacherSubjectPreference> prefs = getPendingPreferences(
                                 programHeadId, semester, schoolYear);
 
-                // Group by subject
                 Map<Long, Map<String, Object>> grouped = new java.util.LinkedHashMap<>();
 
                 for (TeacherSubjectPreference pref : prefs) {
-                        Long subjectId = pref.getSubject().getId();
+                        Subject s = pref.getSubject();
+                        Long subjectId = s.getId();
+
                         grouped.computeIfAbsent(subjectId, k -> {
+                                Map<String, Object> subjectMap = new java.util.LinkedHashMap<>();
+                                subjectMap.put("id", s.getId());
+                                subjectMap.put("name", s.getName());
+                                subjectMap.put("code", s.getCode());
+                                subjectMap.put("subjectType", s.getSubjectType());
+                                subjectMap.put("sessionType", s.getSessionType());
+
                                 Map<String, Object> entry = new java.util.LinkedHashMap<>();
-                                entry.put("subjectId", subjectId);
-                                entry.put("subjectCode", pref.getSubject().getCode());
-                                entry.put("subjectName", pref.getSubject().getName());
-                                entry.put("teachers", new java.util.ArrayList<>());
+                                entry.put("subject", subjectMap);
+                                entry.put("preferences", new java.util.ArrayList<>());
+                                entry.put("assigned", false);
                                 return entry;
                         });
 
                         @SuppressWarnings("unchecked")
-                        List<Map<String, Object>> teachers = (List<Map<String, Object>>) grouped.get(subjectId)
-                                        .get("teachers");
+                        List<Map<String, Object>> prefList =
+                                (List<Map<String, Object>>) grouped.get(subjectId).get("preferences");
 
-                        Map<String, Object> teacherEntry = new java.util.LinkedHashMap<>();
-                        teacherEntry.put("preferenceId", pref.getId());
-                        teacherEntry.put("teacherId", pref.getTeacher().getId());
-                        teacherEntry.put("teacherName", pref.getTeacher().getFullName());
-                        teacherEntry.put("status", pref.getStatus());
-                        teachers.add(teacherEntry);
+                        Map<String, Object> teacherMap = new java.util.LinkedHashMap<>();
+                        teacherMap.put("id", pref.getId());
+                        teacherMap.put("teacher", Map.of(
+                                "id", pref.getTeacher().getId(),
+                                "fullName", pref.getTeacher().getFullName()
+                        ));
+                        teacherMap.put("status", pref.getStatus());
+                        teacherMap.put("vacantDay", pref.getVacantDay());
+                        teacherMap.put("vacantTime", pref.getVacantTime());
+                        prefList.add(teacherMap);
                 }
 
-                // Check existing assignments for this term
+                // Mark subjects that already have a finalized assignment
                 List<Long> subjectIds = new java.util.ArrayList<>(grouped.keySet());
-                List<SubjectAssignment> existing = subjectAssignmentRepository
+                if (!subjectIds.isEmpty()) {
+                        subjectAssignmentRepository
                                 .findBySubjectIdInAndSemesterAndSchoolYear(
-                                                subjectIds, semester, schoolYear);
-
-                for (SubjectAssignment sa : existing) {
-                        Map<String, Object> entry = grouped.get(sa.getSubject().getId());
-                        if (entry != null) {
-                                entry.put("assignedTeacherId", sa.getTeacher().getId());
-                                entry.put("assignedTeacherName", sa.getTeacher().getFullName());
-                                entry.put("assignmentId", sa.getId());
-                                entry.put("isFinalized", sa.isFinalized());
-                        }
+                                        subjectIds, semester, schoolYear)
+                                .stream()
+                                .filter(SubjectAssignment::isFinalized)
+                                .forEach(sa -> {
+                                        Map<String, Object> entry = grouped.get(sa.getSubject().getId());
+                                        if (entry != null) entry.put("assigned", true);
+                                });
                 }
 
                 return new java.util.ArrayList<>(grouped.values());

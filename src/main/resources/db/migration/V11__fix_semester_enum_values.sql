@@ -43,10 +43,6 @@ ALTER TABLE merged_sections DROP CONSTRAINT IF EXISTS merged_sections_semester_c
 ALTER TABLE merged_sections ADD CONSTRAINT merged_sections_semester_check
     CHECK (semester IN ('FIRST','SECOND','SUMMER'));
 
-ALTER TABLE section_config DROP CONSTRAINT IF EXISTS section_config_semester_check;
-ALTER TABLE section_config ADD CONSTRAINT section_config_semester_check
-    CHECK (semester IN ('FIRST','SECOND','SUMMER'));
-
 ALTER TABLE student_checklists DROP CONSTRAINT IF EXISTS student_checklists_semester_check;
 ALTER TABLE student_checklists ADD CONSTRAINT student_checklists_semester_check
     CHECK (semester IN ('FIRST','SECOND','SUMMER'));

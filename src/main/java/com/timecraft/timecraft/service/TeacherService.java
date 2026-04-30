@@ -195,7 +195,8 @@ public class TeacherService {
 
         @Transactional
         public void saveSubjectPreferences(Long teacherId,
-                        List<Long> subjectIds, String semester, String schoolYear) {
+                        List<Long> subjectIds, String semester, String schoolYear,
+                        String vacantDay, String vacantTime) {
 
                 User teacher = userRepository.findById(teacherId)
                                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -220,6 +221,8 @@ public class TeacherService {
                                                                 .semester(com.timecraft.timecraft.model.CourseSubject.Semester
                                                                                 .valueOf(semester))
                                                                 .schoolYear(schoolYear)
+                                                                .vacantDay(vacantDay)
+                                                                .vacantTime(vacantTime)
                                                                 .build());
                         }
                 }

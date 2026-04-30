@@ -71,6 +71,14 @@ public class TeacherSubjectPreference {
     @JoinColumn(name = "reviewed_by")
     private User reviewedBy;
 
+    /** Day the teacher wants to be vacant e.g. "MONDAY" */
+    @Column(name = "vacant_day", length = 20)
+    private String vacantDay;
+
+    /** Time slot the teacher wants to be vacant e.g. "10:30" */
+    @Column(name = "vacant_time", length = 10)
+    private String vacantTime;
+
     public enum Status {
         PENDING, APPROVED, REJECTED
     }

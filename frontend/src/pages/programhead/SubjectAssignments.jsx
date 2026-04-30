@@ -29,7 +29,7 @@ export default function SubjectAssignments() {
     if (!courseId) { setError("No managed course found. Contact admin."); setLoading(false); return; }
 
     Promise.all([
-      api.get(`/dean/assignments?semester=${term.semester}&schoolYear=${term.schoolYear}`),
+      api.get(`/program-head/assignments?semester=${term.semester}&schoolYear=${term.schoolYear}`),
       courseId
         ? api.get(`/subjects/course/${courseId}/curriculum`)
         : Promise.resolve({ data: { data: [] } }),
@@ -54,7 +54,7 @@ export default function SubjectAssignments() {
     }
     setSaving(true); setError(""); setSuccess("");
     try {
-      await api.post("/dean/assignments", {
+      await api.post("/program-head/assignments", {
         subjectId:  Number(form.subjectId),
         sectionId:  Number(form.sectionId),
         teacherId:  Number(form.teacherId),
@@ -73,7 +73,7 @@ export default function SubjectAssignments() {
 
   const handleFinalize = async (id) => {
     try {
-      await api.put(`/dean/assignments/${id}/finalize`);
+      await api.put(`/program-head/assignments/${id}/finalize`);
       setSuccess("Assignment finalized.");
       load();
     } catch (e) {

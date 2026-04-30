@@ -32,4 +32,7 @@ public interface SubjectAssignmentRepository
 
         boolean existsByTeacherIdAndSubjectIdAndSemesterAndSchoolYear(
                         Long teacherId, Long subjectId, String semester, String schoolYear);
+
+        Optional<SubjectAssignment> findBySubjectIdAndSemesterAndSchoolYear(
+        Long subjectId, String semester, String schoolYear);
 }

@@ -20,7 +20,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "subject_assignments", uniqueConstraints = @UniqueConstraint(name = "uq_sa", columnNames = { "subject_id",
-                "section_id", "semester", "school_year" }))
+                "semester", "school_year" }))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -37,8 +37,8 @@ public class SubjectAssignment {
         @JoinColumn(name = "subject_id", nullable = false)
         private Subject subject;
 
-        @ManyToOne(fetch = FetchType.LAZY, optional = false)
-        @JoinColumn(name = "section_id", nullable = false)
+        @ManyToOne(fetch = FetchType.LAZY, optional = true)
+        @JoinColumn(name = "section_id", nullable = true)
         @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "schedules",
                         "students" })
         private Section section;

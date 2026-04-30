@@ -23,24 +23,27 @@ const TeacherDashboard = lazy(() => import("../pages/teacher/TeacherDashboard"))
 const ViewMySchedule = lazy(() => import("../pages/teacher/ViewMySchedule"));
 const SetAvailability = lazy(() => import("../pages/teacher/SetAvailability"));
 const SubjectPreferences = lazy(() => import("../pages/teacher/SubjectPreferences"));
-const TeacherAvailabilityReview = lazy(() => import("../pages/dean/TeacherAvailabilityReview"));
+const TeacherAvailabilityReview = lazy(() => import("../pages/admin/Reports"));
 
-const AdminDashboard = lazy(() => import("../pages/dean/AdminDashboard"));
-const GenerateSchedule = lazy(() => import("../pages/dean/GenerateSchedule"));
-const ManageDepartments = lazy(() => import("../pages/dean/ManageDepartments"));
-const ManageRooms = lazy(() => import("../pages/dean/ManageRooms"));
-const ManageSubjects = lazy(() => import("../pages/dean/ManageSubjects"));
-const Reports = lazy(() => import("../pages/dean/Reports"));
+const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
+const GenerateSchedule = lazy(() => import("../pages/admin/AdminDashboard"));
+const ManageDepartments = lazy(() => import("../pages/admin/ManageDepartments"));
+const ManageRooms = lazy(() => import("../pages/admin/ManageRooms"));
+const ManageSubjects = lazy(() => import("../pages/programhead/ManageSubjects"));
+const Reports = lazy(() => import("../pages/admin/Reports"));
 const DeanDashboard = lazy(() => import("../pages/dean/DeanDashboard"));
-const SubjectAssignments = lazy(() => import("../pages/dean/SubjectAssignments"));
-const PreferenceReview = lazy(() => import("../pages/dean/PreferenceReview"));
+const SubjectAssignments = lazy(() => import("../pages/programhead/SubjectAssignments"));
+const PreferenceReview = lazy(() => import("../pages/programhead/PreferenceReview"));
 const DeanGenerateSchedule = GenerateSchedule;
 const ScheduleView = lazy(() => import("../pages/dean/ScheduleView"));
-const DeanSubjects = lazy(() => import("../pages/dean/ManageSubjects"));
-const ManageStudents = lazy(() => import("../pages/dean/ManageStudents"));
-const IrregularEnrollment = lazy(() => import("../pages/dean/IrregularEnrollment"));
+const DeanSubjects = lazy(() => import("../pages/programhead/ManageSubjects"));
+const ManageStudents = lazy(() => import("../pages/admin/ManageStudents"));
+const IrregularEnrollment = lazy(() => import("../pages/admin/ManageStudents"));
 const CurriculumImport = lazy(() => import("../pages/dean/CurriculumImport"));
 const IrregularStudents = lazy(() => import("../pages/dean/IrregularStudents"));
+const PHDashboard = lazy(() => import("../pages/programhead/Dashboard"));
+const PHManageSubjects = lazy(() => import("../pages/programhead/ManageSubjects"));
+const PHPreferenceReview = lazy(() => import("../pages/programhead/PreferenceReview"));
 
 // ── Loader ────────────────────────────────────────────────────────────────────
 
@@ -154,6 +157,11 @@ export default function AppRouter() {
             <Route path="/dean/irregular-enrollment" element={<Page roles={["ADMIN", "DEAN"]}><IrregularEnrollment /></Page>} />
             <Route path="/dean/curriculum" element={<Page roles={["DEAN", "ADMIN"]}><CurriculumImport /></Page>} />
             <Route path="/dean/irregular" element={<Page roles={["DEAN", "ADMIN"]}><IrregularStudents /></Page>} />
+
+            {/* Program Head */}
+            <Route path="/ph" element={<Page roles={["DEAN","ADMIN"]}><PHDashboard /></Page>} />
+            <Route path="/ph/subjects" element={<Page roles={["DEAN","ADMIN"]}><PHManageSubjects /></Page>} />
+            <Route path="/ph/preferences" element={<Page roles={["DEAN","ADMIN"]}><PHPreferenceReview /></Page>} />
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />

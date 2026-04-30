@@ -1,7 +1,7 @@
 -- ── 1. Extend user_type to include PROGRAM_HEAD ───────────────────────────────
 ALTER TABLE users DROP CONSTRAINT users_user_type_check;
 ALTER TABLE users ADD CONSTRAINT users_user_type_check
-    CHECK (user_type IN ('STUDENT', 'TEACHER', 'ADMIN', 'DEAN'));
+    CHECK (user_type IN ('STUDENT', 'TEACHER', 'ADMIN', 'DEAN', 'PROGRAM_HEAD'));
 
 -- ── 2. Program head profiles ──────────────────────────────────────────────────
 CREATE TABLE dean_profiles (

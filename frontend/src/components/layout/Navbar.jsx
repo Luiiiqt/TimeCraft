@@ -25,6 +25,11 @@ const PAGE_META = {
 };
 
 const NAV_LINKS = {
+  PROGRAM_HEAD: [
+    { path: "/ph",             label: "Dashboard"   },
+    { path: "/ph/subjects",    label: "Subjects"    },
+    { path: "/ph/preferences", label: "Assign"      },
+  ],
   ADMIN: [
     { path: "/admin",               label: "Dashboard"    },
     { path: "/admin/generate",      label: "Generate"     },
@@ -46,11 +51,17 @@ const NAV_LINKS = {
   ],
   DEAN: [
     { path: "/dean",             label: "Dashboard"   },
+    { path: "/dean/curriculum",  label: "Curriculum"  },
     { path: "/dean/subjects",    label: "Subjects"    },
-    { path: "/dean/assignments", label: "Assignments" },
     { path: "/dean/preferences", label: "Preferences" },
     { path: "/dean/generate",    label: "Generate"    },
     { path: "/dean/schedule",    label: "Schedule"    },
+    { path: "/dean/irregular",   label: "Irregular"   },
+  ],
+  PROGRAM_HEAD: [
+    { path: "/ph",               label: "Dashboard"   },
+    { path: "/ph/subjects",      label: "Subjects"    },
+    { path: "/ph/preferences",   label: "Assign"      },
   ],
 };
 
