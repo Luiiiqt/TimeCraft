@@ -88,6 +88,8 @@ public class CurriculumService {
     }
 
     // ── CSV import ────────────────────────────────────────────────────────────
+    // Expected columns: code, name, units, prerequisite, yearLevel, semester,
+    //                   subjectType (MAJOR/MINOR), sessionType (LECTURE/LABORATORY), hasLab (true/false)
     private void importCsv(InputStream is, Course course,
             Curriculum curriculum) throws Exception {
         try (CSVReader reader = new CSVReader(new InputStreamReader(is))) {
@@ -95,16 +97,21 @@ public class CurriculumService {
             if (rows.isEmpty()) return;
             rows.remove(0); // skip header
             for (String[] row : rows) {
-                if (row.length < 5) continue;
+                if (row.length < 7) continue;
+                String subjectType = row.length > 6 ? row[6].trim() : "MINOR";
+                String sessionType = row.length > 7 ? row[7].trim() : "LECTURE";
+                boolean hasLab     = row.length > 8 && "true".equalsIgnoreCase(row[8].trim());
                 processRow(row[0].trim(), row[1].trim(),
                         parseUnits(row[2]), row[3].trim(),
                         parseYear(row[4]), parseSemester(row[5]),
-                        course, curriculum);
+                        course, curriculum, subjectType, sessionType, hasLab);
             }
         }
     }
 
     // ── Excel import ──────────────────────────────────────────────────────────
+    // Expected columns (0-based): 0=code,1=name,2=units,3=prerequisite,4=yearLevel,
+    //   5=semester,6=subjectType,7=sessionType,8=hasLab
     private void importExcel(InputStream is, Course course,
             Curriculum curriculum) throws Exception {
         try (Workbook wb = new XSSFWorkbook(is)) {
@@ -113,13 +120,16 @@ public class CurriculumService {
             for (Row row : sheet) {
                 if (first) { first = false; continue; } // skip header
                 if (row == null) continue;
+                String subjectType = cellStr(row, 6).isBlank() ? "MINOR" : cellStr(row, 6);
+                String sessionType = cellStr(row, 7).isBlank() ? "LECTURE" : cellStr(row, 7);
+                boolean hasLab     = "true".equalsIgnoreCase(cellStr(row, 8));
                 processRow(
                         cellStr(row, 0), cellStr(row, 1),
                         (int) row.getCell(2).getNumericCellValue(),
                         cellStr(row, 3),
                         (short) row.getCell(4).getNumericCellValue(),
                         parseSemester(cellStr(row, 5)),
-                        course, curriculum);
+                        course, curriculum, subjectType, sessionType, hasLab);
             }
         }
     }
@@ -129,12 +139,20 @@ public class CurriculumService {
     protected void processRow(String code, String name, int units,
             String prerequisite, short yearLevel,
             Semester semester, Course course,
-            Curriculum curriculum) {
+            Curriculum curriculum,
+            String subjectTypeStr, String sessionTypeStr, boolean hasLab) {
         Subject subject = subjectRepository.findByCode(code).orElseGet(() -> {
+            Subject.SubjectType sType = Subject.SubjectType.MINOR;
+            Subject.SessionType sessType = Subject.SessionType.LECTURE;
+            try { sType = Subject.SubjectType.valueOf(subjectTypeStr.toUpperCase()); } catch (Exception ignored) {}
+            try { sessType = Subject.SessionType.valueOf(sessionTypeStr.toUpperCase()); } catch (Exception ignored) {}
             Subject s = Subject.builder()
                     .code(code)
                     .name(name)
                     .units((short) units)
+                    .subjectType(sType)
+                    .sessionType(sessType)
+                    .hasLab(hasLab)
                     .build();
             return subjectRepository.save(s);
         });

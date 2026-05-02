@@ -25,10 +25,12 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
   const slotMap = {}
   schedules.forEach(entry => {
     if (entry.day1 && entry.startTime1) {
-      slotMap[`${entry.day1.toUpperCase()}-${entry.startTime1}`] = entry
+      const t1 = entry.startTime1.substring(0, 5)
+      slotMap[`${entry.day1.toUpperCase()}-${t1}`] = entry
     }
     if (entry.day2 && entry.startTime2) {
-      slotMap[`${entry.day2.toUpperCase()}-${entry.startTime2}`] = entry
+      const t2 = entry.startTime2.substring(0, 5)
+      slotMap[`${entry.day2.toUpperCase()}-${t2}`] = entry
     }
   })
 

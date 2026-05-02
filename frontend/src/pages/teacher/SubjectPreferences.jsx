@@ -28,15 +28,20 @@ export default function SubjectPreferences() {
     setLoading(true);
     console.log("TEACHER USER:", user);
     try {
+      const uid = user?.userId ?? user?.id;
       const [sRes, pRes] = await Promise.all([
-        api.get(`/teachers/${user?.id ?? user?.userId}/available-subjects`),
-        api.get(`/teachers/${user?.id ?? user?.userId}/subject-preferences?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
+        api.get(`/teachers/${uid}/available-subjects`),
+        api.get(`/teachers/${uid}/subject-preferences?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
       ]);
       const allSubjects = sRes.data?.data ?? [];
       const prefs = pRes.data?.data ?? [];        
       setSubjects(allSubjects);
       setSaved(prefs);
       setSelected(new Set(prefs.map(p => p.subject?.id)));
+      if (prefs.length > 0) {
+        setVacantDay(prefs[0].vacantDay ?? "");
+        setVacantTime(prefs[0].vacantTime ?? "");
+      }
     } catch {
       setMsg({ type: "error", text: "Failed to load subjects." });
     } finally {
@@ -57,7 +62,8 @@ export default function SubjectPreferences() {
   const handleSave = async () => {
     setSaving(true); setMsg(null);
     try {
-      await api.post(`/teachers/${user?.userId ?? user?.id}/subject-preferences`, {
+      const uid = user?.userId ?? user?.id;
+      await api.post(`/teachers/${uid}/subject-preferences`, {
         subjectIds: [...selected],
         semester: SEMESTER,
         schoolYear: SCHOOL_YEAR,

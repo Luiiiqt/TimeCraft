@@ -103,7 +103,7 @@ public class ScheduleController {
     // ── GET /api/v1/schedules/section/{sectionId} ─────────────────────────────
 
     @GetMapping("/section/{sectionId}")
-    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER', 'ADMIN', 'DEAN')")
+    @PreAuthorize("hasAnyRole('STUDENT','TEACHER','ADMIN','DEAN','PROGRAM_HEAD','GE_COORDINATOR')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSectionScheduleById(
             @PathVariable Long sectionId,
             @RequestParam String semester,
@@ -127,6 +127,43 @@ public class ScheduleController {
 
         List<Schedule> schedules = scheduleService.findByRoom(
                 roomId, Semester.valueOf(semester), schoolYear);
+
+        return ResponseEntity.ok(ApiResponse.of(
+                schedules.stream().map(ScheduleResponse::from).toList()));
+    }
+
+    // ── GET /api/v1/schedules/published ───────────────────────────────────────
+    // All roles can see published schedules for a section
+
+    @GetMapping("/published/section/{sectionId}")
+    @PreAuthorize("hasAnyRole('STUDENT','TEACHER','DEAN','PROGRAM_HEAD','GE_COORDINATOR','ADMIN')")
+    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getPublishedBySection(
+            @PathVariable Long sectionId,
+            @RequestParam String semester,
+            @RequestParam String schoolYear) {
+
+        List<Schedule> schedules = scheduleService.findBySection(
+                sectionId, Semester.valueOf(semester), schoolYear)
+                .stream()
+                .filter(s -> s.getStatus() == Schedule.ScheduleStatus.PUBLISHED)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.of(
+                schedules.stream().map(ScheduleResponse::from).toList()));
+    }
+
+    @GetMapping("/published/teacher/{teacherId}")
+    @PreAuthorize("hasAnyRole('TEACHER','DEAN','PROGRAM_HEAD','ADMIN')")
+    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getPublishedByTeacher(
+            @PathVariable Long teacherId,
+            @RequestParam String semester,
+            @RequestParam String schoolYear) {
+
+        List<Schedule> schedules = scheduleService.findByTeacher(
+                teacherId, Semester.valueOf(semester), schoolYear)
+                .stream()
+                .filter(s -> s.getStatus() == Schedule.ScheduleStatus.PUBLISHED)
+                .toList();
 
         return ResponseEntity.ok(ApiResponse.of(
                 schedules.stream().map(ScheduleResponse::from).toList()));
@@ -212,7 +249,7 @@ public class ScheduleController {
     // ── PUT /api/v1/schedules/{id}/publish ────────────────────────────────────
 
     @PutMapping("/{id}/publish")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<Void>> publish(@PathVariable Long id) {
         scheduleService.publish(id);
         return ResponseEntity.ok(ApiResponse.success("Schedule published"));
@@ -221,7 +258,7 @@ public class ScheduleController {
     // ── PUT /api/v1/schedules/publish-all ─────────────────────────────────────
 
     @PutMapping("/publish-all")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<Void>> publishAll(
             @RequestParam String semester,
             @RequestParam String schoolYear) {

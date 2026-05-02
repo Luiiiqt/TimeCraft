@@ -85,6 +85,6 @@ public class User {
 
     // ── Enum ──────────────────────────────────────────────────────────────────
     public enum UserType {
-        STUDENT, TEACHER, ADMIN, DEAN, PROGRAM_HEAD
+        STUDENT, TEACHER, ADMIN, DEAN, PROGRAM_HEAD, GE_COORDINATOR
     }
 }

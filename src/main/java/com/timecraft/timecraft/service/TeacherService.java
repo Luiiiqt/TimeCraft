@@ -293,14 +293,24 @@ public class TeacherService {
 
         // ── Available subjects ────────────────────────────────────────────────────
 
+        /**
+         * Returns subjects a teacher can vote on.
+         * GE teachers (campusFlexible / GEN_ED dept) → only MINOR subjects.
+         * Department teachers → only MAJOR subjects in their own department.
+         * Teachers cannot see or vote on subjects from other departments.
+         */
         public List<Subject> getAvailableSubjects(Long teacherId) {
                 TeacherProfile profile = findProfileByUserId(teacherId);
 
-                if (profile.isCampusFlexible()) {
-                        return subjectRepository.findByIsActiveTrue();
+                if (profile.isGETeacher()) {
+                        // GE / minor-subject teachers see only MINOR subjects
+                        return subjectRepository.findByIsActiveTrue().stream()
+                                        .filter(s -> s.getSubjectType() == Subject.SubjectType.MINOR)
+                                        .filter(s -> !s.getCourseSubjects().isEmpty())
+                                        .toList();
                 }
 
-                // Return subjects linked to any course in the teacher's department
+                // Dept teachers: only subjects belonging to their own department
                 Long departmentId = profile.getDepartment().getId();
                 return subjectRepository.findByDepartmentIdAndIsActiveTrue(departmentId)
                                 .stream()

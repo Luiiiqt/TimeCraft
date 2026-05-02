@@ -364,6 +364,54 @@ public class DeanService {
                 return new java.util.ArrayList<>(grouped.values());
         }
 
+        /**
+         * Returns unfinalized subjects per course for the given term.
+         * Empty list = all courses are ready → Dean can generate.
+         */
+        public List<Map<String, Object>> getReadinessReport(
+                        Long deanUserId, String semester, String schoolYear) {
+
+                List<Long> managedCourseIds = programHeadCourseRepository
+                                .findByDeanUserId(deanUserId)
+                                .stream()
+                                .map(com.timecraft.timecraft.model.DeanCourse::getCourseId)
+                                .toList();
+
+                List<Map<String, Object>> report = new java.util.ArrayList<>();
+
+                for (Long courseId : managedCourseIds) {
+                        Course course = courseRepository.findById(courseId).orElse(null);
+                        if (course == null) continue;
+
+                        List<CourseSubject> allSubjects = courseSubjectRepository
+                                        .findByCourseIdIn(List.of(courseId));
+
+                        List<String> unfinalized = allSubjects.stream()
+                                        .filter(cs -> {
+                                                List<SubjectAssignment> assignments =
+                                        subjectAssignmentRepository
+                                                .findBySubjectIdInAndSemesterAndSchoolYear(
+                                                        List.of(cs.getSubject().getId()),
+                                                        semester, schoolYear)
+                                                .stream()
+                                                .toList();
+                                                return assignments.isEmpty() ||
+                                                        assignments.stream().noneMatch(SubjectAssignment::isFinalized);
+                                        })
+                                        .map(cs -> cs.getSubject().getCode())
+                                        .toList();
+
+                        Map<String, Object> entry = new java.util.LinkedHashMap<>();
+                        entry.put("courseId",    courseId);
+                        entry.put("courseCode",  course.getCode());
+                        entry.put("courseName",  course.getName());
+                        entry.put("ready",       unfinalized.isEmpty());
+                        entry.put("unfinalized", unfinalized);
+                        report.add(entry);
+                }
+                return report;
+        }
+
         public List<Course> getManagedCourses(Long programHeadId) {
                 return programHeadCourseRepository.findByDeanUserId(programHeadId)
                                 .stream()

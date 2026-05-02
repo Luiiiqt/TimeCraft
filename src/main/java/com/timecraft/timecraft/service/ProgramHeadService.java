@@ -144,7 +144,7 @@ public class ProgramHeadService {
             Long phUserId, Long subjectId, Long teacherId,
             String semester, String schoolYear) {
 
-        assertManagesCourse(phUserId, subjectId);
+        assertManagesSubject(phUserId, subjectId);
 
         com.timecraft.timecraft.model.Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(() -> new RuntimeException("Subject not found: " + subjectId));
@@ -190,7 +190,17 @@ public class ProgramHeadService {
 
     // ── Guard ─────────────────────────────────────────────────────────────────
 
-    private void assertManagesCourse(Long phUserId, Long subjectId) {
+    public void assertManagesCourse(Long phUserId, Long courseId) {
+        boolean manages = phCourseRepository
+                .findByDeanUserId(phUserId)
+                .stream()
+                .anyMatch(phc -> phc.getCourseId().equals(courseId));
+        if (!manages)
+            throw new IllegalStateException(
+                    "You do not manage course: " + courseId);
+    }
+
+    private void assertManagesSubject(Long phUserId, Long subjectId) {
         List<Long> managedCourseIds = phCourseRepository
                 .findByDeanUserId(phUserId)
                 .stream()

@@ -71,10 +71,13 @@ export function AuthProvider({ children }) {
   // ── Internal session helpers ──────────────────────────────────────────────
   const _applySession = async (tok, userData) => {
     let enriched = { ...userData };
-    if (userData.role === "PROGRAM_HEAD" || userData.role === "COORDINATOR") {
+    if (userData.role === "PROGRAM_HEAD" || userData.role === "GE_COORDINATOR") {
       try {
         api.defaults.headers.common["Authorization"] = `Bearer ${tok}`;
-        const r = await api.get("/program-head/my-courses");
+        const endpoint = userData.role === "GE_COORDINATOR"
+          ? "/ge-coordinator/assignments"
+          : "/program-head/my-courses";
+        const r = await api.get(endpoint);
         enriched.courses = r.data?.data ?? [];
       } catch {
         enriched.courses = [];
@@ -130,7 +133,8 @@ export function AuthProvider({ children }) {
   const isTeacher = role === "TEACHER";
   const isStudent = role === "STUDENT";
   const isDean = role === "DEAN";
-  const isProgramHead = role === "DEAN"; // kept for backward compat
+  const isProgramHead = role === "PROGRAM_HEAD";
+  const isGECoordinator = role === "GE_COORDINATOR";
 
   const value = {
     user,
@@ -143,6 +147,7 @@ export function AuthProvider({ children }) {
     isStudent,
     isDean,
     isProgramHead,
+    isGECoordinator,
     login,
     register,
     logout,

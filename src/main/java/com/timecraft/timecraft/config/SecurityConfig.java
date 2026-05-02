@@ -85,6 +85,14 @@ public class SecurityConfig {
                                                                 "/api/v1/teachers/*/availability")
                                                 .hasAnyRole("TEACHER", "ADMIN")
 
+                                                // ── Program Head endpoints ────────────────────────────────────
+                                                .requestMatchers("/api/v1/program-head/**")
+                                                .hasAnyRole("PROGRAM_HEAD", "DEAN", "ADMIN")
+
+                                                // ── GE Coordinator endpoints ──────────────────────────────────
+                                                .requestMatchers("/api/v1/ge-coordinator/**")
+                                                .hasAnyRole("GE_COORDINATOR", "ADMIN")
+
                                                 // ── Dean endpoints ────────────────────────────────────────────
                                                 .requestMatchers("/api/v1/dean/**")
                                                 .hasAnyRole("DEAN", "ADMIN")
@@ -105,9 +113,11 @@ public class SecurityConfig {
                                                                 "/api/v1/subjects/**",
                                                                 "/api/v1/courses/**",
                                                                 "/api/v1/schedules/section/**",
+                                                                "/api/v1/schedules/published/**",
                                                                 "/api/v1/schedules/conflicted",
                                                                 "/api/v1/timeslots/**")
-                                                .hasAnyRole("ADMIN", "DEAN", "TEACHER")
+                                                .hasAnyRole("ADMIN", "DEAN", "TEACHER",
+                                                        "PROGRAM_HEAD", "GE_COORDINATOR")
 
                                                 .requestMatchers(HttpMethod.POST,
                                                 "/api/v1/teachers",

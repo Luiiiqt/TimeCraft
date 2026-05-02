@@ -135,8 +135,11 @@ public class AuthService {
             enrichWithTeacherClaims(user, claims);
         } else if (user.getUserType() == UserType.DEAN) {
             enrichWithDeanClaims(user, claims);
+        } else if (user.getUserType() == UserType.GE_COORDINATOR) {
+            enrichWithTeacherClaims(user, claims);
+        } else if (user.getUserType() == UserType.PROGRAM_HEAD) {
+            enrichWithDeanClaims(user, claims); // PH shares dean profile structure
         }
-        // ADMIN has no profile table — base claims only
 
         return claims;
     }

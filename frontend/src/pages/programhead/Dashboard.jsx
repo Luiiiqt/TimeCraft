@@ -119,6 +119,16 @@ export default function PHDashboard() {
             View all subjects in your curriculum by year level and semester.
           </div>
         </div>
+        <div onClick={() => navigate("/ph/schedule")} style={{
+          background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb",
+          padding: "20px 24px", cursor: "pointer"
+        }}>
+          <div style={{ fontSize: 22, marginBottom: 8 }}>📅</div>
+          <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>View Schedule</div>
+          <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
+            View the published timetable for your courses.
+          </div>
+        </div>
         <div onClick={() => navigate("/ph/preferences")} style={{
           background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb",
           padding: "20px 24px", cursor: "pointer"

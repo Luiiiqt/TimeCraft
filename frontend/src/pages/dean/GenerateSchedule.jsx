@@ -35,6 +35,8 @@ export default function ProgramHeadGenerateSchedule() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [readiness, setReadiness] = useState([]);
+  const [readinessLoading, setReadinessLoading] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [lockChecking, setLockChecking] = useState(false);
   const [sectionConfigs, setSectionConfigs] = useState({ 1: 1, 2: 1, 3: 1, 4: 1 });
@@ -50,9 +52,19 @@ export default function ProgramHeadGenerateSchedule() {
     finally { setLockChecking(false); }
   };
 
+  const checkReadiness = async (semester, schoolYear) => {
+    setReadinessLoading(true);
+    try {
+      const res = await api.get(`/dean/readiness?semester=${semester}&schoolYear=${schoolYear}`);
+      setReadiness(res.data?.data ?? []);
+    } catch { setReadiness([]); }
+    finally { setReadinessLoading(false); }
+  };
+
   useEffect(() => {
     if (form.courseId) {
       checkLock(form.courseId, form.semester, form.schoolYear);
+      checkReadiness(form.semester, form.schoolYear);
       api.get(`/sections/config?courseId=${form.courseId}&semester=${form.semester}&schoolYear=${form.schoolYear}`)
         .then(r => {
           const list = r.data?.data ?? [];
@@ -78,6 +90,7 @@ export default function ProgramHeadGenerateSchedule() {
         schoolYear: form.schoolYear,
         autoPublish: form.autoPublish,
         courseId: form.courseId,
+        clearDraftsFirst: true,
       });
       setResult(res.data?.data ?? res.data);
     } catch (e) {
@@ -118,10 +131,34 @@ export default function ProgramHeadGenerateSchedule() {
         {user?.departmentName} · Only finalized assignments will be used.
       </p>
 
-      {/* Warning if no finalized assignments */}
-      <div style={{ background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 10, padding: "10px 16px", marginBottom: 24, fontSize: 13, color: "#92400e" }}>
-        ⚠️ Make sure all subject assignments are <strong>finalized</strong> before generating. Unfinalized assignments will be ignored.
-      </div>
+      {/* Readiness report */}
+      {readinessLoading ? (
+        <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 16px", marginBottom: 24, fontSize: 13, color: "#6b7280" }}>
+          Checking readiness…
+        </div>
+      ) : readiness.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          {readiness.map(r => (
+            <div key={r.courseId} style={{
+              background: r.ready ? "#f0fdf4" : "#fef2f2",
+              border: `1px solid ${r.ready ? "#bbf7d0" : "#fecaca"}`,
+              borderRadius: 10, padding: "10px 16px", marginBottom: 8,
+              fontSize: 13, color: r.ready ? "#14532d" : "#7f1d1d",
+              display: "flex", alignItems: "flex-start", gap: 10,
+            }}>
+              <span>{r.ready ? "✅" : "❌"}</span>
+              <div>
+                <strong>{r.courseCode}</strong> — {r.courseName}
+                {!r.ready && (
+                  <div style={{ fontSize: 12, marginTop: 4, color: "#dc2626" }}>
+                    Unfinalized subjects: {r.unfinalized.join(", ")}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
 
@@ -190,9 +227,15 @@ export default function ProgramHeadGenerateSchedule() {
           )}
 
           {!confirmed ? (
-            <button onClick={() => setConfirmed(true)} disabled={loading || isLocked || lockChecking}
-              style={{ width: "100%", padding: "10px", background: isLocked ? "#9ca3af" : "#7c3aed", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: isLocked ? "not-allowed" : "pointer" }}>
-              {lockChecking ? "Checking…" : "Review & Generate"}
+            <button onClick={() => setConfirmed(true)}
+              disabled={loading || isLocked || lockChecking || readiness.length === 0 || readiness.some(r => !r.ready)}
+              style={{
+                width: "100%", padding: "10px",
+                background: (isLocked || readiness.some(r => !r.ready)) ? "#9ca3af" : "#7c3aed",
+                color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700,
+                cursor: (isLocked || readiness.some(r => !r.ready)) ? "not-allowed" : "pointer"
+              }}>
+              {lockChecking ? "Checking…" : readiness.length === 0 ? "Loading Readiness…" : readiness.some(r => !r.ready) ? "Not Ready — Fix Assignments First" : "Review & Generate"}
             </button>
           ) : (
             <div style={{ background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 8, padding: "14px" }}>

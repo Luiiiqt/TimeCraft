@@ -220,6 +220,17 @@ public class DeanController {
                                                 userId, semester, schoolYear)));
         }
 
+        @GetMapping("/readiness")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
+        public ResponseEntity<ApiResponse<List<java.util.Map<String, Object>>>> getReadiness(
+                        @RequestParam String semester,
+                        @RequestParam String schoolYear,
+                        Principal principal) {
+                Long userId = resolveUserId(principal);
+                return ResponseEntity.ok(ApiResponse.of(
+                                deanService.getReadinessReport(userId, semester, schoolYear)));
+        }
+
         @GetMapping("/my-courses")
         @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
         public ResponseEntity<ApiResponse<List<Course>>> getMyCourses(Principal principal) {

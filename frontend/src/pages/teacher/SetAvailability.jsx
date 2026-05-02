@@ -39,7 +39,14 @@ function useTimeslots(teacherId) {
       // Each item: { id, teacher, timeslot: {id, dayOfWeek, slotNumber, startTime, endTime, label}, available }
       const res  = await api.get(`/teachers/${teacherId}/availability`);
       const data = res.data?.data ?? res.data ?? [];
-      const rows = Array.isArray(data) ? data : [];
+      let rows = Array.isArray(data) ? data : [];
+
+      // If no availability set yet, load all timeslots as unselected
+      if (rows.length === 0) {
+        const tsRes = await api.get("/timeslots");
+        const allTs = tsRes.data?.data ?? [];
+        rows = allTs.map(ts => ({ timeslot: ts, available: false }));
+      }
 
       // Extract unique timeslot objects (sorted by day + slot)
       const tsMap = {};
@@ -175,7 +182,7 @@ function DayColumn({ day, timeslots, selected, onToggle, isSelectedDay, onSelect
 
 export default function SetAvailability() {
   const { user } = useAuth();
-  const teacherId = user?.userId;
+  const teacherId = user?.userId ?? user?.id;
 
   const { timeslots, availMap, loading, error, reload } = useTimeslots(teacherId);
 

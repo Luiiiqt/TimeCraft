@@ -80,9 +80,9 @@ public class Subject {
     @JoinColumn(name = "prerequisite_subject_id")
     private Subject prerequisite;
 
-    /** Owning department. No year-level restriction on teacher assignment. */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "department_id", nullable = false)
+    /** Owning department. NULL for GE/MINOR subjects (cross-department). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
     private Department department;
 
     @Column(name = "is_active", nullable = false)
@@ -101,6 +101,16 @@ public class Subject {
     public enum SubjectType {
         MAJOR, MINOR
     }
+
+    /**
+     * TRUE = major subject has both a lecture session AND a lab session.
+     * When true, the scheduling engine will create TWO schedule entries:
+     *   - one LECTURE (1hr, twice a week)
+     *   - one LABORATORY (1.5hr, twice a week)
+     */
+    @Column(name = "has_lab", nullable = false)
+    @Builder.Default
+    private boolean hasLab = false;
 
     public enum SessionType {
         LECTURE, LABORATORY

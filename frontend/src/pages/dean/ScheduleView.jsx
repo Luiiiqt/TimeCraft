@@ -17,8 +17,6 @@ export default function ScheduleView() {
   const defaults = getDefaultTerm();
 
   const courseId = params.get("courseId");
-  const semester = params.get("semester") || defaults.semester;
-  const schoolYear = params.get("schoolYear") || defaults.schoolYear;
 
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +54,12 @@ export default function ScheduleView() {
     if (!sectionId) return;
     setLoading(true);
     api.get(`/schedules/section/${sectionId}`, { params: { semester: activeSemester, schoolYear: activeSchoolYear } })
-      .then(r => { setSchedules(r.data?.data ?? []); setLoading(false); })
+      .then(r => {
+        const all = r.data?.data ?? [];
+        // Show PUBLISHED + DRAFT to dean/admin; students/teachers see published only
+        setSchedules(all);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, [sectionId, activeSemester, activeSchoolYear]);
 

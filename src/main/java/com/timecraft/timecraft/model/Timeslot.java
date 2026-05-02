@@ -50,4 +50,9 @@ public class Timeslot {
     /** Human-readable label e.g. "Monday 7:30 AM – 9:00 AM". */
     @Column(name = "label", nullable = false, length = 60)
     private String label;
+
+    /** Duration in minutes: 90 for standard slots, 60 for lecture-only hasLab subjects. */
+    @Column(name = "duration_minutes", nullable = false)
+    @Builder.Default
+    private short durationMinutes = 90;
 }

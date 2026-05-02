@@ -344,7 +344,7 @@ function SummaryPanel({ schedules }) {
 
 export default function ViewMySchedule() {
   const { user } = useAuth();
-  const { schedules, loading, error, fetchTeacherSchedule } = useSchedule();
+  const { schedules, loading, error, fetchPublishedByTeacher } = useSchedule();
   const defaults = getDefaultTerm();
 
   const [term,  setTerm]  = useState(defaults);
@@ -366,7 +366,7 @@ export default function ViewMySchedule() {
   }, [user]);
 
   useEffect(() => {
-    if (teacherId) fetchTeacherSchedule(teacherId, term.semester, term.schoolYear);
+    if (teacherId) fetchPublishedByTeacher(teacherId, term.semester, term.schoolYear);
   }, [teacherId, term.semester, term.schoolYear]);
 
   return (

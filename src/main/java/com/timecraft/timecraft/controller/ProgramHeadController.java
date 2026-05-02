@@ -38,6 +38,7 @@ public class ProgramHeadController {
 
     private final ProgramHeadService programHeadService;
     private final UserRepository userRepository;
+    private final com.timecraft.timecraft.service.ScheduleService scheduleService;
 
     // ── GET /api/v1/program-head/my-courses ───────────────────────────────────
 

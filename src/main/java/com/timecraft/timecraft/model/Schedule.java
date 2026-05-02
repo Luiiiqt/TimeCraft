@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.timecraft.timecraft.model.Subject.SessionType;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -123,4 +125,9 @@ public class Schedule {
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "merged_section_id")
         private MergedSection mergedSection;
+
+        // In Schedule.java
+        @Enumerated(EnumType.STRING)
+        @Column(name = "session_type")
+        private SessionType sessionType; // LECTURE or LABORATORY — per schedule row
 }

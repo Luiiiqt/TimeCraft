@@ -94,7 +94,7 @@ function useSchedule() {
       }
     }
     return _fetch("/schedules/my", { semester, schoolYear });
-  }, [_fetch, api]);
+  }, [_fetch]);
 
   /** Teacher/Admin: teacher's full load */
   const fetchTeacherSchedule = useCallback((teacherId, semester, schoolYear) =>
@@ -119,6 +119,16 @@ function useSchedule() {
   /** Admin: teaching load report */
   const fetchLoadReport = useCallback((semester, schoolYear) =>
     _fetch("/schedules/load-report", { semester, schoolYear }),
+  [_fetch]);
+
+  /** Published schedule by section (PH, Student, Dean) */
+  const fetchPublishedBySection = useCallback((sectionId, semester, schoolYear) =>
+    _fetch(`/schedules/published/section/${sectionId}`, { semester, schoolYear }),
+  [_fetch]);
+
+  /** Published schedule by teacher (Teacher role) */
+  const fetchPublishedByTeacher = useCallback((teacherId, semester, schoolYear) =>
+    _fetch(`/schedules/published/teacher/${teacherId}`, { semester, schoolYear }),
   [_fetch]);
 
   // ── Action methods ────────────────────────────────────────────────────────

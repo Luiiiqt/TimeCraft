@@ -109,7 +109,9 @@ public class ScheduleResponse {
                 .subjectCode(schedule.getSubject().getCode())
                 .subjectName(schedule.getSubject().getName())
                 .subjectType(schedule.getSubject().getSubjectType().name())
-                .sessionType(schedule.getSubject().getSessionType().name())
+                .sessionType(schedule.getSessionType() != null
+                        ? schedule.getSessionType().name()
+                        : schedule.getSubject().getSessionType().name())
                 .units(schedule.getSubject().getUnits())
 
                 // Teacher

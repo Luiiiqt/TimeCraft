@@ -82,6 +82,7 @@ public class SubjectController {
     // ── GET /api/v1/subjects/course/{courseId}/curriculum ─────────────────────
 
     @GetMapping("/course/{courseId}/curriculum")
+    @PreAuthorize("hasAnyRole('DEAN','ADMIN','PROGRAM_HEAD','GE_COORDINATOR')")
     public ResponseEntity<ApiResponse<List<CourseSubject>>> getFullCurriculum(
             @PathVariable Long courseId) {
         return ResponseEntity.ok(

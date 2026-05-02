@@ -205,18 +205,25 @@ public class SchedulingEngine {
 
                         boolean isMajor = subject.getSubjectType() == Subject.SubjectType.MAJOR;
 
-                        if (isMajor && subject.getSessionType() == Subject.SessionType.LECTURE) {
-                                // MAJOR LECTURE: 1hr slot twice a week — use slot pair (same slotNumber, diff
-                                // days)
-                                Schedule lec = tryScheduleSubject(subject, section, campus, semester, schoolYear);
+                        if (isMajor && subject.isHasLab()) {
+                                // MAJOR with LECTURE + LAB:
+                                //   Lecture: 1hr twice a week (use 60-min slots)
+                                //   Lab:     1.5hr twice a week (use 90-min slots)
+                                Schedule lec = tryScheduleSubject(subject, section, campus,
+                                        semester, schoolYear, Subject.SessionType.LECTURE);
                                 result.add(lec);
-                        } else if (isMajor && subject.getSessionType() == Subject.SessionType.LABORATORY) {
-                                // MAJOR LAB: 1.5hr slot twice a week — normal 90-min slot pair
-                                Schedule lab = tryScheduleSubject(subject, section, campus, semester, schoolYear);
+                                Schedule lab = tryScheduleSubject(subject, section, campus,
+                                        semester, schoolYear, Subject.SessionType.LABORATORY);
                                 result.add(lab);
+                        } else if (isMajor) {
+                                // MAJOR LECTURE-ONLY: 1.5hr twice a week
+                                Schedule lec = tryScheduleSubject(subject, section, campus,
+                                        semester, schoolYear, Subject.SessionType.LECTURE);
+                                result.add(lec);
                         } else {
-                                // MINOR: 1.5hr twice a week — normal slot pair
-                                Schedule schedule = tryScheduleSubject(subject, section, campus, semester, schoolYear);
+                                // MINOR: 1.5hr twice a week
+                                Schedule schedule = tryScheduleSubject(subject, section, campus,
+                                        semester, schoolYear, subject.getSessionType());
                                 result.add(schedule);
                         }
                 }
@@ -227,7 +234,7 @@ public class SchedulingEngine {
         // ── Subject assignment attempt ─────────────────────────────────────────────
         private Schedule tryScheduleSubject(Subject subject, Section section,
                         Campus campus, Semester semester,
-                        String schoolYear) {
+                        String schoolYear, Subject.SessionType overrideSessionType) {
                 User teacher = subject.getDepartment() != null
                                 ? resolveTeacher(subject, section, semester, schoolYear)
                                 : null;
@@ -259,14 +266,14 @@ public class SchedulingEngine {
                                                         subject.getDepartment().getCode()));
                 }
 
-                // Validate room type matches subject session type
-                RoomType requiredRoomType = subject.getSessionType() == Subject.SessionType.LABORATORY
+                // Validate room type matches the session being scheduled
+                RoomType requiredRoomType = overrideSessionType == Subject.SessionType.LABORATORY
                                 ? RoomType.LABORATORY
                                 : RoomType.LECTURE;
 
                 // Find two free timeslots on different days
                 TimeslotPair pair = findTimeslotPair(teacher, section,
-                                semester, schoolYear);
+                                semester, schoolYear, overrideSessionType);
 
                 if (pair == null) {
                         return logAndSaveConflict(null, subject, section, campus,
@@ -277,7 +284,6 @@ public class SchedulingEngine {
                 }
 
                 // Find an available room
-                boolean isMajor = subject.getSubjectType() == Subject.SubjectType.MAJOR;
                 Room room = findRoom(profile, campus, requiredRoomType,
                                 section.getMaxStudents(), pair.ts1().getId(),
                                 semester, schoolYear);
@@ -301,6 +307,7 @@ public class SchedulingEngine {
                                 .semester(semester)
                                 .schoolYear(schoolYear)
                                 .campus(room.getCampus())
+                                .sessionType(overrideSessionType)
                                 .status(ScheduleStatus.DRAFT)
                                 .build();
 
@@ -318,8 +325,9 @@ public class SchedulingEngine {
          * that time
          */
         private TimeslotPair findTimeslotPair(User teacher, Section section,
-                        Semester semester,
-                        String schoolYear) {
+                        Semester semester, String schoolYear,
+                        Subject.SessionType sessionType) {
+                // Only hasLab LECTURE uses 60-min slots; all others use 90-min
                 List<Timeslot> allSlots = timeslotRepository
                                 .findAllByOrderByDayOfWeekAscSlotNumberAsc();
 
@@ -331,14 +339,21 @@ public class SchedulingEngine {
 
                 // Count how many classes the section already has per day
                 java.util.Map<Object, Long> dayLoad = new java.util.HashMap<>();
+                java.util.Map<Object, java.util.Set<Short>> daySlots = new java.util.HashMap<>();
 
                 scheduleRepository.findSectionSchedules(section.getId(), semester, schoolYear)
                                 .forEach(s -> {
                                         if (s.getTimeslot() != null) {
                                                 dayLoad.merge(s.getTimeslot().getDayOfWeek(), 1L, Long::sum);
+                                                daySlots.computeIfAbsent(s.getTimeslot().getDayOfWeek(),
+                                                        k -> new java.util.HashSet<>())
+                                                        .add(s.getTimeslot().getSlotNumber());
                                         }
                                         if (s.getTimeslot2() != null) {
                                                 dayLoad.merge(s.getTimeslot2().getDayOfWeek(), 1L, Long::sum);
+                                                daySlots.computeIfAbsent(s.getTimeslot2().getDayOfWeek(),
+                                                        k -> new java.util.HashSet<>())
+                                                        .add(s.getTimeslot2().getSlotNumber());
                                         }
                                 });
 
@@ -348,14 +363,17 @@ public class SchedulingEngine {
                                                 ts -> dayLoad.getOrDefault(ts.getDayOfWeek(), 0L)))
                                 .toList();
 
-                // Find two slots on different days (least loaded days first)
+                final int MAX_CONSECUTIVE = 3;
+
+                // Find two slots on different days with vacancy gap enforcement
                 for (int i = 0; i < spread.size(); i++) {
                         for (int j = i + 1; j < spread.size(); j++) {
                                 Timeslot ts1 = spread.get(i);
                                 Timeslot ts2 = spread.get(j);
-                                if (ts1.getDayOfWeek() != ts2.getDayOfWeek()) {
-                                        return new TimeslotPair(ts1, ts2);
-                                }
+                                if (ts1.getDayOfWeek() == ts2.getDayOfWeek()) continue;
+                                if (wouldExceedConsecutiveLimit(ts1, daySlots, MAX_CONSECUTIVE)) continue;
+                                if (wouldExceedConsecutiveLimit(ts2, daySlots, MAX_CONSECUTIVE)) continue;
+                                return new TimeslotPair(ts1, ts2);
                         }
                 }
                 return null;
@@ -587,6 +605,23 @@ public class SchedulingEngine {
                                 }
                         }
                 }
+        }
+
+        /**
+         * Returns true if placing this timeslot on its day would create
+         * more than maxConsecutive back-to-back slots with no gap in between.
+         */
+        private boolean wouldExceedConsecutiveLimit(Timeslot ts,
+                        java.util.Map<Object, java.util.Set<Short>> daySlots,
+                        int maxConsecutive) {
+                java.util.Set<Short> occupied = daySlots.getOrDefault(
+                                ts.getDayOfWeek(), java.util.Collections.emptySet());
+                short slot = ts.getSlotNumber();
+                // Count consecutive run including this new slot
+                int run = 1;
+                for (short s = (short)(slot - 1); s >= 1 && occupied.contains(s); s--) run++;
+                for (short s = (short)(slot + 1); s <= 7 && occupied.contains(s); s++) run++;
+                return run > maxConsecutive;
         }
 
         private boolean isTeacherAvailableAtSlot(User teacher, Timeslot ts) {

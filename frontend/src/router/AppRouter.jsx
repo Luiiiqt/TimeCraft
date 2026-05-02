@@ -26,7 +26,7 @@ const SubjectPreferences = lazy(() => import("../pages/teacher/SubjectPreference
 const TeacherAvailabilityReview = lazy(() => import("../pages/admin/Reports"));
 
 const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
-const GenerateSchedule = lazy(() => import("../pages/admin/AdminDashboard"));
+const GenerateSchedule = lazy(() => import("../pages/dean/GenerateSchedule"));
 const ManageDepartments = lazy(() => import("../pages/admin/ManageDepartments"));
 const ManageRooms = lazy(() => import("../pages/admin/ManageRooms"));
 const ManageSubjects = lazy(() => import("../pages/programhead/ManageSubjects"));
@@ -35,6 +35,7 @@ const DeanDashboard = lazy(() => import("../pages/dean/DeanDashboard"));
 const SubjectAssignments = lazy(() => import("../pages/programhead/SubjectAssignments"));
 const PreferenceReview = lazy(() => import("../pages/programhead/PreferenceReview"));
 const DeanGenerateSchedule = GenerateSchedule;
+const PHScheduleView = lazy(() => import("../pages/programhead/ScheduleView"));
 const ScheduleView = lazy(() => import("../pages/dean/ScheduleView"));
 const DeanSubjects = lazy(() => import("../pages/programhead/ManageSubjects"));
 const ManageStudents = lazy(() => import("../pages/admin/ManageStudents"));
@@ -44,6 +45,7 @@ const IrregularStudents = lazy(() => import("../pages/dean/IrregularStudents"));
 const PHDashboard = lazy(() => import("../pages/programhead/Dashboard"));
 const PHManageSubjects = lazy(() => import("../pages/programhead/ManageSubjects"));
 const PHPreferenceReview = lazy(() => import("../pages/programhead/PreferenceReview"));
+const GEPreferenceReview = lazy(() => import("../pages/ge/GEPreferenceReview"));
 
 // ── Loader ────────────────────────────────────────────────────────────────────
 
@@ -91,6 +93,8 @@ function HomeRoute() {
   if (role === "ADMIN") return <Navigate to="/admin" replace />;
   if (role === "TEACHER") return <Navigate to="/teacher" replace />;
   if (role === "DEAN") return <Navigate to="/dean" replace />;
+  if (role === "PROGRAM_HEAD") return <Navigate to="/ph" replace />;
+  if (role === "GE_COORDINATOR") return <Navigate to="/ge" replace />;
   return <Navigate to="/student" replace />;
 }
 
@@ -159,9 +163,18 @@ export default function AppRouter() {
             <Route path="/dean/irregular" element={<Page roles={["DEAN", "ADMIN"]}><IrregularStudents /></Page>} />
 
             {/* Program Head */}
-            <Route path="/ph" element={<Page roles={["DEAN","ADMIN"]}><PHDashboard /></Page>} />
-            <Route path="/ph/subjects" element={<Page roles={["DEAN","ADMIN"]}><PHManageSubjects /></Page>} />
-            <Route path="/ph/preferences" element={<Page roles={["DEAN","ADMIN"]}><PHPreferenceReview /></Page>} />
+            <Route path="/ph" element={<Page roles={["PROGRAM_HEAD","DEAN","ADMIN"]}><PHDashboard /></Page>} />
+            <Route path="/ph/subjects" element={<Page roles={["PROGRAM_HEAD","DEAN","ADMIN"]}><PHManageSubjects /></Page>} />
+            <Route path="/ph/preferences" element={<Page roles={["PROGRAM_HEAD","DEAN","ADMIN"]}><PHPreferenceReview /></Page>} />
+            <Route path="/ph/schedule" element={<Page roles={["PROGRAM_HEAD","DEAN","ADMIN"]}><PHScheduleView /></Page>} />
+
+            {/* Program Head redirect */}
+            <Route path="/program-head" element={<Navigate to="/ph" replace />} />
+
+            {/* GE Coordinator */}
+            <Route path="/ge" element={<Page roles={["GE_COORDINATOR","ADMIN"]}><PHDashboard /></Page>} />
+            <Route path="/ge/preferences" element={<Page roles={["GE_COORDINATOR","ADMIN"]}><GEPreferenceReview /></Page>} />
+            <Route path="/ge/schedule" element={<Page roles={["GE_COORDINATOR","ADMIN"]}><PHScheduleView /></Page>} />
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
