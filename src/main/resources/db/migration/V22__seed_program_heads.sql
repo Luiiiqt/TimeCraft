@@ -8,8 +8,8 @@
 --   - program_head_profiles
 --   - dean_courses (PH ↔ course mapping)
 --
--- Password: BCrypt of "Teacher123"
--- $2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6
+-- Password: BCrypt of "programhead123"
+-- $2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO
 -- ============================================================
 
 -- ── 1. DEPARTMENTS ────────────────────────────────────────────────────────────
@@ -55,17 +55,17 @@ ON CONFLICT (code) DO NOTHING;
 -- ── 3. PROGRAM HEAD USERS ────────────────────────────────────────────────────
 
 INSERT INTO users (user_type, full_name, school_id, email, password_hash, is_active) VALUES
-    ('PROGRAM_HEAD', 'College of Business Program Head',                   'PH-COB-001',   'ph.business@lorma.edu',         '$2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6', true),
-    ('PROGRAM_HEAD', 'College of Pharmacy Program Head',                   'PH-COP-001',   'ph.pharmacy@lorma.edu',         '$2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6', true),
-    ('PROGRAM_HEAD', 'College of Nursing Program Head',                    'PH-CON-001',   'ph.nursing@lorma.edu',          '$2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6', true),
-    ('PROGRAM_HEAD', 'College of Inclusive Education Program Head',        'PH-CIED-001',  'ph.inclusiveduc@lorma.edu',     '$2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6', true),
-    ('PROGRAM_HEAD', 'College of Psychology Program Head',                 'PH-COPSY-001', 'ph.psychology@lorma.edu',       '$2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6', true),
-    ('PROGRAM_HEAD', 'College of Physical Therapy Program Head',           'PH-COPT-001',  'ph.physicaltherapy@lorma.edu',  '$2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6', true),
-    ('PROGRAM_HEAD', 'College of Respiratory Therapy Program Head',        'PH-CORT-001',  'ph.respiratorytherapy@lorma.edu','$2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6', true),
-    ('PROGRAM_HEAD', 'College of Medical Laboratory Science Program Head', 'PH-COMLS-001', 'ph.medlabscience@lorma.edu',    '$2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6', true),
-    ('PROGRAM_HEAD', 'College of Radiologic Technology Program Head',      'PH-CORT2-001', 'ph.radtech@lorma.edu',          '$2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6', true),
-    ('PROGRAM_HEAD', 'CCSE Program Head - CS IT CE',                       'PH-CCSE-001',  'ph.ccse1@lorma.edu',            '$2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6', true),
-    ('PROGRAM_HEAD', 'CCSE Program Head - BME ECT DIT MIS',               'PH-CCSE-002',  'ph.ccse2@lorma.edu',            '$2a$12$gji5i/N1mjGxALvRr8fQJuPGQ41ZXn2DveNYrZv1xk9n/nq1tPHr6', true)
+    ('PROGRAM_HEAD', 'College of Business Program Head',                   'PH-COB-001',   'ph.business@lorma.edu',         '$2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO', true),
+    ('PROGRAM_HEAD', 'College of Pharmacy Program Head',                   'PH-COP-001',   'ph.pharmacy@lorma.edu',         '$2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO', true),
+    ('PROGRAM_HEAD', 'College of Nursing Program Head',                    'PH-CON-001',   'ph.nursing@lorma.edu',          '$2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO', true),
+    ('PROGRAM_HEAD', 'College of Inclusive Education Program Head',        'PH-CIED-001',  'ph.inclusiveduc@lorma.edu',     '$2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO', true),
+    ('PROGRAM_HEAD', 'College of Psychology Program Head',                 'PH-COPSY-001', 'ph.psychology@lorma.edu',       '$2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO', true),
+    ('PROGRAM_HEAD', 'College of Physical Therapy Program Head',           'PH-COPT-001',  'ph.physicaltherapy@lorma.edu',  '$2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO', true),
+    ('PROGRAM_HEAD', 'College of Respiratory Therapy Program Head',        'PH-CORT-001',  'ph.respiratorytherapy@lorma.edu','$2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO', true),
+    ('PROGRAM_HEAD', 'College of Medical Laboratory Science Program Head', 'PH-COMLS-001', 'ph.medlabscience@lorma.edu',    '$2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO', true),
+    ('PROGRAM_HEAD', 'College of Radiologic Technology Program Head',      'PH-CORT2-001', 'ph.radtech@lorma.edu',          '$2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO', true),
+    ('PROGRAM_HEAD', 'CCSE Program Head - CS IT CE',                       'PH-CCSE-001',  'ph.ccse1@lorma.edu',            '$2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO', true),
+    ('PROGRAM_HEAD', 'CCSE Program Head - BME ECT DIT MIS',               'PH-CCSE-002',  'ph.ccse2@lorma.edu',            '$2a$12$raIxQPkBJJ6b8fuDSFg0aOafUc8NK7JmqrznrmNyc6fcoTSBhATqO', true)
 ON CONFLICT (email) DO NOTHING;
 
 -- ── 4. PROGRAM HEAD PROFILES ──────────────────────────────────────────────────

@@ -24,8 +24,8 @@ export default function ScheduleView() {
   const [sectionId, setSectionId] = useState(null);
   const [courses, setCourses] = useState([]);
   const [activeCourseId, setActiveCourseId] = useState(courseId ? Number(courseId) : null);
-  const [activeSemester, setActiveSemester] = useState(semester);
-  const [activeSchoolYear, setActiveSchoolYear] = useState(schoolYear);
+  const [activeSemester, setActiveSemester] = useState(defaults.semester);
+  const [activeSchoolYear, setActiveSchoolYear] = useState(defaults.schoolYear);
 
   useEffect(() => {
     api.get("/dean/my-courses")
@@ -38,7 +38,7 @@ export default function ScheduleView() {
   }, []);
 
   useEffect(() => {
-    if (!activeCourseId || !semester || !schoolYear) return;
+    if (!activeCourseId || !activeSemester || !activeSchoolYear) return;
     api.get(`/sections`, { params: { courseId: activeCourseId, semester: activeSemester, schoolYear: activeSchoolYear } })
       .then(r => {
         const list = r.data?.data ?? [];

@@ -17,7 +17,7 @@ public class CorsConfig {
      * Defaults to localhost:5173 (Vite dev server) for local development.
      * In production, set CORS_ALLOWED_ORIGIN=https://your-domain.com
      */
-    @Value("${app.cors.allowed-origin:http://localhost:5173}")
+    @Value("${app.cors.allowed-origin:http://localhost:3000}")
     private String allowedOrigin;
 
     @Bean
@@ -25,7 +25,7 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // Only allow requests from the React frontend origin
-        config.setAllowedOrigins(List.of(allowedOrigin));
+        config.setAllowedOrigins(List.of(allowedOrigin, "http://localhost:3000"));
 
         // HTTP methods allowed from the frontend
         config.setAllowedMethods(List.of(

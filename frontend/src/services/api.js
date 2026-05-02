@@ -3,7 +3,7 @@ import axios from "axios";
 // ── Base instance ─────────────────────────────────────────────────────────────
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api/v1",
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api/v1",
   headers: { "Content-Type": "application/json" },
   timeout: 15_000,
 });
@@ -30,7 +30,8 @@ api.interceptors.response.use(
   (error) => {
     console.log("API ERROR:", error.config?.url, error.response?.status);
     if (error.response?.status === 401) {
-      const isAuthEndpoint = error.config?.url?.includes("/auth/");
+      const isAuthEndpoint = error.config?.url?.includes("/auth/") || 
+                       error.config?.url?.includes("/curriculum/import");
       if (!isAuthEndpoint) {
         localStorage.removeItem("tc_token");
         localStorage.removeItem("tc_user");

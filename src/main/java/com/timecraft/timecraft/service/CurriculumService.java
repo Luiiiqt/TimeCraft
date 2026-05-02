@@ -123,14 +123,17 @@ public class CurriculumService {
                 String subjectType = cellStr(row, 6).isBlank() ? "MINOR" : cellStr(row, 6);
                 String sessionType = cellStr(row, 7).isBlank() ? "LECTURE" : cellStr(row, 7);
                 boolean hasLab     = "true".equalsIgnoreCase(cellStr(row, 8));
+                Cell unitsCell = row.getCell(2);
+                Cell yearCell  = row.getCell(4);
+                if (unitsCell == null || yearCell == null) continue;
                 processRow(
                         cellStr(row, 0), cellStr(row, 1),
-                        (int) row.getCell(2).getNumericCellValue(),
+                        (int) unitsCell.getNumericCellValue(),
                         cellStr(row, 3),
-                        (short) row.getCell(4).getNumericCellValue(),
+                        (short) yearCell.getNumericCellValue(),
                         parseSemester(cellStr(row, 5)),
-                        course, curriculum, subjectType, sessionType, hasLab);
-            }
+                        course, curriculum, subjectType, sessionType, hasLab);  
+                            }
         }
     }
 

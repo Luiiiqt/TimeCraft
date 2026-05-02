@@ -69,122 +69,110 @@ CREATE TRIGGER trg_subject_assignments_updated_at
 -- ── 5. Fix: CCSE has 2 PHs — drop the unique constraint on department_id ──────
 ALTER TABLE dean_profiles DROP CONSTRAINT IF EXISTS uq_dean_department;
 
--- ── 6. Seed all program heads ─────────────────────────────────────────────────
--- Password = "programhead123" (bcrypt)
+-- ── 6. Seed all deans ─────────────────────────────────────────────────────────
+-- Password = "Dean@123" (bcrypt)
 INSERT INTO users (user_type, full_name, school_id, email, password_hash)
 VALUES
-  ('DEAN', 'Dean - Business',              'PH-0001', 'ph.cob@timecraft.edu',    '$2a$12$bxHZLrm8Nf6O/wl/ITolm.pTgQpnLJoeGIvmYBI5dplrCK.DefUwS'),
-  ('PROGRAM_HEAD', 'PH - Nursing',               'PH-0002', 'ph.con@timecraft.edu',    '$2a$12$bxHZLrm8Nf6O/wl/ITolm.pTgQpnLJoeGIvmYBI5dplrCK.DefUwS'),
-  ('PROGRAM_HEAD', 'PH - CCSE (CS/IT/CpE)',      'PH-0003', 'ph.ccse1@timecraft.edu',  '$2a$12$bxHZLrm8Nf6O/wl/ITolm.pTgQpnLJoeGIvmYBI5dplrCK.DefUwS'),
-  ('PROGRAM_HEAD', 'PH - CCSE (Biomed/DIT/MIS)', 'PH-0004', 'ph.ccse2@timecraft.edu',  '$2a$12$bxHZLrm8Nf6O/wl/ITolm.pTgQpnLJoeGIvmYBI5dplrCK.DefUwS'),
-  ('PROGRAM_HEAD', 'PH - Psychology',            'PH-0005', 'ph.copsy@timecraft.edu',  '$2a$12$bxHZLrm8Nf6O/wl/ITolm.pTgQpnLJoeGIvmYBI5dplrCK.DefUwS'),
-  ('PROGRAM_HEAD', 'PH - Pharmacy',              'PH-0006', 'ph.cop@timecraft.edu',    '$2a$12$bxHZLrm8Nf6O/wl/ITolm.pTgQpnLJoeGIvmYBI5dplrCK.DefUwS'),
-  ('PROGRAM_HEAD', 'PH - Physical Therapy',      'PH-0007', 'ph.copt@timecraft.edu',   '$2a$12$bxHZLrm8Nf6O/wl/ITolm.pTgQpnLJoeGIvmYBI5dplrCK.DefUwS'),
-  ('PROGRAM_HEAD', 'PH - Respiratory Therapy',   'PH-0008', 'ph.cort2@timecraft.edu',  '$2a$12$bxHZLrm8Nf6O/wl/ITolm.pTgQpnLJoeGIvmYBI5dplrCK.DefUwS'),
-  ('PROGRAM_HEAD', 'PH - Medical Laboratory',    'PH-0009', 'ph.cmls@timecraft.edu',   '$2a$12$bxHZLrm8Nf6O/wl/ITolm.pTgQpnLJoeGIvmYBI5dplrCK.DefUwS'),
-  ('PROGRAM_HEAD', 'PH - Radiologic Technology', 'PH-0010', 'ph.cort@timecraft.edu',   '$2a$12$bxHZLrm8Nf6O/wl/ITolm.pTgQpnLJoeGIvmYBI5dplrCK.DefUwS')
+  ('DEAN', 'Dean - Business',              'DEAN-0001', 'dean.cob@timecraft.edu',   '$2a$12$wefQ5YH6FadChnfjBkiWJOwFwzS9GeZgegPTlFkXwkCqroc645hPe'),
+  ('DEAN', 'Dean - Nursing',               'DEAN-0002', 'dean.con@timecraft.edu',   '$2a$12$wefQ5YH6FadChnfjBkiWJOwFwzS9GeZgegPTlFkXwkCqroc645hPe'),
+  ('DEAN', 'Dean - CCSE',                  'DEAN-0003', 'dean.ccse@timecraft.edu',  '$2a$12$wefQ5YH6FadChnfjBkiWJOwFwzS9GeZgegPTlFkXwkCqroc645hPe'),
+  ('DEAN', 'Dean - Psychology',            'DEAN-0005', 'dean.copsy@timecraft.edu', '$2a$12$wefQ5YH6FadChnfjBkiWJOwFwzS9GeZgegPTlFkXwkCqroc645hPe'),
+  ('DEAN', 'Dean - Pharmacy',              'DEAN-0006', 'dean.cop@timecraft.edu',   '$2a$12$wefQ5YH6FadChnfjBkiWJOwFwzS9GeZgegPTlFkXwkCqroc645hPe'),
+  ('DEAN', 'Dean - Physical Therapy',      'DEAN-0007', 'dean.copt@timecraft.edu',  '$2a$12$wefQ5YH6FadChnfjBkiWJOwFwzS9GeZgegPTlFkXwkCqroc645hPe'),
+  ('DEAN', 'Dean - Respiratory Therapy',   'DEAN-0008', 'dean.cort2@timecraft.edu', '$2a$12$wefQ5YH6FadChnfjBkiWJOwFwzS9GeZgegPTlFkXwkCqroc645hPe'),
+  ('DEAN', 'Dean - Medical Laboratory',    'DEAN-0009', 'dean.cmls@timecraft.edu',  '$2a$12$wefQ5YH6FadChnfjBkiWJOwFwzS9GeZgegPTlFkXwkCqroc645hPe'),
+  ('DEAN', 'Dean - Radiologic Technology', 'DEAN-0010', 'dean.cort@timecraft.edu',  '$2a$12$wefQ5YH6FadChnfjBkiWJOwFwzS9GeZgegPTlFkXwkCqroc645hPe')
 ON CONFLICT DO NOTHING;
 
--- ── 7. Seed program_head_profiles ─────────────────────────────────────────────
+-- ── 7. Seed dean_profiles ─────────────────────────────────────────────────────
 INSERT INTO dean_profiles (user_id, department_id)
 SELECT u.id, d.id FROM users u, departments d
-WHERE u.email = 'ph.cob@timecraft.edu'   AND d.code = 'COB'   ON CONFLICT DO NOTHING;
-
-INSERT INTO dean_profiles (user_id, department_id)
-SELECT u.id, d.id FROM users u, departments d
-WHERE u.email = 'ph.con@timecraft.edu'   AND d.code = 'CON'   ON CONFLICT DO NOTHING;
-
--- CCSE: 2 PHs, same department — constraint already dropped above
-INSERT INTO dean_profiles (user_id, department_id)
-SELECT u.id, d.id FROM users u, departments d
-WHERE u.email = 'ph.ccse1@timecraft.edu' AND d.code = 'CCSE'  ON CONFLICT DO NOTHING;
+WHERE u.email = 'dean.cob@timecraft.edu'   AND d.code = 'COB'   ON CONFLICT DO NOTHING;
 
 INSERT INTO dean_profiles (user_id, department_id)
 SELECT u.id, d.id FROM users u, departments d
-WHERE u.email = 'ph.ccse2@timecraft.edu' AND d.code = 'CCSE'  ON CONFLICT DO NOTHING;
+WHERE u.email = 'dean.con@timecraft.edu'   AND d.code = 'CON'   ON CONFLICT DO NOTHING;
 
 INSERT INTO dean_profiles (user_id, department_id)
 SELECT u.id, d.id FROM users u, departments d
-WHERE u.email = 'ph.copsy@timecraft.edu' AND d.code = 'COPSY' ON CONFLICT DO NOTHING;
+WHERE u.email = 'dean.ccse1@timecraft.edu' AND d.code = 'CCSE'  ON CONFLICT DO NOTHING;
 
 INSERT INTO dean_profiles (user_id, department_id)
 SELECT u.id, d.id FROM users u, departments d
-WHERE u.email = 'ph.cop@timecraft.edu'   AND d.code = 'COP'   ON CONFLICT DO NOTHING;
+WHERE u.email = 'dean.ccse2@timecraft.edu' AND d.code = 'CCSE'  ON CONFLICT DO NOTHING;
 
 INSERT INTO dean_profiles (user_id, department_id)
 SELECT u.id, d.id FROM users u, departments d
-WHERE u.email = 'ph.copt@timecraft.edu'  AND d.code = 'COPT'  ON CONFLICT DO NOTHING;
+WHERE u.email = 'dean.copsy@timecraft.edu' AND d.code = 'COPSY' ON CONFLICT DO NOTHING;
 
 INSERT INTO dean_profiles (user_id, department_id)
 SELECT u.id, d.id FROM users u, departments d
-WHERE u.email = 'ph.cort2@timecraft.edu' AND d.code = 'CORT2' ON CONFLICT DO NOTHING;
+WHERE u.email = 'dean.cop@timecraft.edu'   AND d.code = 'COP'   ON CONFLICT DO NOTHING;
 
 INSERT INTO dean_profiles (user_id, department_id)
 SELECT u.id, d.id FROM users u, departments d
-WHERE u.email = 'ph.cmls@timecraft.edu'  AND d.code = 'CMLS'  ON CONFLICT DO NOTHING;
+WHERE u.email = 'dean.copt@timecraft.edu'  AND d.code = 'COPT'  ON CONFLICT DO NOTHING;
 
 INSERT INTO dean_profiles (user_id, department_id)
 SELECT u.id, d.id FROM users u, departments d
-WHERE u.email = 'ph.cort@timecraft.edu'  AND d.code = 'CORT'  ON CONFLICT DO NOTHING;
+WHERE u.email = 'dean.cort2@timecraft.edu' AND d.code = 'CORT2' ON CONFLICT DO NOTHING;
 
--- ── 8. Seed program_head_courses ──────────────────────────────────────────────
+INSERT INTO dean_profiles (user_id, department_id)
+SELECT u.id, d.id FROM users u, departments d
+WHERE u.email = 'dean.cmls@timecraft.edu'  AND d.code = 'CMLS'  ON CONFLICT DO NOTHING;
 
--- COB — 3 courses
+INSERT INTO dean_profiles (user_id, department_id)
+SELECT u.id, d.id FROM users u, departments d
+WHERE u.email = 'dean.cort@timecraft.edu'  AND d.code = 'CORT'  ON CONFLICT DO NOTHING;
+
+-- ── 8. Seed dean_courses ──────────────────────────────────────────────────────
+
 INSERT INTO dean_courses (dean_user_id, course_id)
 SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'ph.cob@timecraft.edu' AND c.code IN ('BSTM','BSHM','BSBA')
+WHERE u.email = 'dean.cob@timecraft.edu' AND c.code IN ('BSTM','BSHM','BSBA')
 ON CONFLICT DO NOTHING;
 
--- CON — 1 course
 INSERT INTO dean_courses (dean_user_id, course_id)
 SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'ph.con@timecraft.edu' AND c.code = 'BSN'
+WHERE u.email = 'dean.con@timecraft.edu' AND c.code = 'BSN'
 ON CONFLICT DO NOTHING;
 
--- CCSE PH1 — CS, IT, CpE
 INSERT INTO dean_courses (dean_user_id, course_id)
 SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'ph.ccse1@timecraft.edu' AND c.code IN ('BSIT','BSCS','BSCPE')
+WHERE u.email = 'dean.ccse1@timecraft.edu' AND c.code IN ('BSIT','BSCS','BSCPE')
 ON CONFLICT DO NOTHING;
 
--- CCSE PH2 — Biomed, DIT, MIS
 INSERT INTO dean_courses (dean_user_id, course_id)
 SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'ph.ccse2@timecraft.edu' AND c.code IN ('BECT','DIT','MIS')
+WHERE u.email = 'dean.ccse2@timecraft.edu' AND c.code IN ('BECT','DIT','MIS')
 ON CONFLICT DO NOTHING;
 
--- Psychology — 2 courses
 INSERT INTO dean_courses (dean_user_id, course_id)
 SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'ph.copsy@timecraft.edu' AND c.code IN ('ABPsy','BSPsy')
+WHERE u.email = 'dean.copsy@timecraft.edu' AND c.code IN ('ABPsy','BSPsy')
 ON CONFLICT DO NOTHING;
 
--- Pharmacy
 INSERT INTO dean_courses (dean_user_id, course_id)
 SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'ph.cop@timecraft.edu' AND c.code = 'BSPhar'
+WHERE u.email = 'dean.cop@timecraft.edu' AND c.code = 'BSPhar'
 ON CONFLICT DO NOTHING;
 
--- Physical Therapy
 INSERT INTO dean_courses (dean_user_id, course_id)
 SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'ph.copt@timecraft.edu' AND c.code = 'BSPT'
+WHERE u.email = 'dean.copt@timecraft.edu' AND c.code = 'BSPT'
 ON CONFLICT DO NOTHING;
 
--- Respiratory Therapy
 INSERT INTO dean_courses (dean_user_id, course_id)
 SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'ph.cort2@timecraft.edu' AND c.code = 'BSREST'
+WHERE u.email = 'dean.cort2@timecraft.edu' AND c.code = 'BSREST'
 ON CONFLICT DO NOTHING;
 
--- Medical Laboratory Science
 INSERT INTO dean_courses (dean_user_id, course_id)
 SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'ph.cmls@timecraft.edu' AND c.code = 'BSMLS'
+WHERE u.email = 'dean.cmls@timecraft.edu' AND c.code = 'BSMLS'
 ON CONFLICT DO NOTHING;
 
--- Radiologic Technology
 INSERT INTO dean_courses (dean_user_id, course_id)
 SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'ph.cort@timecraft.edu' AND c.code = 'BSRT'
+WHERE u.email = 'dean.cort@timecraft.edu' AND c.code = 'BSRT'
 ON CONFLICT DO NOTHING;

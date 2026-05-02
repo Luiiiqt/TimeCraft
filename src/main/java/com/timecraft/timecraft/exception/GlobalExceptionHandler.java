@@ -65,6 +65,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(body);
     }
 
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrity(
+            org.springframework.dao.DataIntegrityViolationException ex) {
+        String msg = ex.getMostSpecificCause().getMessage();
+        return buildResponse(HttpStatus.CONFLICT, msg);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
+
     @ExceptionHandler(ScheduleConflictException.class)
     public ResponseEntity<Map<String, Object>> handleScheduleConflict(
             ScheduleConflictException ex) {
