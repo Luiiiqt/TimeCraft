@@ -32,6 +32,11 @@ export default function ManageSubjects() {
   const [activeSem, setActiveSem] = useState("FIRST");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [assignments, setAssignments] = useState([]);
+  const [term] = useState(() => {
+    const now = new Date(); const m = now.getMonth() + 1; const y = now.getFullYear();
+    return { semester: m >= 6 && m <= 10 ? "FIRST" : "SECOND", schoolYear: `${y}-${y+1}` };
+  });
 
   // Load courses under this PH's department
   useEffect(() => {
@@ -45,15 +50,21 @@ export default function ManageSubjects() {
       .catch(() => {});
   }, [user]);
 
-  // Load curriculum when course changes
+  // Load curriculum and assignments when course changes
   useEffect(() => {
     if (!courseId) return;
     setLoading(true);
-    api.get(`/subjects/course/${courseId}/curriculum`)
-      .then(r => setCurriculum(r.data?.data ?? []))
-      .catch(() => setCurriculum([]))
+    Promise.all([
+      api.get(`/subjects/course/${courseId}/curriculum`),
+      api.get(`/program-head/assignments?semester=${term.semester}&schoolYear=${term.schoolYear}`),
+    ])
+      .then(([cRes, aRes]) => {
+        setCurriculum(cRes.data?.data ?? []);
+        setAssignments(aRes.data?.data ?? []);
+      })
+      .catch(() => { setCurriculum([]); setAssignments([]); })
       .finally(() => setLoading(false));
-  }, [courseId]);
+  }, [courseId, term]);
 
   const visible = curriculum.filter(cs =>
     Number(cs.yearLevel) === Number(activeYear) &&
@@ -188,13 +199,18 @@ export default function ManageSubjects() {
                     {cs.subject?.prerequisite?.code ?? "—"}
                   </td>
                   <td style={{ padding: "10px 14px" }}>
-                    {cs.assignedTeacher ? (
-                      <span style={{ fontSize: 12, background: "#d1fae5", color: "#065f46", borderRadius: 6, padding: "2px 10px", fontWeight: 600 }}>
-                        ✓ {cs.assignedTeacher}
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: 12, color: "#9ca3af" }}>Not assigned</span>
-                    )}
+                    {(() => {
+                      const a = assignments.find(a => a.subject?.id === cs.subject?.id);
+                      return a ? (
+                        <span style={{
+                          fontSize: 12, borderRadius: 6, padding: "2px 10px", fontWeight: 600,
+                          background: a.finalized ? "#d1fae5" : "#fef3c7",
+                          color: a.finalized ? "#065f46" : "#92400e",
+                        }}>
+                          {a.finalized ? "✓ " : "⏳ "}{a.teacher?.fullName}
+                        </span>
+                      ) : <span style={{ fontSize: 12, color: "#9ca3af" }}>Not assigned</span>;
+                    })()}
                   </td>
                 </tr>
               ))}

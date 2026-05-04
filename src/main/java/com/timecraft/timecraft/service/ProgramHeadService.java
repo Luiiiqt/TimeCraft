@@ -62,11 +62,23 @@
                 List<Long> subjectIds = courseSubjectRepository
                         .findByCourseIdIn(managedCourseIds)
                         .stream()
+                        .filter(cs -> cs.getSubject().getSubjectType() ==
+                                com.timecraft.timecraft.model.Subject.SubjectType.MAJOR)
                         .map(cs -> cs.getSubject().getId())
                         .distinct()
                         .toList();
 
                 if (subjectIds.isEmpty()) return List.of();
+
+                // Include ALL curriculum subjects for this semester (not just ones with votes)
+                List<com.timecraft.timecraft.model.CourseSubject> semesterSubjects =
+                        courseSubjectRepository.findByCourseIdIn(managedCourseIds)
+                                .stream()
+                                .filter(cs -> cs.getSemester() ==
+                                        com.timecraft.timecraft.model.CourseSubject.Semester.valueOf(semester))
+                                .filter(cs -> cs.getSubject().getSubjectType() ==
+                                        com.timecraft.timecraft.model.Subject.SubjectType.MAJOR)
+                                .toList();
 
                 List<TeacherSubjectPreference> prefs = preferenceRepository
                         .findBySubjectIdInAndSemesterAndSchoolYear(
@@ -74,8 +86,26 @@
                                 com.timecraft.timecraft.model.CourseSubject.Semester.valueOf(semester),
                                 schoolYear);
 
-                // Group by subject
+                // Group by subject — seed with ALL semester subjects first
                 Map<Long, Map<String, Object>> grouped = new java.util.LinkedHashMap<>();
+
+                for (com.timecraft.timecraft.model.CourseSubject cs : semesterSubjects) {
+                        var s = cs.getSubject();
+                        grouped.computeIfAbsent(s.getId(), k -> {
+                                Map<String, Object> subjectMap = new java.util.LinkedHashMap<>();
+                                subjectMap.put("id", s.getId());
+                                subjectMap.put("name", s.getName());
+                                subjectMap.put("code", s.getCode());
+                                subjectMap.put("subjectType", s.getSubjectType());
+                                subjectMap.put("sessionType", s.getSessionType());
+                                subjectMap.put("hasLab", s.isHasLab());
+                                Map<String, Object> entry = new java.util.LinkedHashMap<>();
+                                entry.put("subject", subjectMap);
+                                entry.put("preferences", new java.util.ArrayList<>());
+                                entry.put("assigned", false);
+                                return entry;
+                        });
+                }
 
                 for (TeacherSubjectPreference pref : prefs) {
                 var s = pref.getSubject();
@@ -186,6 +216,35 @@
                 assignmentRepository.saveAll(all);
 
                 return assignment;
+        }
+
+        // ── Teachers ──────────────────────────────────────────────────────────────
+
+        public List<com.timecraft.timecraft.model.User> getTeachersForManagedCourses(Long phUserId) {
+                List<Long> managedCourseIds = phCourseRepository
+                        .findByDeanUserId(phUserId)
+                        .stream()
+                        .map(phc -> phc.getCourseId())
+                        .toList();
+
+                if (managedCourseIds.isEmpty()) return List.of();
+
+                // Get department IDs from managed courses
+                List<Long> departmentIds = managedCourseIds.stream()
+                        .map(courseId -> courseRepository.findById(courseId).orElse(null))
+                        .filter(c -> c != null && c.getDepartment() != null)
+                        .map(c -> c.getDepartment().getId())
+                        .distinct()
+                        .toList();
+
+                if (departmentIds.isEmpty()) return List.of();
+
+                return userRepository.findAll().stream()
+                        .filter(u -> com.timecraft.timecraft.model.User.UserType.TEACHER == u.getUserType())
+                        .filter(u -> u.getTeacherProfile() != null
+                                && u.getTeacherProfile().getDepartment() != null
+                                && departmentIds.contains(u.getTeacherProfile().getDepartment().getId()))
+                        .toList();
         }
 
         // ── Guard ─────────────────────────────────────────────────────────────────

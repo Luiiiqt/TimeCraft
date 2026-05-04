@@ -35,4 +35,7 @@ public interface SubjectAssignmentRepository
 
         Optional<SubjectAssignment> findBySubjectIdAndSemesterAndSchoolYear(
         Long subjectId, String semester, String schoolYear);
+
+        List<SubjectAssignment> findByTeacherIdAndSemesterAndSchoolYear(
+                Long teacherId, String semester, String schoolYear);
 }

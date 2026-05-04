@@ -39,30 +39,43 @@ export default function PreferenceReview() {
     setLoading(true);
     setError("");
     try {
-      const gRes = await api.get(`/program-head/preferences/grouped?semester=${term.semester}&schoolYear=${term.schoolYear}`);
+      const [gRes, tRes] = await Promise.all([
+        api.get(`/program-head/preferences/grouped?semester=${term.semester}&schoolYear=${term.schoolYear}`),
+        api.get(`/program-head/teachers`),
+      ]);
       const data = gRes.data?.data ?? [];
       setGrouped(data);
 
-      // Derive unique teachers from all preferences
-      const teacherMap = new Map();
+      // Build preference map from grouped data
+      const prefMap = new Map();
       data.forEach(group => {
         (group.preferences ?? []).forEach(p => {
           const t = p.teacher;
-          if (t && !teacherMap.has(t.id)) {
-            teacherMap.set(t.id, { ...t, preferences: [] });
-          }
-          if (t) {
-            teacherMap.get(t.id).preferences.push({
-              subjectId: group.subject?.id,
-              subjectName: group.subject?.name,
-              subjectCode: group.subject?.code,
-              hasLab: group.subject?.hasLab,
-              status: p.status,
-            });
-          }
+          if (!t) return;
+          if (!prefMap.has(t.id)) prefMap.set(t.id, []);
+          prefMap.get(t.id).push({
+            subjectId: group.subject?.id,
+            subjectName: group.subject?.name,
+            subjectCode: group.subject?.code,
+            hasLab: group.subject?.hasLab,
+            status: p.status,
+          });
         });
       });
-      setTeachers([...teacherMap.values()]);
+
+      // Only show teachers who voted for at least one subject (major subject teachers)
+      // or who appear in the preference map
+      const majorSubjectIds = new Set(
+        data.flatMap(group =>
+          (group.subject?.subjectType === "MAJOR" || group.subject?.subjectType !== "MINOR")
+            ? [group.subject?.id]
+            : []
+        )
+      );
+      // Show ALL department teachers, merge their preferences
+      const allTeachers = (tRes.data?.data ?? [])
+        .map(t => ({ ...t, preferences: prefMap.get(t.id) ?? [] }));
+      setTeachers(allTeachers);
     } catch {
       setError("Failed to load preferences.");
     } finally {

@@ -17,7 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.timecraft.timecraft.dto.response.ApiResponse;
+import com.timecraft.timecraft.model.SubjectAssignment;
 import com.timecraft.timecraft.model.User;
+import com.timecraft.timecraft.repository.SubjectAssignmentRepository;
+import com.timecraft.timecraft.repository.UserRepository;
 import com.timecraft.timecraft.service.TeacherService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 public class TeacherController {
 
     private final TeacherService teacherService;
+    private final SubjectAssignmentRepository subjectAssignmentRepository;
+    private final UserRepository userRepository;
 
     // ── GET /api/v1/teachers ──────────────────────────────────────────────────
 
@@ -110,6 +115,21 @@ public class TeacherController {
     public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable Long id) {
         teacherService.deactivate(id);
         return ResponseEntity.ok(ApiResponse.success("Teacher deactivated"));
+    }
+
+    // ── GET /api/v1/teachers/my-assignments ──────────────────────────────────
+
+    @GetMapping("/my-assignments")
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
+    public ResponseEntity<ApiResponse<List<SubjectAssignment>>> getMyAssignments(
+            @RequestParam String semester,
+            @RequestParam String schoolYear,
+            Principal principal) {
+        Long userId = userRepository.findByEmail(principal.getName())
+                .orElseThrow().getId();
+        return ResponseEntity.ok(ApiResponse.of(
+                subjectAssignmentRepository.findByTeacherIdAndSemesterAndSchoolYear(
+                        userId, semester, schoolYear)));
     }
 
     // ── GET /api/v1/teachers/subject-preferences ──────────────────────────────

@@ -115,6 +115,17 @@ public class ProgramHeadController {
                 programHeadService.finalizeAssignment(id, userId)));
     }
 
+    // ── GET /api/v1/program-head/teachers ─────────────────────────────────────
+
+    @GetMapping("/teachers")
+    @PreAuthorize("hasAnyRole('PROGRAM_HEAD','DEAN','ADMIN')")
+    public ResponseEntity<ApiResponse<List<com.timecraft.timecraft.model.User>>> getTeachers(
+            Principal principal) {
+        Long userId = resolveUserId(principal);
+        return ResponseEntity.ok(ApiResponse.of(
+                programHeadService.getTeachersForManagedCourses(userId)));
+    }
+
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private Long resolveUserId(Principal principal) {

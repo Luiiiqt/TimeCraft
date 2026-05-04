@@ -24,6 +24,11 @@ export default function CurriculumImport() {
   const [form, setForm] = useState({ courseId: "", effectiveYear: "", curriculumName: "", file: null });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ type: "", text: "" });
+  const [assignments, setAssignments] = useState([]);
+  const [term, setTerm] = useState(() => {
+    const now = new Date(); const m = now.getMonth() + 1; const y = now.getFullYear();
+    return { semester: m >= 6 && m <= 10 ? "FIRST" : "SECOND", schoolYear: `${y}-${y+1}` };
+  });
   const [activeTab, setActiveTab] = useState("import"); // "import" | "checklist"
   const [filterYear, setFilterYear] = useState("ALL");
   const [filterSem, setFilterSem] = useState("ALL");
@@ -39,9 +44,10 @@ export default function CurriculumImport() {
         setForm(f => ({ ...f, courseId: id }));
         loadCurricula(id);
         loadChecklist(id);
+        loadAssignments(id);
       }
     }).catch(() => { });
-  }, []);
+  }, [term]);
 
   const loadCurricula = (courseId) => {
     api.get(`/curriculum?courseId=${courseId}`)
@@ -55,10 +61,17 @@ export default function CurriculumImport() {
       .catch(() => setChecklist([]));
   };
 
+  const loadAssignments = (courseId) => {
+    api.get(`/dean/assignments?semester=${term.semester}&schoolYear=${term.schoolYear}`)
+      .then(r => setAssignments(r.data?.data ?? []))
+      .catch(() => setAssignments([]));
+  };
+
   const handleCourseChange = (id) => {
     setForm(f => ({ ...f, courseId: id }));
     loadCurricula(id);
     loadChecklist(id);
+    loadAssignments(id);
   };
 
   const handleSubmit = async () => {
@@ -462,7 +475,7 @@ export default function CurriculumImport() {
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                           <thead>
                             <tr style={{ background: "#f9fafb", borderBottom: "1.5px solid #e5e7eb" }}>
-                              {["#", "Code", "Subject Name", "Units", "Prerequisite", "Type"].map(h => (
+                              {["#", "Code", "Subject Name", "Units", "Prerequisite", "Type", "Assigned Teacher"].map(h => (
                                 <th key={h} style={{ padding: "9px 14px", textAlign: "left", fontWeight: 600, color: "#374151", fontSize: 11, whiteSpace: "nowrap" }}>{h}</th>
                               ))}
                             </tr>
@@ -495,6 +508,18 @@ export default function CurriculumImport() {
                                       <span style={{ width: 7, height: 7, borderRadius: "50%", background: cfg.dot, display: "inline-block" }} />
                                       {cfg.label}
                                     </span>
+                                  </td>
+                                  <td style={{ padding: "9px 14px" }}>
+                                    {(() => {
+                                      const a = assignments.find(a => a.subject?.id === cs.subject?.id);
+                                      return a ? (
+                                        <span style={{ fontSize: 12, fontWeight: 600, color: a.finalized ? "#065f46" : "#92400e",
+                                          background: a.finalized ? "#d1fae5" : "#fef3c7",
+                                          padding: "2px 8px", borderRadius: 6 }}>
+                                          {a.teacher?.fullName}
+                                        </span>
+                                      ) : <span style={{ color: "#d1d5db", fontSize: 12 }}>—</span>;
+                                    })()}
                                   </td>
                                 </tr>
                               );

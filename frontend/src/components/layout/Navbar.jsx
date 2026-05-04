@@ -54,7 +54,6 @@ const NAV_LINKS = {
     { path: "/dean",             label: "Dashboard"   },
     { path: "/dean/curriculum",  label: "Curriculum"  },
     { path: "/dean/subjects",    label: "Subjects"    },
-    { path: "/dean/preferences", label: "Preferences" },
     { path: "/dean/generate",    label: "Generate"    },
     { path: "/dean/schedule",    label: "Schedule"    },
     { path: "/dean/irregular",   label: "Irregular"   },

@@ -18,6 +18,7 @@ export default function SubjectPreferences() {
   const [subjects, setSubjects] = useState([]);
   const [saved, setSaved] = useState([]);
   const [selected, setSelected] = useState(new Set());
+  const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -27,14 +28,16 @@ export default function SubjectPreferences() {
     console.log("TEACHER USER:", user);
     try {
       const uid = user?.userId ?? user?.id;
-      const [sRes, pRes] = await Promise.all([
+      const [sRes, pRes, aRes] = await Promise.all([
         api.get(`/teachers/${uid}/available-subjects`),
         api.get(`/teachers/${uid}/subject-preferences?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
+        api.get(`/teachers/my-assignments?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
       ]);
       const allSubjects = sRes.data?.data ?? [];
       const prefs = pRes.data?.data ?? [];
       setSubjects(allSubjects);
       setSaved(prefs);
+      setAssignments(aRes.data?.data ?? []);
       setSelected(new Set(prefs.map(p => p.subject?.id)));
     } catch {
       setMsg({ type: "error", text: "Failed to load subjects." });
@@ -100,7 +103,7 @@ export default function SubjectPreferences() {
           <thead>
             <tr style={{ background: "#f9fafb", borderBottom: "1.5px solid #e5e7eb" }}>
               <th style={{ padding: "10px 14px", width: 40 }}></th>
-              {["Subject", "Code", "Units", "Session Type", "Status"].map(h => (
+              {["Subject", "Code", "Units", "Session Type", "Status", "Assignment"].map(h => (
                 <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, color: "#374151", fontSize: 12 }}>{h}</th>
               ))}
             </tr>
@@ -138,6 +141,21 @@ export default function SubjectPreferences() {
                         {status}
                       </span>
                     ) : "—"}
+                  </td>
+                  <td style={{ padding: "10px 14px" }}>
+                    {(() => {
+                      const a = assignments.find(a => a.subject?.id === s.id);
+                      if (!a) return <span style={{ color: "#d1d5db", fontSize: 12 }}>—</span>;
+                      return (
+                        <span style={{
+                          fontSize: 11, padding: "2px 8px", borderRadius: 6, fontWeight: 600,
+                          background: a.finalized ? "#d1fae5" : "#fef3c7",
+                          color: a.finalized ? "#065f46" : "#92400e",
+                        }}>
+                          {a.finalized ? "✓ Assigned" : "Pending"}
+                        </span>
+                      );
+                    })()}
                   </td>
                 </tr>
               );

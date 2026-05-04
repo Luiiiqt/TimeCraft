@@ -106,30 +106,38 @@
     const { semester, schoolYear } = getDefaultTerm();
 
     // Teacher profile state (from /teachers/me)
-    const [profile, setProfile] = useState(null);
-    const [profileLoading, setProfileLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [assignedSubjects, setAssignedSubjects] = useState([]);
 
-    // Fetch teacher profile
-    useEffect(() => {
-      const load = async () => {
-        try {
-          setProfileLoading(true);
-          const res = await api.get("/teachers/me");
-          setProfile(res.data?.data ?? res.data);
-        } catch (e) {
-          console.error("Failed to load teacher profile", e);
-        } finally {
-          setProfileLoading(false);
-        }
-      };
-      load();
-    }, []);
+  // Fetch teacher profile
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setProfileLoading(true);
+        const res = await api.get("/teachers/me");
+        setProfile(res.data?.data ?? res.data);
+      } catch (e) {
+        console.error("Failed to load teacher profile", e);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    load();
+  }, []);
 
-    // Fetch schedule when we know teacher id
-    useEffect(() => {
-      const id = user?.userId;
-      if (id) fetchTeacherSchedule(id, semester, schoolYear);
-    }, [user?.userId, semester, schoolYear]);
+  // Fetch assigned subjects
+  useEffect(() => {
+    api.get(`/teachers/my-assignments?semester=${semester}&schoolYear=${schoolYear}`)
+      .then(r => setAssignedSubjects(r.data?.data ?? []))
+      .catch(() => setAssignedSubjects([]));
+  }, [semester, schoolYear]);
+
+  // Fetch schedule when we know teacher id
+  useEffect(() => {
+    const id = user?.userId;
+    if (id) fetchTeacherSchedule(id, semester, schoolYear);
+  }, [user?.userId, semester, schoolYear]);
 
     // Derived stats
     const uniqueSections  = new Set(schedules.map(s => s.sectionId)).size;
@@ -184,6 +192,26 @@
           {error && (
             <div style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", borderRadius: 10, padding: "12px 16px", marginBottom: 20, color: "#B91C1C", fontSize: 14 }}>
               ⚠️ {error}
+            </div>
+          )}
+
+          {/* Assigned Subjects */}
+          {assignedSubjects.length > 0 && (
+            <div style={{ background: "#fffbeb", border: "1.5px solid #fcd34d", borderRadius: 14, padding: "14px 20px", marginBottom: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e", marginBottom: 8 }}>📋 Subjects Assigned to You This Term</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {assignedSubjects.map(a => (
+                  <span key={a.id} style={{
+                    fontSize: 12, padding: "4px 12px", borderRadius: 20, fontWeight: 600,
+                    border: "1px solid",
+                    background: a.finalized ? "#d1fae5" : "#fef3c7",
+                    color: a.finalized ? "#065f46" : "#92400e",
+                    borderColor: a.finalized ? "#6ee7b7" : "#fcd34d",
+                  }}>
+                    {a.subject?.name} ({a.subject?.code}) {a.finalized ? "✓" : "· Pending"}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
