@@ -32,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -54,11 +55,11 @@ public class CurriculumService {
 
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Course not found: " + courseId));
+                "Course not found: " + courseId));
 
         User importedBy = userRepository.findById(importedByUserId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "User not found: " + importedByUserId));
+                "User not found: " + importedByUserId));
 
         // Deactivate existing curriculum for same course+year
         curriculumRepository.findByCourseIdAndEffectiveYear(courseId, effectiveYear)
@@ -89,18 +90,23 @@ public class CurriculumService {
 
     // ── CSV import ────────────────────────────────────────────────────────────
     // Expected columns: code, name, units, prerequisite, yearLevel, semester,
-    //                   subjectType (MAJOR/MINOR), sessionType (LECTURE/LABORATORY), hasLab (true/false)
+    // subjectType (MAJOR/MINOR), sessionType (LECTURE/LABORATORY), hasLab
+    // (true/false)
     private void importCsv(InputStream is, Course course,
             Curriculum curriculum) throws Exception {
         try (CSVReader reader = new CSVReader(new InputStreamReader(is))) {
             List<String[]> rows = reader.readAll();
-            if (rows.isEmpty()) return;
+            if (rows.isEmpty()) {
+                return;
+            }
             rows.remove(0); // skip header
             for (String[] row : rows) {
-                if (row.length < 7) continue;
+                if (row.length < 7) {
+                    continue;
+                }
                 String subjectType = row.length > 6 ? row[6].trim() : "MINOR";
                 String sessionType = row.length > 7 ? row[7].trim() : "LECTURE";
-                boolean hasLab     = row.length > 8 && "true".equalsIgnoreCase(row[8].trim());
+                boolean hasLab = row.length > 8 && "true".equalsIgnoreCase(row[8].trim());
                 processRow(row[0].trim(), row[1].trim(),
                         parseUnits(row[2]), row[3].trim(),
                         parseYear(row[4]), parseSemester(row[5]),
@@ -111,29 +117,50 @@ public class CurriculumService {
 
     // ── Excel import ──────────────────────────────────────────────────────────
     // Expected columns (0-based): 0=code,1=name,2=units,3=prerequisite,4=yearLevel,
-    //   5=semester,6=subjectType,7=sessionType,8=hasLab
+    // 5=semester,6=subjectType,7=sessionType,8=hasLab
     private void importExcel(InputStream is, Course course,
             Curriculum curriculum) throws Exception {
         try (Workbook wb = new XSSFWorkbook(is)) {
             Sheet sheet = wb.getSheetAt(0);
             boolean first = true;
             for (Row row : sheet) {
-                if (first) { first = false; continue; } // skip header
-                if (row == null) continue;
+                if (first) {
+                    first = false;
+                    continue;
+                }
+                if (row == null) {
+                    continue;
+                }
+                if (cellStr(row, 0).isBlank()) {
+                    continue;
+                }
+                String unitsStr = cellStr(row, 2);
+                String yearStr = cellStr(row, 4);
+                if (unitsStr.isBlank() || yearStr.isBlank()) {
+                    continue;
+                }
+                short yearLevel;
+                int units;
+                try {
+                    yearLevel = (short) Double.parseDouble(yearStr);
+                    units = (int) Double.parseDouble(unitsStr);
+                } catch (Exception e) {
+                    continue;
+                }
+                if (yearLevel < 1 || yearLevel > 5) {
+                    continue;
+                }
                 String subjectType = cellStr(row, 6).isBlank() ? "MINOR" : cellStr(row, 6);
                 String sessionType = cellStr(row, 7).isBlank() ? "LECTURE" : cellStr(row, 7);
-                boolean hasLab     = "true".equalsIgnoreCase(cellStr(row, 8));
-                Cell unitsCell = row.getCell(2);
-                Cell yearCell  = row.getCell(4);
-                if (unitsCell == null || yearCell == null) continue;
+                boolean hasLab = "true".equalsIgnoreCase(cellStr(row, 8));
                 processRow(
                         cellStr(row, 0), cellStr(row, 1),
-                        (int) unitsCell.getNumericCellValue(),
+                        units,
                         cellStr(row, 3),
-                        (short) yearCell.getNumericCellValue(),
+                        yearLevel,
                         parseSemester(cellStr(row, 5)),
-                        course, curriculum, subjectType, sessionType, hasLab);  
-                            }
+                        course, curriculum, subjectType, sessionType, hasLab);
+            }
         }
     }
 
@@ -147,8 +174,14 @@ public class CurriculumService {
         Subject subject = subjectRepository.findByCode(code).orElseGet(() -> {
             Subject.SubjectType sType = Subject.SubjectType.MINOR;
             Subject.SessionType sessType = Subject.SessionType.LECTURE;
-            try { sType = Subject.SubjectType.valueOf(subjectTypeStr.toUpperCase()); } catch (Exception ignored) {}
-            try { sessType = Subject.SessionType.valueOf(sessionTypeStr.toUpperCase()); } catch (Exception ignored) {}
+            try {
+                sType = Subject.SubjectType.valueOf(subjectTypeStr.toUpperCase());
+            } catch (Exception ignored) {
+            }
+            try {
+                sessType = Subject.SessionType.valueOf(sessionTypeStr.toUpperCase());
+            } catch (Exception ignored) {
+            }
             Subject s = Subject.builder()
                     .code(code)
                     .name(name)
@@ -180,15 +213,26 @@ public class CurriculumService {
     }
 
     private int parseUnits(String val) {
-        try { return Integer.parseInt(val); } catch (Exception e) { return 3; }
+        try {
+            return Integer.parseInt(val);
+        } catch (Exception e) {
+            return 3;
+        }
     }
 
     private short parseYear(String val) {
-        try { return Short.parseShort(val); } catch (Exception e) { return 1; }
+        try {
+            return Short.parseShort(val);
+        } catch (Exception e) {
+            return 1;
+        }
     }
 
     private Semester parseSemester(String val) {
-        try { return Semester.from(val); }
-        catch (Exception e) { return Semester.FIRST; }
+        try {
+            return Semester.from(val);
+        } catch (Exception e) {
+            return Semester.FIRST;
+        }
     }
 }

@@ -79,11 +79,11 @@ ON CONFLICT (room_number) DO NOTHING;
 -- └─────────────────────────────────────────────────────────────────────────┘
 
 INSERT INTO users (user_type, full_name, school_id, email, password_hash, is_active) VALUES
-    ('TEACHER', 'Johnny F. Verzola',          '2417001', 'johnny.verzola@lorma.edu',         '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Mary-Ann L. Mzana',          '2417002', 'maryann.mzana@lorma.edu',           '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Tyrrone Gil R. Azusano',     '2417003', 'tyrronegil.azusano@lorma.edu',      '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Ellen Mangaoang',            '2417004', 'ellen.mangaoang@lorma.edu',         '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Janelli M. Mendez',          '2417005', 'janelli.mendez@lorma.edu',          '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true)
+    ('TEACHER', 'Johnny F. Verzola',          '2417001', 'johnny.verzola@lorma.edu',         '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Mary-Ann L. Mzana',          '2417002', 'maryann.mzana@lorma.edu',           '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Tyrrone Gil R. Azusano',     '2417003', 'tyrronegil.azusano@lorma.edu',      '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Ellen Mangaoang',            '2417004', 'ellen.mangaoang@lorma.edu',         '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Janelli M. Mendez',          '2417005', 'janelli.mendez@lorma.edu',          '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true)
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO teacher_profiles (user_id, department_id, campus_flexible, is_ge_teacher) VALUES
@@ -99,10 +99,10 @@ ON CONFLICT (user_id) DO NOTHING;
 -- └─────────────────────────────────────────────────────────────────────────┘
 
 INSERT INTO users (user_type, full_name, school_id, email, password_hash, is_active) VALUES
-    ('TEACHER', 'Nicolette Estrella',         '2417006', 'nicolette.estrella@lorma.edu',     '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Gelo Ryan Carbonell',        '2417007', 'geloryan.carbonell@lorma.edu',     '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Shekiro Raposas',            '2417008', 'shekiro.raposas@lorma.edu',        '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Brianne Mark Aquino',        '2417009', 'briannemark.aquino@lorma.edu',     '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true)
+    ('TEACHER', 'Nicolette Estrella',         '2417006', 'nicolette.estrella@lorma.edu',     '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Gelo Ryan Carbonell',        '2417007', 'geloryan.carbonell@lorma.edu',     '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Shekiro Raposas',            '2417008', 'shekiro.raposas@lorma.edu',        '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Brianne Mark Aquino',        '2417009', 'briannemark.aquino@lorma.edu',     '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true)
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO teacher_profiles (user_id, department_id, campus_flexible, is_ge_teacher) VALUES
@@ -118,38 +118,38 @@ ON CONFLICT (user_id) DO NOTHING;
 -- └─────────────────────────────────────────────────────────────────────────┘
 
 INSERT INTO users (user_type, full_name, school_id, email, password_hash, is_active) VALUES
-    ('TEACHER', 'Rodolfo Jr S. Natarte',              '2417010', 'rodolfo.natarte@lorma.edu',        '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Joshua B. Delfin',                   '2417011', 'joshua.delfin@lorma.edu',          '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Carl Jan Jendrix Cargamento',        '2417012', 'carljanjendrix.cargamento@lorma.edu', '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Reinalyn J. Bucsit',                 '2417013', 'reinalyn.bucsit@lorma.edu',        '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Melba C. Ano',                       '2417014', 'melba.ano@lorma.edu',              '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Roence Aaron O. Galvez',             '2417015', 'roenceaaron.galvez@lorma.edu',     '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Ana Louise B. Sebio',                '2417016', 'analouise.sebio@lorma.edu',        '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Blessie S. Corpuz',                  '2417017', 'blessie.corpuz@lorma.edu',         '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Neferthea N. Quinquito',             '2417018', 'neferthea.quinquito@lorma.edu',    '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Maridel A. Dulay',                   '2417019', 'maridel.dulay@lorma.edu',          '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'James R. Alfredo',                   '2417020', 'james.alfredo@lorma.edu',          '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Gladys W. Marcelo',                  '2417021', 'gladys.marcelo@lorma.edu',         '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Joylyn P. Baniaga',                  '2417022', 'joylyn.baniaga@lorma.edu',         '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Adrianne Paola Grace P. Dacanay',    '2417023', 'adriannepaola.dacanay@lorma.edu',  '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Kate Lyra Octaviano',                '2417024', 'katelyra.octaviano@lorma.edu',     '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Ariston S. Ansagay',                 '2417025', 'ariston.ansagay@lorma.edu',        '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'John Mark M. Marquez',               '2417026', 'johnmark.marquez@lorma.edu',       '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Wayne Tabion',                       '2417027', 'wayne.tabion@lorma.edu',           '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Elizabeth D. Aceituno',              '2417028', 'elizabeth.aceituno@lorma.edu',     '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Princess Lloyda S. Peralta',         '2417029', 'princesslloyda.peralta@lorma.edu', '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Rolando Jr. Nabua',                  '2417030', 'rolando.nabua@lorma.edu',          '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Roda Canono',                        '2417031', 'roda.canono@lorma.edu',            '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Khrystelle Joy M. Apilado',          '2417032', 'khrystellejoy.apilado@lorma.edu',  '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Angelica L. Balaguer',               '2417033', 'angelica.balaguer@lorma.edu',      '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Marianito R. Dacanay',               '2417034', 'marianito.dacanay@lorma.edu',      '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'John Stephen D. Gois',               '2417035', 'johnstephen.gois@lorma.edu',       '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Ericson M. Javillo',                 '2417036', 'ericson.javillo@lorma.edu',        '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Maria Delia I. Libao',               '2417037', 'mariadelia.libao@lorma.edu',       '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Grace G. Nabalan',                   '2417038', 'grace.nabalan@lorma.edu',          '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Crisanta C. Nebrida',                '2417039', 'crisanta.nebrida@lorma.edu',       '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Jetro M. Novero',                    '2417040', 'jetro.novero@lorma.edu',           '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true),
-    ('TEACHER', 'Andrew Cesar M. Rimando',            '2417041', 'andrew.rimando@lorma.edu',         '$2a$12$.YujI0qvc61d1cFA2/52ae9qgGhlcaXFLIfnsfAEof6/nK6mhxjLS', true)
+    ('TEACHER', 'Rodolfo Jr S. Natarte',              '2417010', 'rodolfo.natarte@lorma.edu',        '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Joshua B. Delfin',                   '2417011', 'joshua.delfin@lorma.edu',          '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Carl Jan Jendrix Cargamento',        '2417012', 'carljanjendrix.cargamento@lorma.edu', '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Reinalyn J. Bucsit',                 '2417013', 'reinalyn.bucsit@lorma.edu',        '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Melba C. Ano',                       '2417014', 'melba.ano@lorma.edu',              '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Roence Aaron O. Galvez',             '2417015', 'roenceaaron.galvez@lorma.edu',     '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Ana Louise B. Sebio',                '2417016', 'analouise.sebio@lorma.edu',        '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Blessie S. Corpuz',                  '2417017', 'blessie.corpuz@lorma.edu',         '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Neferthea N. Quinquito',             '2417018', 'neferthea.quinquito@lorma.edu',    '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Maridel A. Dulay',                   '2417019', 'maridel.dulay@lorma.edu',          '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'James R. Alfredo',                   '2417020', 'james.alfredo@lorma.edu',          '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Gladys W. Marcelo',                  '2417021', 'gladys.marcelo@lorma.edu',         '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Joylyn P. Baniaga',                  '2417022', 'joylyn.baniaga@lorma.edu',         '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Adrianne Paola Grace P. Dacanay',    '2417023', 'adriannepaola.dacanay@lorma.edu',  '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Kate Lyra Octaviano',                '2417024', 'katelyra.octaviano@lorma.edu',     '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Ariston S. Ansagay',                 '2417025', 'ariston.ansagay@lorma.edu',        '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'John Mark M. Marquez',               '2417026', 'johnmark.marquez@lorma.edu',       '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Wayne Tabion',                       '2417027', 'wayne.tabion@lorma.edu',           '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Elizabeth D. Aceituno',              '2417028', 'elizabeth.aceituno@lorma.edu',     '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Princess Lloyda S. Peralta',         '2417029', 'princesslloyda.peralta@lorma.edu', '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Rolando Jr. Nabua',                  '2417030', 'rolando.nabua@lorma.edu',          '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Roda Canono',                        '2417031', 'roda.canono@lorma.edu',            '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Khrystelle Joy M. Apilado',          '2417032', 'khrystellejoy.apilado@lorma.edu',  '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Angelica L. Balaguer',               '2417033', 'angelica.balaguer@lorma.edu',      '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Marianito R. Dacanay',               '2417034', 'marianito.dacanay@lorma.edu',      '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'John Stephen D. Gois',               '2417035', 'johnstephen.gois@lorma.edu',       '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Ericson M. Javillo',                 '2417036', 'ericson.javillo@lorma.edu',        '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Maria Delia I. Libao',               '2417037', 'mariadelia.libao@lorma.edu',       '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Grace G. Nabalan',                   '2417038', 'grace.nabalan@lorma.edu',          '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Crisanta C. Nebrida',                '2417039', 'crisanta.nebrida@lorma.edu',       '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Jetro M. Novero',                    '2417040', 'jetro.novero@lorma.edu',           '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true),
+    ('TEACHER', 'Andrew Cesar M. Rimando',            '2417041', 'andrew.rimando@lorma.edu',         '$2a$12$DO.vuTkL4oXjUWhEzZQcVOVYWVGGe2L.icHhhs22k2L2ST2BpMRq2', true)
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO teacher_profiles (user_id, department_id, campus_flexible, is_ge_teacher) VALUES

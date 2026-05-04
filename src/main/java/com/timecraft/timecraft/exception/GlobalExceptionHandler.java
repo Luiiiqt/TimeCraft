@@ -68,7 +68,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, Object>> handleDataIntegrity(
             org.springframework.dao.DataIntegrityViolationException ex) {
-        String msg = ex.getMostSpecificCause().getMessage();
+        String cause = ex.getMostSpecificCause().getMessage();
+        String msg = "A record with the same data already exists.";
+        if (cause.contains("uq_curriculum_course_year")) {
+            msg = "A curriculum for this course and effective year already exists.";
+        } else if (cause.contains("users_email_key")) {
+            msg = "A user with this email already exists.";
+        } else if (cause.contains("subjects_code_key")) {
+            msg = "A subject with this code already exists.";
+        }
         return buildResponse(HttpStatus.CONFLICT, msg);
     }
 

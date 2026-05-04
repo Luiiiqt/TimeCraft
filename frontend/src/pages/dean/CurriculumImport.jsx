@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 
 const YEAR_LABELS = { 1: "1st Year", 2: "2nd Year", 3: "3rd Year", 4: "4th Year" };
-const SEM_LABELS  = { FIRST: "1st Semester", SECOND: "2nd Semester", SUMMER: "Summer" };
-const SEM_ORDER   = ["FIRST", "SECOND", "SUMMER"];
+const SEM_LABELS = { FIRST: "1st Semester", SECOND: "2nd Semester", SUMMER: "Summer" };
+const SEM_ORDER = ["FIRST", "SECOND", "SUMMER"];
 
 const TYPE_CONFIG = {
-  MAJOR_LECTURE:     { label: "Major — Lecture Only",    color: "#1a56db", bg: "#eff6ff", dot: "#3b82f6" },
-  MAJOR_LECTURE_LAB: { label: "Major — Lecture + Lab",   color: "#7c3aed", bg: "#f5f3ff", dot: "#8b5cf6" },
-  MINOR:             { label: "Minor (GE)",               color: "#0891b2", bg: "#ecfeff", dot: "#06b6d4" },
+  MAJOR_LECTURE: { label: "Major — Lecture Only", color: "#1a56db", bg: "#eff6ff", dot: "#3b82f6" },
+  MAJOR_LECTURE_LAB: { label: "Major — Lecture + Lab", color: "#7c3aed", bg: "#f5f3ff", dot: "#8b5cf6" },
+  MINOR: { label: "Minor (GE)", color: "#0891b2", bg: "#ecfeff", dot: "#06b6d4" },
 };
 
 function getSubjectType(cs) {
@@ -18,17 +18,17 @@ function getSubjectType(cs) {
 }
 
 export default function CurriculumImport() {
-  const [courses, setCourses]     = useState([]);
+  const [courses, setCourses] = useState([]);
   const [curricula, setCurricula] = useState([]);
   const [checklist, setChecklist] = useState([]);   // CourseSubject[]
   const [form, setForm] = useState({ courseId: "", effectiveYear: "", curriculumName: "", file: null });
-  const [saving, setSaving]       = useState(false);
-  const [msg, setMsg]             = useState({ type: "", text: "" });
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState({ type: "", text: "" });
   const [activeTab, setActiveTab] = useState("import"); // "import" | "checklist"
-  const [filterYear, setFilterYear]   = useState("ALL");
-  const [filterSem, setFilterSem]     = useState("ALL");
-  const [filterType, setFilterType]   = useState("ALL");
-  const [search, setSearch]           = useState("");
+  const [filterYear, setFilterYear] = useState("ALL");
+  const [filterSem, setFilterSem] = useState("ALL");
+  const [filterType, setFilterType] = useState("ALL");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     api.get("/dean/my-courses").then(r => {
@@ -40,7 +40,7 @@ export default function CurriculumImport() {
         loadCurricula(id);
         loadChecklist(id);
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   const loadCurricula = (courseId) => {
@@ -69,10 +69,10 @@ export default function CurriculumImport() {
     setSaving(true); setMsg({ type: "", text: "" });
     try {
       const data = new FormData();
-      data.append("courseId",       form.courseId);
-      data.append("effectiveYear",  form.effectiveYear);
+      data.append("courseId", form.courseId);
+      data.append("effectiveYear", form.effectiveYear);
       data.append("curriculumName", form.curriculumName);
-      data.append("file",           form.file);
+      data.append("file", form.file);
       await api.post("/curriculum/import", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -91,7 +91,7 @@ export default function CurriculumImport() {
   const filtered = checklist.filter(cs => {
     const t = getSubjectType(cs);
     const matchYear = filterYear === "ALL" || String(cs.yearLevel) === filterYear;
-    const matchSem  = filterSem  === "ALL" || cs.semester === filterSem;
+    const matchSem = filterSem === "ALL" || cs.semester === filterSem;
     const matchType = filterType === "ALL" || t === filterType;
     const q = search.toLowerCase();
     const matchQ = !q ||
@@ -110,10 +110,10 @@ export default function CurriculumImport() {
     grouped[y][s].push(cs);
   }
 
-  const totalSubjects  = checklist.length;
-  const majorLec       = checklist.filter(cs => getSubjectType(cs) === "MAJOR_LECTURE").length;
-  const majorLecLab    = checklist.filter(cs => getSubjectType(cs) === "MAJOR_LECTURE_LAB").length;
-  const minor          = checklist.filter(cs => getSubjectType(cs) === "MINOR").length;
+  const totalSubjects = checklist.length;
+  const majorLec = checklist.filter(cs => getSubjectType(cs) === "MAJOR_LECTURE").length;
+  const majorLecLab = checklist.filter(cs => getSubjectType(cs) === "MAJOR_LECTURE_LAB").length;
+  const minor = checklist.filter(cs => getSubjectType(cs) === "MINOR").length;
 
   return (
     <div style={{ padding: "2rem 2.5rem", maxWidth: 1100, margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
@@ -287,14 +287,132 @@ export default function CurriculumImport() {
             ))}
           </div>
 
-          {/* Filters */}
+          {/* Filters + Print Button */}
+          <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
+            <button onClick={() => {
+              const courseName = courses.find(c => String(c.id) === String(form.courseId))?.name ?? "Curriculum";
+              const yearBlocks = Object.keys(grouped).sort((a, b) => a - b);
+              const pages = yearBlocks.map(year => {
+                const yearLabel = YEAR_LABELS[year] ?? `Year ${year}`;
+                const sems = SEM_ORDER.filter(s => grouped[year][s]);
+                const semTables = sems.map(sem => {
+                  const rows = grouped[year][sem].map((cs, i) => {
+                    const t = getSubjectType(cs);
+                    const typeLabel = TYPE_CONFIG[t]?.label ?? t;
+                    return `<tr>
+                      <td>${i + 1}</td>
+                      <td><b>${cs.subject?.code ?? "—"}</b></td>
+                      <td>${cs.subject?.name ?? "—"}</td>
+                      <td style="text-align:center">${cs.subject?.units ?? "—"}</td>
+                      <td>${cs.subject?.prerequisite?.code ?? "none"}</td>
+                      <td>${typeLabel}</td>
+                    </tr>`;
+                  }).join("");
+                  return `<h3 style="margin:12px 0 4px;font-size:11px;color:#555">${SEM_LABELS[sem]}</h3>
+                    <table>
+                      <thead><tr><th>#</th><th>Code</th><th>Subject Name</th><th>Units</th><th>Prerequisite</th><th>Type</th></tr></thead>
+                      <tbody>${rows}</tbody>
+                    </table>`;
+                }).join("");
+                return `<div class="year-page">
+                  <h2 style="margin:0 0 10px;font-size:14px;background:#1e293b;color:#fff;padding:8px 12px;border-radius:4px">${yearLabel}</h2>
+                  ${semTables}
+                </div>`;
+              }).join("");
+              const html = `<html><head><title>${courseName} Checklist</title>
+                <style>
+                  * { box-sizing: border-box; }
+                  body { font-family: Arial, sans-serif; font-size: 10px; margin: 0; padding: 10mm; }
+                  h1 { font-size: 13px; text-align: center; margin-bottom: 4px; }
+                  table { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 9px; }
+                  th { background: #1e293b; color: #fff; padding: 5px 8px; text-align: left; }
+                  td { padding: 4px 8px; border-bottom: 1px solid #e5e7eb; }
+                  tr:nth-child(even) td { background: #f8fafc; }
+                  .year-page { page-break-after: always; padding-bottom: 10px; }
+                  .year-page:last-child { page-break-after: avoid; }
+                  @media print { #actions { display:none !important; } }
+                </style>
+              </head><body>
+                <h1>${courseName} — Curriculum Checklist</h1>
+                <p style="text-align:center;font-size:9px;color:#888;margin-bottom:12px">Generated: ${new Date().toLocaleDateString()}</p>
+                ${pages}
+              </body></html>`;
+              const win = window.open("", "_blank");
+              win.document.write(html);
+              win.document.close();
+              win.onload = () => win.print();
+            }} style={{
+              padding: "7px 16px", borderRadius: 8, border: "none",
+              background: "#374151", color: "#fff", fontSize: 13,
+              fontWeight: 600, cursor: "pointer",
+            }}>🖨️ Print</button>
+            <button onClick={() => {
+              const courseName = courses.find(c => String(c.id) === String(form.courseId))?.name ?? "Curriculum";
+              const yearBlocks = Object.keys(grouped).sort((a, b) => a - b);
+              const pages = yearBlocks.map(year => {
+                const yearLabel = YEAR_LABELS[year] ?? `Year ${year}`;
+                const sems = SEM_ORDER.filter(s => grouped[year][s]);
+                const semTables = sems.map(sem => {
+                  const rows = grouped[year][sem].map((cs, i) => {
+                    const t = getSubjectType(cs);
+                    const typeLabel = TYPE_CONFIG[t]?.label ?? t;
+                    return `<tr>
+                      <td>${i + 1}</td>
+                      <td><b>${cs.subject?.code ?? "—"}</b></td>
+                      <td>${cs.subject?.name ?? "—"}</td>
+                      <td style="text-align:center">${cs.subject?.units ?? "—"}</td>
+                      <td>${cs.subject?.prerequisite?.code ?? "none"}</td>
+                      <td>${typeLabel}</td>
+                    </tr>`;
+                  }).join("");
+                  return `<h3 style="margin:12px 0 4px;font-size:11px;color:#555">${SEM_LABELS[sem]}</h3>
+                    <table>
+                      <thead><tr><th>#</th><th>Code</th><th>Subject Name</th><th>Units</th><th>Prerequisite</th><th>Type</th></tr></thead>
+                      <tbody>${rows}</tbody>
+                    </table>`;
+                }).join("");
+                return `<div class="year-page">
+                  <h2 style="margin:0 0 10px;font-size:14px;background:#1e293b;color:#fff;padding:8px 12px;border-radius:4px">${yearLabel}</h2>
+                  ${semTables}
+                </div>`;
+              }).join("");
+              const html = `<html><head><title>${courseName} Checklist</title>
+                <style>
+                  * { box-sizing: border-box; }
+                  body { font-family: Arial, sans-serif; font-size: 10px; margin: 0; padding: 10mm; }
+                  h1 { font-size: 13px; text-align: center; margin-bottom: 4px; }
+                  table { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 9px; }
+                  th { background: #1e293b; color: #fff; padding: 5px 8px; text-align: left; }
+                  td { padding: 4px 8px; border-bottom: 1px solid #e5e7eb; }
+                  tr:nth-child(even) td { background: #f8fafc; }
+                  .year-page { page-break-after: always; padding-bottom: 10px; }
+                  .year-page:last-child { page-break-after: avoid; }
+                </style>
+              </head><body>
+                <h1>${courseName} — Curriculum Checklist</h1>
+                <p style="text-align:center;font-size:9px;color:#888;margin-bottom:12px">Generated: ${new Date().toLocaleDateString()}</p>
+                ${pages}
+              </body></html>`;
+              const blob = new Blob([html], { type: "text/html" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `${courseName}_Checklist.html`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }} style={{
+              padding: "7px 16px", borderRadius: 8, border: "none",
+              background: "#1a56db", color: "#fff", fontSize: 13,
+              fontWeight: 600, cursor: "pointer",
+            }}>⬇️ Download</button>
+          </div>
           <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
             <input placeholder="Search subject code or name…" value={search}
               onChange={e => setSearch(e.target.value)}
               style={{ ...inp, width: 240, flex: "0 0 auto" }} />
             <select value={filterYear} onChange={e => setFilterYear(e.target.value)} style={sel}>
               <option value="ALL">All Year Levels</option>
-              {[1,2,3,4].map(y => <option key={y} value={String(y)}>Year {y}</option>)}
+              {[1, 2, 3, 4].map(y => <option key={y} value={String(y)}>Year {y}</option>)}
             </select>
             <select value={filterSem} onChange={e => setFilterSem(e.target.value)} style={sel}>
               <option value="ALL">All Semesters</option>
@@ -314,80 +432,82 @@ export default function CurriculumImport() {
             )}
           </div>
 
-          {checklist.length === 0 ? (
-            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 48, textAlign: "center" }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📂</div>
-              <p style={{ color: "#9ca3af", fontSize: 14 }}>No curriculum imported yet. Go to the Import tab to upload a file.</p>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 32, textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
-              No subjects match your filters.
-            </div>
-          ) : (
-            Object.keys(grouped).sort((a,b) => a-b).map(year => (
-              <div key={year} style={{ marginBottom: 28 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  <div style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "4px 14px", fontSize: 13, fontWeight: 700 }}>
-                    {YEAR_LABELS[year] ?? `Year ${year}`}
-                  </div>
-                  <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
-                </div>
-
-                {SEM_ORDER.filter(s => grouped[year][s]).map(sem => (
-                  <div key={sem} style={{ marginBottom: 18 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", letterSpacing: "0.06em", marginBottom: 8, paddingLeft: 2 }}>
-                      {SEM_LABELS[sem] ?? sem}
-                    </div>
-
-                    <div style={{ background: "#fff", borderRadius: 10, border: "1px solid #e5e7eb", overflow: "hidden" }}>
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                        <thead>
-                          <tr style={{ background: "#f9fafb", borderBottom: "1.5px solid #e5e7eb" }}>
-                            {["#", "Code", "Subject Name", "Units", "Prerequisite", "Type"].map(h => (
-                              <th key={h} style={{ padding: "9px 14px", textAlign: "left", fontWeight: 600, color: "#374151", fontSize: 11, whiteSpace: "nowrap" }}>{h}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {grouped[year][sem].map((cs, i) => {
-                            const t = getSubjectType(cs);
-                            const cfg = TYPE_CONFIG[t];
-                            return (
-                              <tr key={cs.id} style={{ borderBottom: "1px solid #f3f4f6", background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
-                                <td style={{ padding: "9px 14px", color: "#9ca3af", fontSize: 12, width: 36 }}>{i + 1}</td>
-                                <td style={{ padding: "9px 14px", fontWeight: 700, color: "#111827", fontFamily: "monospace", fontSize: 12 }}>
-                                  {cs.subject?.code ?? "—"}
-                                </td>
-                                <td style={{ padding: "9px 14px", color: "#111827", fontWeight: 500 }}>
-                                  {cs.subject?.name ?? "—"}
-                                </td>
-                                <td style={{ padding: "9px 14px", color: "#374151", textAlign: "center" }}>
-                                  {cs.subject?.units ?? "—"}
-                                </td>
-                                <td style={{ padding: "9px 14px", color: "#6b7280", fontSize: 12, fontFamily: "monospace" }}>
-                                  {cs.subject?.prerequisite?.code ?? <span style={{ color: "#d1d5db" }}>none</span>}
-                                </td>
-                                <td style={{ padding: "9px 14px" }}>
-                                  <span style={{
-                                    fontSize: 11, padding: "3px 9px", borderRadius: 6, fontWeight: 600,
-                                    background: cfg.bg, color: cfg.color, whiteSpace: "nowrap",
-                                    display: "inline-flex", alignItems: "center", gap: 5,
-                                  }}>
-                                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: cfg.dot, display: "inline-block" }} />
-                                    {cfg.label}
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                ))}
+          <div id="checklist-print">
+            {checklist.length === 0 ? (
+              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 48, textAlign: "center" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📂</div>
+                <p style={{ color: "#9ca3af", fontSize: 14 }}>No curriculum imported yet. Go to the Import tab to upload a file.</p>
               </div>
-            ))
-          )}
+            ) : filtered.length === 0 ? (
+              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 32, textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
+                No subjects match your filters.
+              </div>
+            ) : (
+              Object.keys(grouped).sort((a, b) => a - b).map(year => (
+                <div key={year} className="year-block" style={{ marginBottom: 28, pageBreakAfter: "always" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <div style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "4px 14px", fontSize: 13, fontWeight: 700 }}>
+                      {YEAR_LABELS[year] ?? `Year ${year}`}
+                    </div>
+                    <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
+                  </div>
+
+                  {SEM_ORDER.filter(s => grouped[year][s]).map(sem => (
+                    <div key={sem} style={{ marginBottom: 18 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", letterSpacing: "0.06em", marginBottom: 8, paddingLeft: 2 }}>
+                        {SEM_LABELS[sem] ?? sem}
+                      </div>
+
+                      <div style={{ background: "#fff", borderRadius: 10, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                          <thead>
+                            <tr style={{ background: "#f9fafb", borderBottom: "1.5px solid #e5e7eb" }}>
+                              {["#", "Code", "Subject Name", "Units", "Prerequisite", "Type"].map(h => (
+                                <th key={h} style={{ padding: "9px 14px", textAlign: "left", fontWeight: 600, color: "#374151", fontSize: 11, whiteSpace: "nowrap" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {grouped[year][sem].map((cs, i) => {
+                              const t = getSubjectType(cs);
+                              const cfg = TYPE_CONFIG[t];
+                              return (
+                                <tr key={cs.id} style={{ borderBottom: "1px solid #f3f4f6", background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
+                                  <td style={{ padding: "9px 14px", color: "#9ca3af", fontSize: 12, width: 36 }}>{i + 1}</td>
+                                  <td style={{ padding: "9px 14px", fontWeight: 700, color: "#111827", fontFamily: "monospace", fontSize: 12 }}>
+                                    {cs.subject?.code ?? "—"}
+                                  </td>
+                                  <td style={{ padding: "9px 14px", color: "#111827", fontWeight: 500 }}>
+                                    {cs.subject?.name ?? "—"}
+                                  </td>
+                                  <td style={{ padding: "9px 14px", color: "#374151", textAlign: "center" }}>
+                                    {cs.subject?.units ?? "—"}
+                                  </td>
+                                  <td style={{ padding: "9px 14px", color: "#6b7280", fontSize: 12, fontFamily: "monospace" }}>
+                                    {cs.subject?.prerequisite?.code ?? <span style={{ color: "#d1d5db" }}>none</span>}
+                                  </td>
+                                  <td style={{ padding: "9px 14px" }}>
+                                    <span style={{
+                                      fontSize: 11, padding: "3px 9px", borderRadius: 6, fontWeight: 600,
+                                      background: cfg.bg, color: cfg.color, whiteSpace: "nowrap",
+                                      display: "inline-flex", alignItems: "center", gap: 5,
+                                    }}>
+                                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: cfg.dot, display: "inline-block" }} />
+                                      {cfg.label}
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
         </>
       )}
     </div>
@@ -398,3 +518,24 @@ export default function CurriculumImport() {
 const lbl = { fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 };
 const inp = { width: "100%", padding: "8px 12px", borderRadius: 8, border: "1.5px solid #d1d5db", fontSize: 13, boxSizing: "border-box" };
 const sel = { padding: "7px 10px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 12, color: "#374151", background: "#fff" };
+
+// Inject print styles
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.innerHTML = `
+    @media print {
+      @page { size: A4; margin: 15mm; }
+      body * { visibility: hidden; }
+      #checklist-print, #checklist-print * { visibility: visible; }
+      #checklist-print { position: absolute; left: 0; top: 0; width: 100%; font-family: Arial, sans-serif; font-size: 11px; }
+      #checklist-print table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+      #checklist-print th { background: #1e293b !important; color: #fff !important; padding: 6px 10px; text-align: left; font-size: 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      #checklist-print td { padding: 5px 10px; border-bottom: 1px solid #e5e7eb; font-size: 10px; }
+      #checklist-print tr:nth-child(even) td { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      #checklist-print button { display: none !important; }
+      .year-block { break-after: page !important; page-break-after: always !important; }
+      .year-block:last-child { break-after: avoid !important; page-break-after: avoid !important; }
+    }
+  `;
+  document.head.appendChild(style);
+}

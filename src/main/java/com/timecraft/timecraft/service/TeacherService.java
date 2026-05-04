@@ -302,6 +302,11 @@ public class TeacherService {
         public List<Subject> getAvailableSubjects(Long teacherId) {
                 TeacherProfile profile = findProfileByUserId(teacherId);
 
+                System.out.println("DEBUG getAvailableSubjects: teacherId=" + teacherId 
+                    + " isGETeacher=" + profile.isGETeacher() 
+                    + " departmentId=" + profile.getDepartment().getId()
+                    + " departmentCode=" + profile.getDepartment().getCode());
+
                 if (profile.isGETeacher()) {
                         // GE / minor-subject teachers see only MINOR subjects
                         return subjectRepository.findByIsActiveTrue().stream()
@@ -310,12 +315,12 @@ public class TeacherService {
                                         .toList();
                 }
 
-                // Dept teachers: only subjects belonging to their own department
+                // Dept teachers: only MAJOR subjects in their own department
                 Long departmentId = profile.getDepartment().getId();
-                return subjectRepository.findByDepartmentIdAndIsActiveTrue(departmentId)
-                                .stream()
-                                .filter(s -> !s.getCourseSubjects().isEmpty())
-                                .toList();
+                return subjectRepository.findByCourseDepartmentId(departmentId)
+                        .stream()
+                        .filter(s -> s.getSubjectType() == Subject.SubjectType.MAJOR)
+                        .toList();
         }
 
         // ── Deactivate ────────────────────────────────────────────────────────────

@@ -18,8 +18,6 @@ export default function SubjectPreferences() {
   const [subjects, setSubjects] = useState([]);
   const [saved, setSaved] = useState([]);
   const [selected, setSelected] = useState(new Set());
-  const [vacantDay, setVacantDay] = useState("");
-  const [vacantTime, setVacantTime] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -34,14 +32,10 @@ export default function SubjectPreferences() {
         api.get(`/teachers/${uid}/subject-preferences?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
       ]);
       const allSubjects = sRes.data?.data ?? [];
-      const prefs = pRes.data?.data ?? [];        
+      const prefs = pRes.data?.data ?? [];
       setSubjects(allSubjects);
       setSaved(prefs);
       setSelected(new Set(prefs.map(p => p.subject?.id)));
-      if (prefs.length > 0) {
-        setVacantDay(prefs[0].vacantDay ?? "");
-        setVacantTime(prefs[0].vacantTime ?? "");
-      }
     } catch {
       setMsg({ type: "error", text: "Failed to load subjects." });
     } finally {
@@ -67,8 +61,6 @@ export default function SubjectPreferences() {
         subjectIds: [...selected],
         semester: SEMESTER,
         schoolYear: SCHOOL_YEAR,
-        vacantDay:  vacantDay  || null,
-        vacantTime: vacantTime || null,
       });
       setMsg({ type: "success", text: "✅ Preferences saved!" });
       load();
@@ -94,30 +86,8 @@ export default function SubjectPreferences() {
     <div style={{ padding: "2rem 2.5rem", maxWidth: 900, margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
       <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#111827", marginBottom: 4 }}>Subject Preferences</h1>
       <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 16 }}>
-        Select the subjects you want to teach this semester. You may also request one vacant day and time slot.
+        Select the subjects you want to teach this semester.
       </p>
-
-      {/* Vacancy preference */}
-      <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "14px 18px", marginBottom: 20, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#92400e" }}>🚫 Request Vacant Slot (optional)</span>
-        <select value={vacantDay} onChange={e => setVacantDay(e.target.value)}
-          style={{ padding: "6px 10px", border: "1.5px solid #fcd34d", borderRadius: 7, fontSize: 13, background: "#fff" }}>
-          <option value="">No vacant day</option>
-          {["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"].map(d =>
-            <option key={d} value={d}>{d.charAt(0) + d.slice(1).toLowerCase()}</option>)}
-        </select>
-        <select value={vacantTime} onChange={e => setVacantTime(e.target.value)}
-          style={{ padding: "6px 10px", border: "1.5px solid #fcd34d", borderRadius: 7, fontSize: 13, background: "#fff" }}>
-          <option value="">No vacant time</option>
-          {["07:30","09:00","10:30","12:00","13:30","15:00","16:30"].map(t =>
-            <option key={t} value={t}>{t}</option>)}
-        </select>
-        {(vacantDay || vacantTime) && (
-          <span style={{ fontSize: 12, color: "#92400e" }}>
-            You will not be scheduled on {vacantDay || "—"} at {vacantTime || "—"}
-          </span>
-        )}
-      </div>
 
       {msg && (
         <div style={{ background: msg.type === "success" ? "#f0fdf4" : "#fef2f2", border: `1px solid ${msg.type === "success" ? "#bbf7d0" : "#fecaca"}`, borderRadius: 8, padding: "10px 14px", marginBottom: 16, color: msg.type === "success" ? "#15803d" : "#dc2626", fontSize: 13 }}>
@@ -156,10 +126,10 @@ export default function SubjectPreferences() {
                   <td style={{ padding: "10px 14px" }}>
                     <span style={{
                       fontSize: 11, padding: "2px 8px", borderRadius: 6, fontWeight: 600,
-                      background: s.sessionType === "LABORATORY" ? "#f0fdf4" : "#fef9ee",
-                      color: s.sessionType === "LABORATORY" ? "#15803d" : "#92400e"
+                      background: s.hasLab ? "#f0fdf4" : "#fef9ee",
+                      color: s.hasLab ? "#15803d" : "#92400e"
                     }}>
-                      {s.sessionType ?? "LECTURE"}
+                      {s.hasLab ? "LECTURE + LAB" : "LECTURE"}
                     </span>
                   </td>
                   <td style={{ padding: "10px 14px" }}>

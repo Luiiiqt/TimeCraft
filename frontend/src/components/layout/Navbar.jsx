@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+import { useWebSocketContext } from "../../context/WebSocketContext";
 
 const PAGE_META = {
   "/admin":                { title: "Dashboard",         section: "Overview"   },
@@ -79,6 +80,7 @@ const CSS = `
 
 export default function Navbar({ conflictCount = 0 }) {
   const { user, role, logout } = useAuth();
+  const { notifications, clearNotifications } = useWebSocketContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -168,6 +170,22 @@ export default function Navbar({ conflictCount = 0 }) {
 
       {/* Right */}
       <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:"10px", flexShrink:0 }}>
+
+        {notifications.length > 0 && (
+          <button
+            onClick={clearNotifications}
+            title={notifications[0]?.message}
+            style={{
+              padding:"4px 10px", borderRadius:"20px",
+              background:"#FFF5EC", border:"1px solid rgba(232,121,42,0.3)",
+              fontSize:"11px", color:"#E8792A", cursor:"pointer",
+              fontFamily:"'DM Sans', sans-serif", fontWeight:"600",
+              display:"flex", alignItems:"center", gap:"5px",
+            }}
+          >
+            🔔 {notifications.length} new
+          </button>
+        )}
 
         {role === "ADMIN" && conflictCount > 0 && (
           <button

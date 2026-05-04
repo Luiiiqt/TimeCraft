@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "subject_assignments", uniqueConstraints = @UniqueConstraint(name = "uq_sa", columnNames = { "subject_id",
+@Table(name = "subject_assignments", uniqueConstraints = @UniqueConstraint(name = "uq_sa_subject_term", columnNames = { "subject_id",
                 "semester", "school_year" }))
 @Getter
 @Setter

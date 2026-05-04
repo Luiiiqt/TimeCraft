@@ -205,7 +205,22 @@ export default function SetAvailability() {
   }, [availMap, timeslots]);
 
   const handleToggle = (newSelected) => {
-    setSelected(newSelected);
+    // Only allow 1 slot selected total across all days
+    const currentlySelected = Object.entries(newSelected).filter(([, v]) => v).map(([k]) => k);
+    if (currentlySelected.length > 1) {
+      // Keep only the newly selected one (last changed)
+      const prevSelected = Object.entries(selected).filter(([, v]) => v).map(([k]) => k);
+      const newlyAdded = currentlySelected.find(k => !prevSelected.includes(k));
+      if (newlyAdded) {
+        const limitedSelected = {};
+        Object.keys(newSelected).forEach(k => { limitedSelected[k] = k === newlyAdded; });
+        setSelected(limitedSelected);
+      } else {
+        setSelected(newSelected);
+      }
+    } else {
+      setSelected(newSelected);
+    }
     setIsDirty(true);
     setSaveMsg(null);
   };
@@ -333,7 +348,7 @@ export default function SetAvailability() {
           </div>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button onClick={selectAll}   style={outlineBtn("#2D6A4F")}>✅ Select All</button>
+            <button onClick={selectAll} disabled style={{ ...outlineBtn("#9CA3AF"), opacity: 0.4, cursor: "not-allowed" }}>✅ Select All</button>
             <button onClick={deselectAll} style={outlineBtn("#EF4444")}>❌ Clear All</button>
             {isDirty && (
               <button onClick={resetToServer} style={outlineBtn("#9CA3AF")}>↩️ Reset</button>
@@ -379,7 +394,7 @@ export default function SetAvailability() {
               borderRadius: 10, padding: "10px 16px", marginBottom: 14,
               fontSize: 13, color: selectedDay ? "#1A5C38" : "#92400E",
             }}>
-              {"Click any day header to expand it, then select your available time slots. Multiple days allowed."}
+              {"Click any day header to expand it, then select your ONE vacant time slot for the week."}
             </div>
             <div style={{
               background: "#fff", borderRadius: 16, padding: 20,

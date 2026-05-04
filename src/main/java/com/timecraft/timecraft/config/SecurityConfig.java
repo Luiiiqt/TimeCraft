@@ -67,6 +67,9 @@ public class SecurityConfig {
                                                 // Actuator health check — public
                                                 .requestMatchers("/actuator/health").permitAll()
 
+                                                // WebSocket handshake
+                                                .requestMatchers("/ws/**").permitAll()
+
                                                 // ── Student endpoints ─────────────────────────────────────────
                                                 // Students can only view their own schedule
                                                 .requestMatchers(HttpMethod.GET,

@@ -197,6 +197,8 @@ function useSchedule() {
     fetchAll,
     fetchMySchedule,
     fetchTeacherSchedule,
+    fetchPublishedByTeacher,
+    fetchPublishedBySection,
     fetchSectionSchedule,
     fetchRoomSchedule,
     fetchConflicted,

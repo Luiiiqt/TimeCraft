@@ -187,14 +187,16 @@ public class TeacherController {
         List<Long> subjectIds = ((List<?>) body.get("subjectIds"))
                 .stream().map(o -> Long.valueOf(o.toString())).toList();
 
-        String vacantDay  = body.containsKey("vacantDay")  ? body.get("vacantDay").toString()  : null;
-        String vacantTime = body.containsKey("vacantTime") ? body.get("vacantTime").toString() : null;
+        String vacantDay  = (body.get("vacantDay")  != null) ? body.get("vacantDay").toString()  : null;
+        String vacantTime = (body.get("vacantTime") != null) ? body.get("vacantTime").toString() : null;
+        String semester   = (body.get("semester")   != null) ? body.get("semester").toString()   : null;
+        String schoolYear = (body.get("schoolYear") != null) ? body.get("schoolYear").toString() : null;
 
         teacherService.saveSubjectPreferences(
                 id,
                 subjectIds,
-                body.get("semester").toString(),
-                body.get("schoolYear").toString(),
+                semester,
+                schoolYear,
                 vacantDay,
                 vacantTime);
 

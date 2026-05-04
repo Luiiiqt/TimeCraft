@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { AuthProvider } from "../context/AuthContext";
+import { WebSocketProvider } from "../context/WebSocketContext";
 import useAuth from "../hooks/useAuth";
 import Navbar from "../components/layout/Navbar";
 import Sidebar from "../components/layout/Sidebar";
@@ -115,6 +116,7 @@ function Page({ roles, children }) {
 export default function AppRouter() {
   return (
     <AuthProvider>
+      <WebSocketProvider>
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -182,6 +184,7 @@ export default function AppRouter() {
           </Routes>
         </Suspense>
       </BrowserRouter>
+      </WebSocketProvider>
     </AuthProvider>
   );
 }

@@ -32,6 +32,15 @@ public interface SubjectRepository extends JpaRepository<Subject, Long> {
 
        List<Subject> findByDepartmentIdAndIsActiveTrue(Long departmentId);
 
+        @org.springframework.data.jpa.repository.Query(
+            value = "SELECT DISTINCT s.* FROM subjects s " +
+                    "JOIN course_subjects cs ON cs.subject_id = s.id " +
+                    "JOIN courses c ON c.id = cs.course_id " +
+                    "WHERE c.department_id = :departmentId AND s.is_active = true",
+            nativeQuery = true)
+        List<Subject> findByCourseDepartmentId(
+            @org.springframework.data.repository.query.Param("departmentId") Long departmentId);
+
        /**
         * Returns active subjects for a course at a specific year and semester.
         * No teacher year-level restriction — subjects are matched by curriculum map

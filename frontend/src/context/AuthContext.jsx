@@ -11,11 +11,11 @@ const TOKEN_KEY = "tc_token";
 const USER_KEY = "tc_user";
 
 const storage = {
-  getToken: () => localStorage.getItem(TOKEN_KEY),
-  setToken: (t) => localStorage.setItem(TOKEN_KEY, t),
-  getUser: () => { try { return JSON.parse(localStorage.getItem(USER_KEY)); } catch { return null; } },
-  setUser: (u) => localStorage.setItem(USER_KEY, JSON.stringify(u)),
-  clear: () => { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); },
+  getToken: () => sessionStorage.getItem(TOKEN_KEY),
+  setToken: (t) => sessionStorage.setItem(TOKEN_KEY, t),
+  getUser: () => { try { return JSON.parse(sessionStorage.getItem(USER_KEY)); } catch { return null; } },
+  setUser: (u) => sessionStorage.setItem(USER_KEY, JSON.stringify(u)),
+  clear: () => { sessionStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(USER_KEY); },
 };
 
 // ── Provider ──────────────────────────────────────────────────────────────────
