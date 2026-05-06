@@ -40,7 +40,7 @@ public class DeanController {
         // ── GET /api/v1/program-head/assignments ──────────────────────────────────
 
         @GetMapping("/assignments")
-        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN','PROGRAM_HEAD')")
         public ResponseEntity<ApiResponse<List<SubjectAssignment>>> getAssignments(
                         @RequestParam String semester,
                         @RequestParam String schoolYear,

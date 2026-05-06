@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { Client } from "@stomp/stompjs";
 
-const WS_URL = "ws://localhost:8080/ws";
+const WS_URL = `ws://${window.location.hostname}:8080/ws`;
 const WebSocketContext = createContext(null);
 
 export function WebSocketProvider({ children }) {

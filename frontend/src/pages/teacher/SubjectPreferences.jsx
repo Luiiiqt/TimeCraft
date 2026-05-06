@@ -11,9 +11,8 @@ function getCurrentTerm() {
     schoolYear: `${year}-${year + 1}`,
   };
 }
-const { semester: SEMESTER, schoolYear: SCHOOL_YEAR } = getCurrentTerm();
-
 export default function SubjectPreferences() {
+  const { semester: SEMESTER, schoolYear: SCHOOL_YEAR } = getCurrentTerm();
   const { user } = useAuth();
   const [subjects, setSubjects] = useState([]);
   const [saved, setSaved] = useState([]);

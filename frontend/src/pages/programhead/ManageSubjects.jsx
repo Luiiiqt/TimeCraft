@@ -20,6 +20,7 @@ const TYPE_COLOR = {
 const SES_COLOR = {
   LECTURE: { bg: "#f0fdf4", text: "#14532d" },
   LABORATORY: { bg: "#fef3c7", text: "#92400e" },
+  LECTURE_LAB: { bg: "#ede9fe", text: "#4c1d95" },
 };
 
 export default function ManageSubjects() {
@@ -35,7 +36,7 @@ export default function ManageSubjects() {
   const [assignments, setAssignments] = useState([]);
   const [term] = useState(() => {
     const now = new Date(); const m = now.getMonth() + 1; const y = now.getFullYear();
-    return { semester: m >= 6 && m <= 10 ? "FIRST" : "SECOND", schoolYear: `${y}-${y+1}` };
+    return { semester: m >= 6 && m <= 10 ? "FIRST" : "SECOND", schoolYear: `${y}-${y + 1}` };
   });
 
   // Load courses under this PH's department
@@ -47,7 +48,7 @@ export default function ManageSubjects() {
         setCourses(list);
         if (list.length > 0) setCourseId(list[0].id);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
   // Load curriculum and assignments when course changes
@@ -56,7 +57,7 @@ export default function ManageSubjects() {
     setLoading(true);
     Promise.all([
       api.get(`/subjects/course/${courseId}/curriculum`),
-      api.get(`/program-head/assignments?semester=${term.semester}&schoolYear=${term.schoolYear}`),
+      api.get(`/dean/assignments?semester=${term.semester}&schoolYear=${term.schoolYear}`),
     ])
       .then(([cRes, aRes]) => {
         setCurriculum(cRes.data?.data ?? []);
@@ -190,7 +191,9 @@ export default function ManageSubjects() {
                     {badge(cs.subject?.subjectType, TYPE_COLOR[cs.subject?.subjectType] ?? TYPE_COLOR.MINOR)}
                   </td>
                   <td style={{ padding: "10px 14px" }}>
-                    {badge(cs.subject?.sessionType, SES_COLOR[cs.subject?.sessionType] ?? SES_COLOR.LECTURE)}
+                    {cs.subject?.hasLab
+                      ? badge("Lecture + Lab", SES_COLOR.LECTURE_LAB)
+                      : badge(cs.subject?.sessionType, SES_COLOR[cs.subject?.sessionType] ?? SES_COLOR.LECTURE)}
                   </td>
                   <td style={{ padding: "10px 14px", color: "#6b7280" }}>
                     {cs.subject?.units}

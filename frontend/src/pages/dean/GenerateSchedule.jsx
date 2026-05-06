@@ -149,11 +149,6 @@ export default function ProgramHeadGenerateSchedule() {
               <span>{r.ready ? "✅" : "❌"}</span>
               <div>
                 <strong>{r.courseCode}</strong> — {r.courseName}
-                {!r.ready && (
-                  <div style={{ fontSize: 12, marginTop: 4, color: "#dc2626" }}>
-                    Unfinalized subjects: {r.unfinalized.join(", ")}
-                  </div>
-                )}
               </div>
             </div>
           ))}
