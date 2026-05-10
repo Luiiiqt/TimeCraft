@@ -9,7 +9,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -61,10 +60,13 @@ public class GECoordinatorController {
     @GetMapping("/assignments")
     @PreAuthorize("hasAnyRole('GE_COORDINATOR','ADMIN')")
     public ResponseEntity<ApiResponse<List<SubjectAssignment>>> getAssignments(
-            @RequestParam String semester,
-            @RequestParam String schoolYear,
+            @RequestParam(required = false) String semester,
+            @RequestParam(required = false) String schoolYear,
             Principal principal) {
         Long userId = resolveUserId(principal);
+        if (semester == null || schoolYear == null) {
+            return ResponseEntity.ok(ApiResponse.of(List.of()));
+        }
         return ResponseEntity.ok(ApiResponse.of(
                 geService.getAssignments(userId, semester, schoolYear)));
     }
@@ -79,6 +81,12 @@ public class GECoordinatorController {
             Principal principal) {
         return ResponseEntity.ok(ApiResponse.of(
                 geService.getPublishedSchedule(sectionId, semester, schoolYear)));
+    }
+
+    @GetMapping("/teachers")
+    @PreAuthorize("hasAnyRole('GE_COORDINATOR','ADMIN')")
+    public ResponseEntity<ApiResponse<List<com.timecraft.timecraft.model.User>>> getGETeachers() {
+        return ResponseEntity.ok(ApiResponse.of(geService.getGETeachers()));
     }
 
     private Long resolveUserId(Principal principal) {

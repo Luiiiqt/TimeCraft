@@ -50,9 +50,11 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   // Logged in but wrong role → redirect to their own home
   if (allowedRoles && !allowedRoles.includes(role)) {
     const home =
-      role === "ADMIN"        ? "/admin"        :
-      role === "TEACHER"      ? "/teacher"      :
-      role === "DEAN" ? "/dean" : "/student";
+      role === "ADMIN"           ? "/admin"   :
+      role === "TEACHER"         ? "/teacher" :
+      role === "DEAN"            ? "/dean"    :
+      role === "PROGRAM_HEAD"    ? "/ph"      :
+      role === "GE_COORDINATOR"  ? "/ge"      : "/student";
     return <Navigate to={home} replace />;
   }
 

@@ -50,7 +50,7 @@ const NAV_LINKS = {
     { path: "/student/timetable",  label: "Timetable"  },
     { path: "/student/enrollment", label: "Enrollment" },
   ],
-  DEAN: [
+   DEAN: [
     { path: "/dean",             label: "Dashboard"   },
     { path: "/dean/curriculum",  label: "Curriculum"  },
     { path: "/dean/subjects",    label: "Subjects"    },
@@ -62,6 +62,11 @@ const NAV_LINKS = {
     { path: "/ph",               label: "Dashboard"   },
     { path: "/ph/subjects",      label: "Subjects"    },
     { path: "/ph/preferences",   label: "Assign"      },
+  ],
+  GE_COORDINATOR: [
+    { path: "/ge",               label: "Dashboard"   },
+    { path: "/ge/preferences",   label: "Assign"      },
+    { path: "/ge/schedule",      label: "Schedule"    },
   ],
 };
 

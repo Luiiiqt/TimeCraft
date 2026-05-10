@@ -32,42 +32,51 @@ public class GECoordinatorService {
     private final SubjectRepository                  subjectRepository;
     private final UserRepository                     userRepository;
     private final ScheduleRepository                 scheduleRepository;
+    private final com.timecraft.timecraft.repository.TeacherProfileRepository teacherProfileRepository;
 
     // Only MINOR subjects visible to GE Coordinator
     public List<Map<String, Object>> getMinorPreferencesGrouped(
             Long coordinatorId, String semester, String schoolYear) {
 
-        List<Long> minorSubjectIds = subjectRepository.findByIsActiveTrue()
+        // Load ALL active MINOR subjects first
+        com.timecraft.timecraft.model.CourseSubject.Semester semesterEnum =
+                com.timecraft.timecraft.model.CourseSubject.Semester.valueOf(semester);
+
+        List<Subject> minorSubjects = subjectRepository.findByIsActiveTrue()
                 .stream()
                 .filter(s -> s.getSubjectType() == Subject.SubjectType.MINOR)
-                .map(Subject::getId)
+                .filter(s -> s.getCourseSubjects().stream()
+                        .anyMatch(cs -> cs.getSemester() == semesterEnum))
                 .toList();
 
-        if (minorSubjectIds.isEmpty()) return List.of();
+        if (minorSubjects.isEmpty()) return List.of();
 
+        List<Long> minorSubjectIds = minorSubjects.stream().map(Subject::getId).toList();
+
+        // Load teacher votes for these subjects
         List<TeacherSubjectPreference> prefs = preferenceRepository
                 .findBySubjectIdInAndSemesterAndSchoolYear(
                         minorSubjectIds,
                         com.timecraft.timecraft.model.CourseSubject.Semester.valueOf(semester),
                         schoolYear);
 
+        // Build grouped map seeded with ALL minor subjects (even zero votes)
         Map<Long, Map<String, Object>> grouped = new LinkedHashMap<>();
+        for (Subject s : minorSubjects) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("subject", Map.of(
+                    "id", s.getId(), "name", s.getName(),
+                    "code", s.getCode(), "subjectType", s.getSubjectType(),
+                    "sessionType", s.getSessionType()));
+            entry.put("preferences", new ArrayList<>());
+            entry.put("assigned", false);
+            grouped.put(s.getId(), entry);
+        }
 
+        // Attach teacher votes
         for (TeacherSubjectPreference pref : prefs) {
             Subject s = pref.getSubject();
-            // Only include MINOR subjects
-            if (s.getSubjectType() != Subject.SubjectType.MINOR) continue;
-
-            grouped.computeIfAbsent(s.getId(), k -> {
-                Map<String, Object> entry = new LinkedHashMap<>();
-                entry.put("subject", Map.of(
-                        "id", s.getId(), "name", s.getName(),
-                        "code", s.getCode(), "subjectType", s.getSubjectType(),
-                        "sessionType", s.getSessionType()));
-                entry.put("preferences", new ArrayList<>());
-                entry.put("assigned", false);
-                return entry;
-            });
+            if (!grouped.containsKey(s.getId())) continue;
 
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> prefList =
@@ -85,7 +94,7 @@ public class GECoordinatorService {
         // Mark already-assigned subjects
         assignmentRepository
                 .findBySubjectIdInAndSemesterAndSchoolYear(
-                        new ArrayList<>(grouped.keySet()), semester, schoolYear)
+                        minorSubjectIds, semester, schoolYear)
                 .stream().filter(SubjectAssignment::isFinalized)
                 .forEach(sa -> {
                     Map<String, Object> entry = grouped.get(sa.getSubject().getId());
@@ -137,6 +146,14 @@ public class GECoordinatorService {
                         coordinatorId, semester, schoolYear)
                 .stream()
                 .filter(a -> a.getSubject().getSubjectType() == Subject.SubjectType.MINOR)
+                .toList();
+    }
+
+    public List<com.timecraft.timecraft.model.User> getGETeachers() {
+        return teacherProfileRepository.findAllGETeachers()
+                .stream()
+                .map(tp -> tp.getUser())
+                .distinct()
                 .toList();
     }
 

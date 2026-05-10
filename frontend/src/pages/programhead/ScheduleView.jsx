@@ -34,7 +34,9 @@ export default function PHScheduleView() {
 
   // Load managed courses
   useEffect(() => {
-    api.get("/program-head/my-courses")
+    const isGE = window.location.pathname.startsWith("/ge");
+    const endpoint = isGE ? "/courses" : "/program-head/my-courses";
+    api.get(endpoint)
       .then(r => {
         const list = r.data?.data ?? [];
         setCourses(list);

@@ -47,6 +47,7 @@ const PHDashboard = lazy(() => import("../pages/programhead/Dashboard"));
 const PHManageSubjects = lazy(() => import("../pages/programhead/ManageSubjects"));
 const PHPreferenceReview = lazy(() => import("../pages/programhead/PreferenceReview"));
 const GEPreferenceReview = lazy(() => import("../pages/ge/GEPreferenceReview"));
+const GEDashboard = lazy(() => import("../pages/ge/GEDashboard"));
 
 // ── Loader ────────────────────────────────────────────────────────────────────
 
@@ -174,7 +175,7 @@ export default function AppRouter() {
             <Route path="/program-head" element={<Navigate to="/ph" replace />} />
 
             {/* GE Coordinator */}
-            <Route path="/ge" element={<Page roles={["GE_COORDINATOR","ADMIN"]}><PHDashboard /></Page>} />
+            <Route path="/ge" element={<Page roles={["GE_COORDINATOR","ADMIN"]}><GEDashboard /></Page>} />
             <Route path="/ge/preferences" element={<Page roles={["GE_COORDINATOR","ADMIN"]}><GEPreferenceReview /></Page>} />
             <Route path="/ge/schedule" element={<Page roles={["GE_COORDINATOR","ADMIN"]}><PHScheduleView /></Page>} />
 

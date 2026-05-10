@@ -29,4 +29,8 @@ public interface TeacherProfileRepository extends JpaRepository<TeacherProfile, 
 
     /** Teachers allowed to teach outside their home department. */
     List<TeacherProfile> findByIsCrossDepartmentTrue();
+
+    /** All GE teachers: campus-flexible OR in GEN_ED department. */
+    @Query("SELECT tp FROM TeacherProfile tp WHERE tp.campusFlexible = true OR tp.department.code = 'GEN_ED'")
+    List<TeacherProfile> findAllGETeachers();
 }

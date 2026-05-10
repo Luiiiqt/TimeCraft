@@ -46,28 +46,16 @@ public class ProgramHeadService {
     // Only shows subjects belonging to this PH's managed courses.
     // Each group includes teacher votes with their vacancy preferences.
     public List<Map<String, Object>> getPreferencesGroupedBySubject(
-            Long phUserId, String semester, String schoolYear) {
+            Long phUserId, String semester, String schoolYear, Long courseId) {
 
         List<Long> managedCourseIds = phCourseRepository
                 .findByDeanUserId(phUserId)
                 .stream()
                 .map(phc -> phc.getCourseId())
+                .filter(id -> courseId == null || id.equals(courseId))
                 .toList();
 
         if (managedCourseIds.isEmpty()) {
-            return List.of();
-        }
-
-        List<Long> subjectIds = courseSubjectRepository
-                .findByCourseIdIn(managedCourseIds)
-                .stream()
-                .filter(cs -> cs.getSubject().getSubjectType()
-                == com.timecraft.timecraft.model.Subject.SubjectType.MAJOR)
-                .map(cs -> cs.getSubject().getId())
-                .distinct()
-                .toList();
-
-        if (subjectIds.isEmpty()) {
             return List.of();
         }
 
@@ -81,12 +69,26 @@ public class ProgramHeadService {
                         == com.timecraft.timecraft.model.Subject.SubjectType.MAJOR)
                         .toList();
 
+        List<Long> subjectIds = semesterSubjects.stream()
+                .map(cs -> cs.getSubject().getId())
+                .distinct()
+                .toList();
+
+        if (subjectIds.isEmpty()) {
+            return List.of();
+        }
+
         List<TeacherSubjectPreference> prefs = preferenceRepository
                 .findBySubjectIdInAndSemesterAndSchoolYear(
                         subjectIds,
                         com.timecraft.timecraft.model.CourseSubject.Semester.valueOf(semester),
                         schoolYear);
 
+        // Also fetch preferences where course is null (teacher saved without course match)
+        List<Long> foundTeacherPrefSubjectIds = prefs.stream()
+                .map(p -> p.getSubject().getId()).toList();
+        List<Long> missingSubjectIds = subjectIds.stream()
+                .filter(id -> !foundTeacherPrefSubjectIds.contains(id)).toList();
         // Group by subject — seed with ALL semester subjects first
         Map<Long, Map<String, Object>> grouped = new java.util.LinkedHashMap<>();
 

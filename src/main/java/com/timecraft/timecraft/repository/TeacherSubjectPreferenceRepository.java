@@ -19,6 +19,8 @@ public interface TeacherSubjectPreferenceRepository
     List<TeacherSubjectPreference> findByTeacherIdAndSemesterAndSchoolYear(
             Long teacherId, Semester semester, String schoolYear);
 
+    void deleteByTeacherIdAndSchoolYear(Long teacherId, String schoolYear);
+
     List<TeacherSubjectPreference> findBySubjectIdInAndSemesterAndSchoolYear(
             List<Long> subjectIds, Semester semester, String schoolYear);
 

@@ -75,6 +75,7 @@ public class TeacherProfile {
      * scheduled at either campus.
      */
     public boolean isGETeacher() {
-        return campusFlexible;
+        return campusFlexible ||
+               (department != null && "GEN_ED".equals(department.getCode()));
     }
 }

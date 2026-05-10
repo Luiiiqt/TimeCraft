@@ -28,8 +28,8 @@ function useConflict() {
     setError(null);
     try {
       const res  = await api.get(url, { params });
-      const data = res.data?.data ?? res.data;
-      const list = Array.isArray(data) ? data : [];
+      const raw = res.data?.data ?? res.data;
+      const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.content) ? raw.content : []);
       setConflicts(list);
       return list;
     } catch (err) {

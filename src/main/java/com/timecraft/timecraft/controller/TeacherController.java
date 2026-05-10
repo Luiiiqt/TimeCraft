@@ -178,9 +178,10 @@ public class TeacherController {
     @GetMapping("/{id}/available-subjects")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<?>>> getAvailableSubjects(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @RequestParam(required = false) String semester) {
         return ResponseEntity.ok(
-                ApiResponse.of(teacherService.getAvailableSubjects(id)));
+                ApiResponse.of(teacherService.getAvailableSubjects(id, semester)));
     }
 
     // ── GET /api/v1/teachers/{id}/subject-preferences ────────────────────────

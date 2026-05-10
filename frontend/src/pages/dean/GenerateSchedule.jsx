@@ -89,7 +89,6 @@ export default function ProgramHeadGenerateSchedule() {
         semester: form.semester,
         schoolYear: form.schoolYear,
         autoPublish: form.autoPublish,
-        courseId: form.courseId,
         clearDraftsFirst: true,
       });
       setResult(res.data?.data ?? res.data);
@@ -104,14 +103,16 @@ export default function ProgramHeadGenerateSchedule() {
   const handleSaveConfigs = async () => {
     setSavingConfig(true);
     try {
-      for (const yearLevel of [1, 2, 3, 4]) {
-        await api.post("/sections/config", {
-          courseId: form.courseId,
+      for (const course of courses) {
+        for (const yearLevel of [1, 2, 3, 4]) {
+          await api.post("/sections/config", {
+            courseId: course.id,
           yearLevel,
           sectionCount: sectionConfigs[yearLevel],
-          semester: form.semester,
-          schoolYear: form.schoolYear,
-        });
+            semester: form.semester,
+            schoolYear: form.schoolYear,
+          });
+        }
       }
     } catch (e) {
       setError(e.response?.data?.message ?? "Failed to save section config.");
@@ -162,15 +163,7 @@ export default function ProgramHeadGenerateSchedule() {
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 18 }}>Term Configuration</h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
-            {courses.length > 1 && (
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>Course</label>
-                <select name="courseId" value={form.courseId ?? ""} onChange={handleChange}
-                  style={{ width: "100%", padding: "8px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
-                  {courses.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
-                </select>
-              </div>
-            )}
+
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>Semester</label>
               <select name="semester" value={form.semester} onChange={handleChange}
@@ -312,7 +305,7 @@ export default function ProgramHeadGenerateSchedule() {
               {/* View Schedule button */}
               {result && (
                 <button
-                  onClick={() => navigate(`/dean/schedule-view?courseId=${form.courseId}&semester=${form.semester}&schoolYear=${form.schoolYear}`)}
+                                    onClick={() => navigate(`/dean/schedule-view?semester=${form.semester}&schoolYear=${form.schoolYear}`)}
                   style={{ width: "100%", padding: "10px", background: "#1a56db", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", marginTop: 4 }}>
                   📅 View Generated Schedule
                 </button>

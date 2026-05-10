@@ -57,11 +57,17 @@ export default function ManageSubjects() {
     setLoading(true);
     Promise.all([
       api.get(`/subjects/course/${courseId}/curriculum`),
-      api.get(`/dean/assignments?semester=${term.semester}&schoolYear=${term.schoolYear}`),
+      api.get(`/dean/assignments?semester=FIRST&schoolYear=${term.schoolYear}`),
+      api.get(`/dean/assignments?semester=SECOND&schoolYear=${term.schoolYear}`),
+      api.get(`/dean/assignments?semester=SUMMER&schoolYear=${term.schoolYear}`),
     ])
-      .then(([cRes, aRes]) => {
+      .then(([cRes, aRes1, aRes2, aRes3]) => {
         setCurriculum(cRes.data?.data ?? []);
-        setAssignments(aRes.data?.data ?? []);
+        setAssignments([
+          ...(aRes1.data?.data ?? []),
+          ...(aRes2.data?.data ?? []),
+          ...(aRes3.data?.data ?? []),
+        ]);
       })
       .catch(() => { setCurriculum([]); setAssignments([]); })
       .finally(() => setLoading(false));

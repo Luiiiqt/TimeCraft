@@ -57,8 +57,9 @@ export default function Reports() {
     if (idx === 2) ensureCampuses();
   };
 
-  const handleFetchConflicts = () => {
-    fetchConflicts({ semester, schoolYear });
+  const handleFetchConflicts = async () => {
+    const result = await fetchConflicts({ semester, schoolYear });
+    console.log("CONFLICTS RESULT:", result);
     fetchConflictSummary();
   };
 

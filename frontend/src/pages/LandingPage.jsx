@@ -381,20 +381,7 @@ export default function LandingPage() {
         background    : "rgba(11,13,26,0.85)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width      : 34,
-            height     : 34,
-            borderRadius: 9,
-            background : "linear-gradient(135deg, #0F6E56, #1D9E75)",
-            display    : "flex",
-            alignItems : "center",
-            justifyContent: "center",
-            fontSize   : 16,
-            fontWeight : 900,
-            color      : "#fff",
-          }}>
-            T
-          </div>
+          <img src="/favicon.png" alt="TimeCraft" style={{ width: 34, height: 34, borderRadius: 9, objectFit: "contain" }} />
           <span style={{
             fontFamily : "'Instrument Serif', serif",
             fontStyle  : "italic",

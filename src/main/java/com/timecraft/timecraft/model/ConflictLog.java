@@ -40,6 +40,7 @@ public class ConflictLog {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "schedule_id")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "conflictLogs", "section", "room", "teacher", "timeslot", "timeslot2", "campus", "subject"})
     private Schedule schedule;
 
     @Enumerated(EnumType.STRING)

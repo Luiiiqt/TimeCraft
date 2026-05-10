@@ -12,8 +12,12 @@ import com.timecraft.timecraft.model.SubjectAssignment;
 public interface SubjectAssignmentRepository
                 extends JpaRepository<SubjectAssignment, Long> {
 
+        @org.springframework.data.jpa.repository.Query(
+                "SELECT a FROM SubjectAssignment a WHERE a.assignedBy.id = :assignedById AND a.semester = :semester AND a.schoolYear = :schoolYear")
         List<SubjectAssignment> findByAssignedByIdAndSemesterAndSchoolYear(
-                        Long deanId, String semester, String schoolYear);
+                        @org.springframework.data.repository.query.Param("assignedById") Long assignedById,
+                        @org.springframework.data.repository.query.Param("semester") String semester,
+                        @org.springframework.data.repository.query.Param("schoolYear") String schoolYear);
 
         List<SubjectAssignment> findBySemesterAndSchoolYearAndIsFinalizedTrue(
                         String semester, String schoolYear);

@@ -13,7 +13,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("tc_token");
+    const token = sessionStorage.getItem("tc_token");
     if (token && !config.headers["Authorization"]) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -33,8 +33,8 @@ api.interceptors.response.use(
       const isAuthEndpoint = error.config?.url?.includes("/auth/") || 
                        error.config?.url?.includes("/curriculum/import");
       if (!isAuthEndpoint) {
-        localStorage.removeItem("tc_token");
-        localStorage.removeItem("tc_user");
+        sessionStorage.removeItem("tc_token");
+        sessionStorage.removeItem("tc_user");
         delete api.defaults.headers.common["Authorization"];
         if (!window.location.pathname.startsWith("/login")) {
           console.trace("REDIRECTING TO LOGIN");

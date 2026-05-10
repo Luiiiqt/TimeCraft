@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class CurriculumService {
 
     private final CurriculumRepository curriculumRepository;
@@ -48,7 +48,6 @@ public class CurriculumService {
         return curriculumRepository.findByCourseId(courseId);
     }
 
-    @Transactional
     public Curriculum importFile(Long courseId, String effectiveYear,
             String curriculumName, Long importedByUserId,
             MultipartFile file) throws Exception {
@@ -104,12 +103,14 @@ public class CurriculumService {
                 if (row.length < 7) {
                     continue;
                 }
-                String subjectType = row.length > 6 ? row[6].trim() : "MINOR";
-                String sessionType = row.length > 7 ? row[7].trim() : "LECTURE";
-                boolean hasLab = row.length > 8 && "true".equalsIgnoreCase(row[8].trim());
+                String subjectType = row.length > 9 ? row[9].trim() : "MINOR";
+                String rawSession = row.length > 11 ? row[11].trim().toUpperCase() : "LECTURE";
+                boolean hasLab = rawSession.contains("LABORATORY") || rawSession.contains("LAB") ||
+                                (row.length > 13 && "true".equalsIgnoreCase(row[13].trim()));
+                String sessionType = "LECTURE";
                 processRow(row[0].trim(), row[1].trim(),
-                        parseUnits(row[2]), row[3].trim(),
-                        parseYear(row[4]), parseSemester(row[5]),
+                        parseUnits(row[5]), row[6].trim(),
+                        parseYear(row[7]), parseSemester(row[8]),
                         course, curriculum, subjectType, sessionType, hasLab);
             }
         }
@@ -123,6 +124,7 @@ public class CurriculumService {
         try (Workbook wb = new XSSFWorkbook(is)) {
             Sheet sheet = wb.getSheetAt(0);
             boolean first = true;
+            java.util.Map<String, String> prereqMap = new java.util.LinkedHashMap<>();
             for (Row row : sheet) {
                 if (first) {
                     first = false;
@@ -131,11 +133,16 @@ public class CurriculumService {
                 if (row == null) {
                     continue;
                 }
-                if (cellStr(row, 0).isBlank()) {
+                String code = cellStr(row, 0);
+               log.info("ROW {}: code='{}' units='{}' year='{}'",
+                    row.getRowNum(), code, cellStr(row, 5), cellStr(row, 7));
+                if (code.isBlank()) {
                     continue;
                 }
-                String unitsStr = cellStr(row, 2);
-                String yearStr = cellStr(row, 4);
+                // Columns: A(0)=code, B-C merged(1)=name, F(5)=units, G(6)=prerequisite,
+                //          H(7)=year_level, I(8)=semester, J(9)=subject_type, L(11)=session_type, N(13)=has_lab
+                String unitsStr = cellStr(row, 5);
+                String yearStr = cellStr(row, 7);
                 if (unitsStr.isBlank() || yearStr.isBlank()) {
                     continue;
                 }
@@ -150,28 +157,38 @@ public class CurriculumService {
                 if (yearLevel < 1 || yearLevel > 5) {
                     continue;
                 }
-                String subjectType = cellStr(row, 6).isBlank() ? "MINOR" : cellStr(row, 6);
-                String sessionType = cellStr(row, 7).isBlank() ? "LECTURE" : cellStr(row, 7);
-                boolean hasLab = "true".equalsIgnoreCase(cellStr(row, 8));
+                String subjectType = cellStr(row, 9).isBlank() ? "MINOR" : cellStr(row, 9);
+                String sessionType = cellStr(row, 11).isBlank() ? "LECTURE" : cellStr(row, 11);
+                boolean hasLab = "true".equalsIgnoreCase(cellStr(row, 13));
+                String prereqCode = cellStr(row, 6);
+                if (!prereqCode.isBlank() && !prereqCode.equalsIgnoreCase("NONE")) {
+                    prereqMap.put(cellStr(row, 0), prereqCode);
+                }
                 processRow(
                         cellStr(row, 0), cellStr(row, 1),
                         units,
-                        cellStr(row, 3),
+                        cellStr(row, 6),
                         yearLevel,
-                        parseSemester(cellStr(row, 5)),
+                        parseSemester(cellStr(row, 8)),
                         course, curriculum, subjectType, sessionType, hasLab);
             }
+            // Second pass: resolve prerequisites
+            prereqMap.forEach((subjectCode, prereqCode) -> {
+                subjectRepository.findByCode(subjectCode).ifPresent(subject -> {
+                    subjectRepository.findByCode(prereqCode).ifPresent(prereq -> {
+                        subject.setPrerequisite(prereq);
+                        subjectRepository.save(subject);
+                    });
+                });
+            });
         }
     }
-
-    // ── Row processor ─────────────────────────────────────────────────────────
-    @Transactional
     protected void processRow(String code, String name, int units,
             String prerequisite, short yearLevel,
             Semester semester, Course course,
             Curriculum curriculum,
             String subjectTypeStr, String sessionTypeStr, boolean hasLab) {
-        Subject subject = subjectRepository.findByCode(code).orElseGet(() -> {
+       Subject subject = subjectRepository.findByCode(code).orElseGet(() -> {
             Subject.SubjectType sType = Subject.SubjectType.MINOR;
             Subject.SessionType sessType = Subject.SessionType.LECTURE;
             try {
@@ -182,6 +199,9 @@ public class CurriculumService {
                 sessType = Subject.SessionType.valueOf(sessionTypeStr.toUpperCase());
             } catch (Exception ignored) {
             }
+            Subject prereq = (prerequisite != null && !prerequisite.isBlank() && !prerequisite.equalsIgnoreCase("NONE"))
+                    ? subjectRepository.findByCode(prerequisite).orElse(null)
+                    : null;
             Subject s = Subject.builder()
                     .code(code)
                     .name(name)
@@ -189,21 +209,43 @@ public class CurriculumService {
                     .subjectType(sType)
                     .sessionType(sessType)
                     .hasLab(hasLab)
+                    .prerequisite(prereq)
                     .build();
-            return subjectRepository.save(s);
+            return subjectRepository.saveAndFlush(s);
         });
 
-        if (!courseSubjectRepository.existsByCourseIdAndSubjectId(
-                course.getId(), subject.getId())) {
-            courseSubjectRepository.save(CourseSubject.builder()
+        if (subject.getId() == null) {
+            log.warn("Subject {} has null ID, skipping CourseSubject insert", code);
+            return;
+        }
+
+         boolean alreadyLinked = courseSubjectRepository
+                .existsByCourseIdAndSubjectId(course.getId(), subject.getId());
+        if (!alreadyLinked) {
+            // Check if this subject is already used by another course — mark as shared
+            boolean usedByOtherCourse = courseSubjectRepository
+                    .findBySubjectId(subject.getId()).stream()
+                    .anyMatch(existing -> !existing.getCourse().getId().equals(course.getId()));
+            if (usedByOtherCourse) {
+                // Mark all existing CourseSubject entries for this subject as shared
+                courseSubjectRepository.findBySubjectId(subject.getId()).forEach(existing -> {
+                    existing.setShared(true);
+                    courseSubjectRepository.save(existing);
+                });
+            }
+            CourseSubject cs = CourseSubject.builder()
                     .course(course)
                     .subject(subject)
                     .yearLevel(yearLevel)
                     .semester(semester)
                     .curriculum(curriculum)
-                    .build());
-        }
-        log.info("Imported subject {} into curriculum {}", code, curriculum.getName());
+                    .isShared(usedByOtherCourse)
+                    .build();
+            courseSubjectRepository.saveAndFlush(cs);
+            log.info("Saved CourseSubject for subject {} yearLevel {} sem {} shared={}", code, yearLevel, semester, usedByOtherCourse);
+        } else {
+            log.warn("CourseSubject already exists for course {} subject {}", course.getId(), subject.getId());
+        }        log.info("Imported subject {} into curriculum {}", code, curriculum.getName());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

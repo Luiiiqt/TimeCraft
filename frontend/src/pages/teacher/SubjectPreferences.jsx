@@ -7,37 +7,94 @@ function getCurrentTerm() {
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
   return {
-    semester: month >= 6 && month <= 10 ? "FIRST" : "SECOND",
+    semester: month >= 1 && month <= 10 ? "FIRST" : "SECOND",
     schoolYear: `${year}-${year + 1}`,
   };
 }
+const SEMESTER_OPTIONS = [
+  { value: "FIRST", label: "1st Semester" },
+  { value: "SECOND", label: "2nd Semester" },
+  { value: "SUMMER", label: "Summer" },
+];
+const SCHOOL_YEARS = ["2024-2025", "2025-2026", "2026-2027"];
+
 export default function SubjectPreferences() {
-  const { semester: SEMESTER, schoolYear: SCHOOL_YEAR } = getCurrentTerm();
   const { user } = useAuth();
+  const [term, setTerm] = useState(getCurrentTerm());
+  const [allSubjects, setAllSubjects] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [saved, setSaved] = useState([]);
-  const [selected, setSelected] = useState(new Set());
+  const [selectedMap, setSelectedMap] = useState({}); // { "FIRST|2026-2027": Set([id1, id2]) }
+  const termKey = `${term.semester}|${term.schoolYear}`;
+  const selected = selectedMap[termKey] ?? new Set();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [yearLevel, setYearLevel] = useState("");
+  const [courses, setCourses] = useState([]);
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
+
+  const loadAllSaved = async () => {
+    try {
+      const uid = user?.userId ?? user?.id;
+      const allTerms = [];
+      SCHOOL_YEARS.forEach(sy => {
+        SEMESTER_OPTIONS.forEach(sem => {
+          allTerms.push({ semester: sem.value, schoolYear: sy });
+        });
+      });
+      const results = await Promise.all(
+        allTerms.map(t =>
+          api.get(`/teachers/${uid}/subject-preferences?semester=${t.semester}&schoolYear=${t.schoolYear}`)
+            .then(r => ({ ...t, prefs: r.data?.data ?? [] }))
+            .catch(() => ({ ...t, prefs: [] }))
+        )
+      );
+      setSelectedMap(prev => {
+        const next = { ...prev };
+        results.forEach(({ semester, schoolYear, prefs }) => {
+          if (prefs.length > 0) {
+            const key = `${semester}|${schoolYear}`;
+            const ids = new Set(next[key] ?? []);
+            prefs.forEach(p => { if (p.subject?.id) ids.add(p.subject.id); });
+            next[key] = ids;
+          }
+        });
+        return next;
+      });
+    } catch {}
+  };
 
   const load = async () => {
     setLoading(true);
-    console.log("TEACHER USER:", user);
     try {
       const uid = user?.userId ?? user?.id;
       const [sRes, pRes, aRes] = await Promise.all([
-        api.get(`/teachers/${uid}/available-subjects`),
-        api.get(`/teachers/${uid}/subject-preferences?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
-        api.get(`/teachers/my-assignments?semester=${SEMESTER}&schoolYear=${SCHOOL_YEAR}`),
+        api.get(`/teachers/${uid}/available-subjects?semester=${term.semester}`),
+        api.get(`/teachers/${uid}/subject-preferences?semester=${term.semester}&schoolYear=${term.schoolYear}`),
+        api.get(`/teachers/my-assignments?semester=${term.semester}&schoolYear=${term.schoolYear}`),
       ]);
-      const allSubjects = sRes.data?.data ?? [];
+      const all = sRes.data?.data ?? [];
       const prefs = pRes.data?.data ?? [];
-      setSubjects(allSubjects);
+      setAllSubjects(all);
       setSaved(prefs);
       setAssignments(aRes.data?.data ?? []);
-      setSelected(new Set(prefs.map(p => p.subject?.id)));
+      setSelectedMap(prev => {
+        const next = new Set(prev[termKey] ?? new Set());
+        prefs.forEach(p => { if (p.subject?.id) next.add(p.subject.id); });
+        return { ...prev, [termKey]: next };
+      });
+      // Derive unique courses from subjects
+      const uniqueCourses = [];
+      const seen = new Set();
+      all.forEach(s => {
+        if (s.courseId && !seen.has(s.courseId)) {
+          seen.add(s.courseId);
+          uniqueCourses.push({ id: s.courseId, code: s.courseCode, name: s.courseName });
+        }
+      });
+      setCourses(uniqueCourses);
     } catch {
       setMsg({ type: "error", text: "Failed to load subjects." });
     } finally {
@@ -45,25 +102,34 @@ export default function SubjectPreferences() {
     }
   };
 
-  useEffect(() => { if (user?.id ?? user?.userId) load(); }, [user]);
+  useEffect(() => { if (user?.id ?? user?.userId) { loadAllSaved(); load(); } }, [user]);
+  useEffect(() => { if (user?.id ?? user?.userId) load(); }, [term]);
 
   const toggle = (id) => {
-    setSelected(prev => {
-      const next = new Set(prev);
+    setSelectedMap(prev => {
+      const next = new Set(prev[termKey] ?? new Set());
       next.has(id) ? next.delete(id) : next.add(id);
-      return next;
+      return { ...prev, [termKey]: next };
     });
   };
-
   const handleSave = async () => {
     setSaving(true); setMsg(null);
     try {
       const uid = user?.userId ?? user?.id;
-      await api.post(`/teachers/${uid}/subject-preferences`, {
-        subjectIds: [...selected],
-        semester: SEMESTER,
-        schoolYear: SCHOOL_YEAR,
-      });
+      const entries = Object.entries(selectedMap).filter(([, ids]) => ids.size > 0);
+      if (entries.length === 0) {
+        setMsg({ type: "error", text: "No subjects selected." });
+        return;
+      }
+      await Promise.all(entries.map(([key, ids]) => {
+        const [semester, schoolYear] = key.split("|");
+        return api.post(`/teachers/${uid}/subject-preferences`, {
+          subjectIds: Array.from(ids),
+          semester,
+          schoolYear,
+          partialUpdate: true,
+        });
+      }));
       setMsg({ type: "success", text: "✅ Preferences saved!" });
       load();
     } catch (e) {
@@ -91,6 +157,28 @@ export default function SubjectPreferences() {
         Select the subjects you want to teach this semester.
       </p>
 
+      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+        <select value={term.semester} onChange={e => { setTerm(t => ({ ...t, semester: e.target.value })); }} style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
+          {SEMESTER_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+        <select value={term.schoolYear} onChange={e => { setTerm(t => ({ ...t, schoolYear: e.target.value })); }} style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
+          {SCHOOL_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        <select value={selectedCourseId ?? ""} onChange={e => setSelectedCourseId(e.target.value ? Number(e.target.value) : null)}
+          style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
+          <option value="">All Courses</option>
+          {courses.map(c => <option key={c.id} value={c.id}>{c.code}</option>)}
+        </select>
+        <select value={yearLevel} onChange={e => setYearLevel(e.target.value)}
+          style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
+          <option value="">All Year Levels</option>
+          <option value="1">Year 1</option>
+          <option value="2">Year 2</option>
+          <option value="3">Year 3</option>
+          <option value="4">Year 4</option>
+        </select>
+      </div>
+
       {msg && (
         <div style={{ background: msg.type === "success" ? "#f0fdf4" : "#fef2f2", border: `1px solid ${msg.type === "success" ? "#bbf7d0" : "#fecaca"}`, borderRadius: 8, padding: "10px 14px", marginBottom: 16, color: msg.type === "success" ? "#15803d" : "#dc2626", fontSize: 13 }}>
           {msg.text}
@@ -110,7 +198,7 @@ export default function SubjectPreferences() {
           <tbody>
             {loading ? (
               <tr><td colSpan={6} style={{ padding: 32, textAlign: "center", color: "#9ca3af" }}>Loading…</td></tr>
-            ) : subjects.map(s => {
+            ) : allSubjects.filter(s => !yearLevel || String(s.yearLevel) === yearLevel).filter(s => !selectedCourseId || s.courseId === selectedCourseId).filter((s, idx, arr) => arr.findIndex(x => x.id === s.id && (selectedCourseId ? x.courseId === s.courseId : true) && (yearLevel ? x.yearLevel === s.yearLevel : true)) === idx).map(s => {
               const checked = selected.has(s.id);
               const status = getStatus(s.id);
               const sc = status ? STATUS_COLOR[status] : null;

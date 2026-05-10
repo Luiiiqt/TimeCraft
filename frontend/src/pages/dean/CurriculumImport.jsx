@@ -27,7 +27,7 @@ export default function CurriculumImport() {
   const [assignments, setAssignments] = useState([]);
   const [term, setTerm] = useState(() => {
     const now = new Date(); const m = now.getMonth() + 1; const y = now.getFullYear();
-    return { semester: m >= 6 && m <= 10 ? "FIRST" : "SECOND", schoolYear: `${y}-${y+1}` };
+    return { semester: m >= 6 && m <= 10 ? "FIRST" : "SECOND", schoolYear: `${y}-${y + 1}` };
   });
   const [activeTab, setActiveTab] = useState("import"); // "import" | "checklist"
   const [filterYear, setFilterYear] = useState("ALL");
@@ -217,8 +217,8 @@ export default function CurriculumImport() {
                   ["year_level", "1 – 4"],
                   ["semester", "FIRST / SECOND / SUMMER"],
                   ["subject_type", "MAJOR or MINOR"],
-                  ["session_type", "LECTURE or LABORATORY"],
-                  ["has_lab", "true or false"],
+                  ["session_type", "LECTURE / LECTURE ONLY / LECTURE & LABORATORY"],
+                  ["has_lab", "TRUE or FALSE"],
                 ].map(([col, hint]) => (
                   <div key={col} style={{ fontSize: 11, color: "#6b7280" }}>
                     <span style={{ fontWeight: 700, color: "#111827" }}>{col}</span> — {hint}
@@ -513,9 +513,11 @@ export default function CurriculumImport() {
                                     {(() => {
                                       const a = assignments.find(a => a.subject?.id === cs.subject?.id);
                                       return a ? (
-                                        <span style={{ fontSize: 12, fontWeight: 600, color: a.finalized ? "#065f46" : "#92400e",
+                                        <span style={{
+                                          fontSize: 12, fontWeight: 600, color: a.finalized ? "#065f46" : "#92400e",
                                           background: a.finalized ? "#d1fae5" : "#fef3c7",
-                                          padding: "2px 8px", borderRadius: 6 }}>
+                                          padding: "2px 8px", borderRadius: 6
+                                        }}>
                                           {a.teacher?.fullName}
                                         </span>
                                       ) : <span style={{ color: "#d1d5db", fontSize: 12 }}>—</span>;

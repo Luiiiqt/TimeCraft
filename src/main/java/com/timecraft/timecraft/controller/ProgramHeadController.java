@@ -57,11 +57,12 @@ public class ProgramHeadController {
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getGroupedPreferences(
             @RequestParam String semester,
             @RequestParam String schoolYear,
+            @RequestParam(required = false) Long courseId,
             Principal principal) {
 
         Long userId = resolveUserId(principal);
         return ResponseEntity.ok(ApiResponse.of(
-                programHeadService.getPreferencesGroupedBySubject(userId, semester, schoolYear)));
+                programHeadService.getPreferencesGroupedBySubject(userId, semester, schoolYear, courseId)));
     }
 
     // ── GET /api/v1/program-head/assignments ──────────────────────────────────
