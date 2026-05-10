@@ -120,7 +120,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
          */
         @Query("SELECT s FROM Schedule s " +
                         "WHERE s.teacher.id = :teacherId " +
-                        "AND (s.timeslot.id = :timeslotId OR s.timeslot2.id = :timeslotId) " +
+                        "AND s.status = com.timecraft.timecraft.model.Schedule.ScheduleStatus.DRAFT " +
+                        "AND s.timeslot IS NOT NULL " +
+                        "AND (s.timeslot.id = :timeslotId OR (s.timeslot2 IS NOT NULL AND s.timeslot2.id = :timeslotId)) " +
                         "AND s.semester = :semester AND s.schoolYear = :schoolYear")
         List<Schedule> findTeacherConflicts(
                         @Param("teacherId") Long teacherId,
@@ -146,8 +148,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
          */
         @Query("SELECT s FROM Schedule s " +
                         "WHERE s.section.id = :sectionId " +
-                        "AND (s.timeslot.id = :timeslotId OR s.timeslot2.id = :timeslotId) " +
-                        "AND s.semester = :semester AND s.schoolYear = :schoolYear")
+                        "AND (s.timeslot.id = :timeslotId OR (s.timeslot2 IS NOT NULL AND s.timeslot2.id = :timeslotId)) " +
+                        "AND s.semester = :semester AND s.schoolYear = :schoolYear " +
+                        "AND s.status = com.timecraft.timecraft.model.Schedule.ScheduleStatus.DRAFT")
         List<Schedule> findSectionConflicts(
                         @Param("sectionId") Long sectionId,
                         @Param("timeslotId") Long timeslotId,

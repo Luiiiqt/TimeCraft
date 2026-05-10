@@ -326,9 +326,12 @@ public class SchedulingEngine {
                     + teacher.getFullName() + " for subject: " + subject.getCode());
         }
 
-        // Find an available room
+        // Find an available room — use actual subject group size not section max
+        int roomCapacity = overrideSessionType == Subject.SessionType.LABORATORY
+                ? 30  // lab sessions split the class; use lab room capacity
+                : section.getMaxStudents();
         Room room = findRoom(profile, campus, requiredRoomType,
-                section.getMaxStudents(), pair.ts1().getId(),
+                roomCapacity, pair.ts1().getId(),
                 semester, schoolYear);
 
         if (room == null) {
@@ -374,19 +377,10 @@ public class SchedulingEngine {
         List<Timeslot> allSlots = timeslotRepository
                 .findAllByOrderByDayOfWeekAscSlotNumberAsc();
 
-        // Get all sections of same year level to check combined availability
-        List<Section> sameLevelSections = sectionRepository
-                .findBySemesterAndSchoolYear(semester, schoolYear)
-                .stream()
-                .filter(Section::isActive)
-                .filter(s -> s.getYearLevel() == section.getYearLevel())
-                .toList();
-
         List<Timeslot> freeSlots = allSlots.stream()
                 .filter(ts -> isTeacherAvailableAtSlot(teacher, ts))
                 .filter(ts -> isSlotFreeForTeacher(teacher, ts, semester, schoolYear))
-                .filter(ts -> sameLevelSections.stream()
-                        .allMatch(s -> isSlotFreeForSection(s, ts, semester, schoolYear)))
+                .filter(ts -> isSlotFreeForSection(section, ts, semester, schoolYear))
                 .toList();
 
         // Count how many classes the section already has per day
@@ -568,15 +562,39 @@ private boolean isAlreadyScheduledForYearLevel(Subject subject, Semester semeste
         if (subject.getDepartment() == null) {
             return null;
         }
-return teacherProfileRepository
+// Get teachers already scheduled for this subject in other sections this term
+        List<Long> alreadyTeachingThisSubject = scheduleRepository
+                .findBySubjectIdAndSemesterAndSchoolYear(subject.getId(), semester, schoolYear)
+                .stream()
+                .filter(s -> s.getStatus() == ScheduleStatus.DRAFT)
+                .filter(s -> s.getTeacher() != null)
+                .map(s -> s.getTeacher().getId())
+                .distinct()
+                .toList();
+
+        // Prefer teachers NOT already teaching this subject (spread the load)
+        // Fall back to any available teacher if no fresh one exists
+        List<User> departmentTeachers = teacherProfileRepository
                 .findByDepartmentId(subject.getDepartment().getId())
                 .stream()
                 .map(TeacherProfile::getUser)
                 .filter(u -> u != null && u.isActive())
                 .filter(u -> hasAvailableTimeslotPair(u, section, semester, schoolYear))
+                .toList();
+
+        log.debug("Department teachers for {}: {} total, {} with available slots",
+                subject.getCode(), 
+                teacherProfileRepository.findByDepartmentId(subject.getDepartment().getId()).size(),
+                departmentTeachers.size());
+        return departmentTeachers.stream()
+                .filter(u -> !alreadyTeachingThisSubject.contains(u.getId()))
                 .min(Comparator.comparingLong(
                         u -> scheduleRepository.countByTeacherIdAndStatus(
                                 u.getId(), ScheduleStatus.DRAFT)))
+                .or(() -> departmentTeachers.stream()
+                        .min(Comparator.comparingLong(
+                                u -> scheduleRepository.countByTeacherIdAndStatus(
+                                        u.getId(), ScheduleStatus.DRAFT))))
                 .orElse(null);
     }
     // ── Conflict save helper ───────────────────────────────────────────────────
