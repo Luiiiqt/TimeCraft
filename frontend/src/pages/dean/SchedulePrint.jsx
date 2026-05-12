@@ -4,15 +4,32 @@ import api from "../../services/api";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-const TIMESLOTS = [
-  { slot: 1, display: "7:30 – 9:00 AM",      startTime: "07:30" },
-  { slot: 2, display: "9:00 – 10:30 AM",     startTime: "09:00" },
-  { slot: 3, display: "10:30 AM – 12:00 PM", startTime: "10:30" },
-  { slot: 4, display: "12:00 – 1:30 PM",     startTime: "12:00" },
-  { slot: 5, display: "1:30 – 3:00 PM",      startTime: "13:30" },
-  { slot: 6, display: "3:00 – 4:30 PM",      startTime: "15:00" },
-  { slot: 7, display: "4:30 – 6:00 PM",      startTime: "16:30" },
-];
+function fmt12(t) {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  return `${((h % 12) || 12)}:${String(m).padStart(2,"0")} ${h >= 12 ? "PM" : "AM"}`;
+}
+
+function buildTimeslots(schedules) {
+  const map = new Map();
+  schedules.forEach(s => {
+    if (s.startTime1) {
+      const k = s.startTime1.substring(0,5);
+      if (!map.has(k)) map.set(k, s.endTime1?.substring(0,5));
+    }
+    if (s.startTime2) {
+      const k = s.startTime2.substring(0,5);
+      if (!map.has(k)) map.set(k, s.endTime2?.substring(0,5));
+    }
+  });
+  return Array.from(map.entries())
+    .map(([start, end], i) => ({
+      slot: i + 1,
+      display: `${fmt12(start)} – ${fmt12(end)}`,
+      startTime: start,
+    }))
+    .sort((a,b) => a.startTime.localeCompare(b.startTime));
+}
 
 const SESSION_COLORS = {
   LABORATORY: { bg: "#FFF3E0", border: "#FB8C00", text: "#E65100", badge: "#FB8C00" },
@@ -102,14 +119,20 @@ export default function SchedulePrint() {
   const currentSection = sections.find(s => s.id === sectionId);
 
   // Build slot map
+  const TIMESLOTS = buildTimeslots(schedules);
   const slotMap = {};
   schedules.forEach(entry => {
-    if (entry.day1 && entry.startTime1)
-      slotMap[`${entry.day1.toUpperCase()}-${entry.startTime1}`] = entry;
-    if (entry.day2 && entry.startTime2)
-      slotMap[`${entry.day2.toUpperCase()}-${entry.startTime2}`] = entry;
+    if (entry.day1 && entry.startTime1) {
+      const k = `${entry.day1.toUpperCase()}-${entry.startTime1.substring(0,5)}`;
+      if (!slotMap[k]) slotMap[k] = [];
+      if (!slotMap[k].some(e => e.id === entry.id)) slotMap[k].push(entry);
+    }
+    if (entry.day2 && entry.startTime2) {
+      const k = `${entry.day2.toUpperCase()}-${entry.startTime2.substring(0,5)}`;
+      if (!slotMap[k]) slotMap[k] = [];
+      if (!slotMap[k].some(e => e.id === entry.id)) slotMap[k].push(entry);
+    }
   });
-
   const totalSubjects = new Set(schedules.map(s => s.subjectId)).size;
   const conflicts     = schedules.filter(s => s.status === "CONFLICTED").length;
   const labCount      = [...new Set(
@@ -237,14 +260,16 @@ export default function SchedulePrint() {
                         <div style={{ fontSize: 9, color: "#D1D5DB", textAlign: "right" }}>S{slot}</div>
                       </td>
                       {DAYS.map(day => {
-                        const entry = slotMap[`${day.toUpperCase()}-${startTime}`];
+                        const entries = slotMap[`${day.toUpperCase()}-${startTime}`] ?? [];
                         return (
                           <td key={day} style={{
                             borderBottom: "1px solid #F3F4F6",
                             borderRight: "1px solid #F3F4F6",
                             padding: 4, minHeight: 80, verticalAlign: "top", height: 80,
                           }}>
-                            {entry ? <SlotCard entry={entry} /> : <div style={{ minHeight: 72 }} />}
+                            {entries.length > 0
+                              ? entries.map((entry, i) => <SlotCard key={`${entry.id}-${i}`} entry={entry} />)
+                              : <div style={{ minHeight: 72 }} />}
                           </td>
                         );
                       })}

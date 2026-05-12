@@ -45,7 +45,7 @@ export default function ScheduleView() {
         const filtered = list.filter(s => s.schoolYear === activeSchoolYear || !s.schoolYear);
         const final = filtered.length > 0 ? filtered : list;
         setSections(final);
-        if (final.length > 0) setSectionId(final[0].id);
+        setSectionId(final.length > 0 ? final[0].id : null);
       })
       .catch(() => setLoading(false));
   }, [activeCourseId, activeSemester, activeSchoolYear]);
@@ -55,9 +55,7 @@ export default function ScheduleView() {
     setLoading(true);
     api.get(`/schedules/section/${sectionId}`, { params: { semester: activeSemester, schoolYear: activeSchoolYear } })
       .then(r => {
-        const all = r.data?.data ?? [];
-        // Show PUBLISHED + DRAFT to dean/admin; students/teachers see published only
-        setSchedules(all);
+        setSchedules(r.data?.data ?? []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -99,13 +97,13 @@ export default function ScheduleView() {
             </select>
           </div>
         )}
-        {sections.length > 1 && (
+        {sections.length > 0 && (
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", marginRight: 8 }}>SECTION</label>
             <select value={sectionId ?? ""} onChange={e => setSectionId(Number(e.target.value))}
               style={{ padding: "6px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 13 }}>
               {sections.map(s => (
-                <option key={s.id} value={s.id}>Year {s.yearLevel}-{s.sectionName}</option>
+                <option key={s.id} value={s.id}>Year {s.yearLevel} — {s.sectionName}</option>
               ))}
             </select>
           </div>

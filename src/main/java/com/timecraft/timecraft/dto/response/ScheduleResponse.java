@@ -94,6 +94,9 @@ public class ScheduleResponse {
     /** DRAFT, PUBLISHED, or CONFLICTED */
     private String status;
 
+    /** TRUE if this is an online Saturday lecture */
+    private boolean isOnline;
+
     // ── Static mapper ─────────────────────────────────────────────────────────
 
     /**
@@ -182,6 +185,7 @@ public class ScheduleResponse {
 
                 // Status
                 .status(schedule.getStatus().name())
+                .isOnline(schedule.isOnline())
 
                 .build();
     }

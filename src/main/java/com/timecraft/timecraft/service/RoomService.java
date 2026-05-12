@@ -66,29 +66,26 @@ public class RoomService {
     /**
      * Used by the scheduling engine for dept (campus-locked) teachers.
      */
-    public List<Room> findAvailableRooms(Long campusId, RoomType roomType,
-            int minCapacity, Long timeslotId,
-            com.timecraft.timecraft.model.CourseSubject.Semester semester,
-            String schoolYear) {
-        return roomRepository.findAvailableRooms(
-                campusId, roomType, minCapacity,
-                timeslotId, semester, schoolYear);
-    }
+// NEW
+public List<Room> findAvailableRooms(Long campusId, RoomType roomType,
+        int minCapacity, Long timeslotId, Long timeslot2Id,
+        com.timecraft.timecraft.model.CourseSubject.Semester semester,
+        String schoolYear) {
+    return roomRepository.findAvailableRooms(
+            campusId, roomType, minCapacity,
+            timeslotId, timeslot2Id, semester.name(), schoolYear);
+}
 
-    /**
-     * Used by the scheduling engine for GE (campus-flexible) teachers.
-     * Searches both campuses, preferred campus rooms appear first.
-     */
-    public List<Room> findAvailableRoomsFlexible(RoomType roomType,
-            int minCapacity,
-            Long timeslotId,
-            com.timecraft.timecraft.model.CourseSubject.Semester semester,
-            String schoolYear,
-            Long preferredCampusId) {
-        return roomRepository.findAvailableRoomsFlexible(
-                roomType, minCapacity, timeslotId,
-                semester, schoolYear, preferredCampusId);
-    }
+public List<Room> findAvailableRoomsFlexible(RoomType roomType,
+        int minCapacity,
+        Long timeslotId, Long timeslot2Id,
+        com.timecraft.timecraft.model.CourseSubject.Semester semester,
+        String schoolYear,
+        Long preferredCampusId) {
+    return roomRepository.findAvailableRoomsFlexible(
+            roomType, minCapacity, timeslotId, timeslot2Id,
+            semester.name(), schoolYear, preferredCampusId);
+}
 
     // ── Create ────────────────────────────────────────────────────────────────
 

@@ -3,173 +3,175 @@ import ScheduleSlot from './ScheduleSlot'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-const TIMESLOTS = [
-  { slot: 1, label: '7:30 AM – 9:00 AM',    display: '7:30 – 9:00 AM',      startTime: '07:30' },
-  { slot: 2, label: '9:00 AM – 10:30 AM',   display: '9:00 – 10:30 AM',     startTime: '09:00' },
-  { slot: 3, label: '10:30 AM – 12:00 PM',  display: '10:30 AM – 12:00 PM', startTime: '10:30' },
-  { slot: 4, label: '12:00 PM – 1:30 PM',   display: '12:00 – 1:30 PM',     startTime: '12:00' },
-  { slot: 5, label: '1:30 PM – 3:00 PM',    display: '1:30 – 3:00 PM',      startTime: '13:30' },
-  { slot: 6, label: '3:00 PM – 4:30 PM',    display: '3:00 – 4:30 PM',      startTime: '15:00' },
-  { slot: 7, label: '4:30 PM – 6:00 PM',    display: '4:30 – 6:00 PM',      startTime: '16:30' },
-]
+function fmt(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':').map(Number);
+  return `${((h % 12) || 12)}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+}
 
-/**
- * TimetableGrid
- *
- * @param {Array}    schedules  - list of ScheduleResponse objects from the API
- * @param {Function} onSlotClick - called with a schedule entry when clicked
- * @param {boolean}  loading    - shows skeleton state when true
- */
+function getDuration(start, end) {
+  if (!start || !end) return 90;
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  return (eh * 60 + em) - (sh * 60 + sm);
+}
+
+// Find which row (by startTime) this time belongs to
+function findRowKey(startTime, timeblocks) {
+  const match = timeblocks.find(tb => tb.startTime === startTime);
+  return match ? match.startTime : startTime;
+}
+
 export default function TimetableGrid({ schedules = [], onSlotClick, loading = false }) {
-  // Build a lookup map: "DAY-SLOT" -> schedule entry
-  const slotMap = {}
+
+  // Build rows: one per unique startTime, keep the LONGEST endTime for that start
+  const timeRowMap = new Map();
+  schedules.forEach(s => {
+    ['1', '2'].forEach(n => {
+      const start = s[`startTime${n}`]?.substring(0, 5);
+      const end = s[`endTime${n}`]?.substring(0, 5);
+      if (!start) return;
+      if (!timeRowMap.has(start)) {
+        timeRowMap.set(start, { startTime: start, endTime: end ?? '' });
+      } else if (end && end > timeRowMap.get(start).endTime) {
+        timeRowMap.get(start).endTime = end;
+      }
+    });
+  });
+
+  const TIMEBLOCKS = Array.from(timeRowMap.values())
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  // Build slotMap: key = DAY|startTime, deduplicate by id+sessionType
+  const slotMap = {};
   schedules.forEach(entry => {
-    if (entry.day1 && entry.startTime1) {
-      const t1 = entry.startTime1.substring(0, 5)
-      slotMap[`${entry.day1.toUpperCase()}-${t1}`] = entry
-    }
-    if (entry.day2 && entry.startTime2) {
-      const t2 = entry.startTime2.substring(0, 5)
-      slotMap[`${entry.day2.toUpperCase()}-${t2}`] = entry
-    }
-  })
+    ['1', '2'].forEach(n => {
+      const day = entry[`day${n}`];
+      const start = entry[`startTime${n}`]?.substring(0, 5);
+      if (!day || !start) return;
+      const rowKey = findRowKey(start, TIMEBLOCKS);
+      const k = `${day.toUpperCase()}|${rowKey}`;
+      if (!slotMap[k]) slotMap[k] = [];
+      const exists = slotMap[k].some(e => e.id === entry.id && e.sessionType === entry.sessionType);
+      if (!exists) slotMap[k].push(entry);
+    });
+  });
 
   return (
     <div style={styles.wrapper}>
       <div style={styles.grid}>
-        {/* Top-left empty corner */}
         <div style={styles.cornerCell} />
-
-        {/* Day headers */}
         {DAYS.map(day => (
           <div key={day} style={styles.dayHeader}>
             <span style={styles.dayFull}>{day}</span>
-            <span style={styles.dayShort}>{day.slice(0, 3)}</span>
           </div>
         ))}
 
-        {/* Time rows */}
-        {TIMESLOTS.map(({ slot, label, display, startTime }) => (
-          <React.Fragment key={slot}>
-            {/* Time label */}
-            <div key={`time-${slot}`} style={styles.timeCell}>
-              <span style={styles.timeText}>{display}</span>
-              <span style={styles.slotNum}>S{slot}</span>
-            </div>
+        {TIMEBLOCKS.map(({ startTime, endTime }) => {
+          const dur = getDuration(startTime, endTime);
+          const rowHeight = dur <= 60 ? '80px' : '110px';
 
-            {/* Cells for each day */}
-            {DAYS.map(day => {
-              const dayUpper = day.toUpperCase()
-              const entry = slotMap[`${dayUpper}-${startTime}`]
+          return (
+            <React.Fragment key={startTime}>
+              <div style={{ ...styles.timeCell, minHeight: rowHeight }}>
+                <span style={styles.timeStart}>{fmt(startTime)}</span>
+                <span style={styles.timeSep}>—</span>
+                <span style={styles.timeEnd}>{fmt(endTime)}</span>
+                <span style={{
+                  fontSize: '8px', fontWeight: '700', marginTop: '2px',
+                  background: dur <= 60 ? '#FEF3C7' : '#E8F5E9',
+                  color: dur <= 60 ? '#92400E' : '#2D6A4F',
+                  borderRadius: '4px', padding: '1px 5px',
+                }}>
+                  {dur} min
+                </span>
+              </div>
 
-              return (
-                <div key={`${day}-${slot}`} style={styles.cell}>
-                  {loading ? (
-                    <div style={styles.skeleton} />
-                  ) : entry ? (
-                    <ScheduleSlot
-                      schedule={entry}
-                      onClick={() => onSlotClick?.(entry)}
-                    />
-                  ) : (
-                    <div style={styles.empty} />
-                  )}
-                </div>
-              )
-            })}
-          </React.Fragment>
-        ))}
+              {DAYS.map(day => {
+                const entries = slotMap[`${day.toUpperCase()}|${startTime}`] ?? [];
+                return (
+                  <div key={`${day}|${startTime}`} style={{ ...styles.cell, minHeight: rowHeight }}>
+                    {loading ? (
+                      <div style={{ ...styles.skeleton, height: '90px' }} />
+                    ) : entries.length > 0 ? (
+                      entries.map((entry, i) => (
+                        <ScheduleSlot
+                          key={`${entry.id}-${entry.sessionType ?? i}`}
+                          schedule={entry}
+                          onClick={() => onSlotClick?.(entry)}
+                        />
+                      ))
+                    ) : (
+                      <div style={styles.empty} />
+                    )}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          );
+        })}
       </div>
     </div>
-  )
+  );
 }
 
 const styles = {
   wrapper: {
-    overflowX: "auto",
-    borderRadius: "12px",
-    border: "1px solid #E0EAE0",
-    background: "#fff",
+    overflowX: 'auto',
+    borderRadius: '12px',
+    border: '1px solid #E0EAE0',
+    background: '#fff',
     fontFamily: "'DM Sans', sans-serif",
   },
   grid: {
-    display: "grid",
-    gridTemplateColumns: "90px repeat(6, 1fr)",
-    minWidth: "820px",
+    display: 'grid',
+    gridTemplateColumns: '110px repeat(6, 1fr)',
+    minWidth: '860px',
   },
   cornerCell: {
-    background: "#F4FAF6",
-    borderBottom: "1px solid #E0EAE0",
-    borderRight: "1px solid #E0EAE0",
+    background: '#F4FAF6',
+    borderBottom: '2px solid #D0E8D0',
+    borderRight: '2px solid #D0E8D0',
   },
   dayHeader: {
-    padding: "12px 8px",
-    textAlign: "center",
-    background: "#F4FAF6",
-    borderBottom: "1px solid #E0EAE0",
-    borderRight: "1px solid #E8EEE8",
+    padding: '14px 8px',
+    textAlign: 'center',
+    background: '#F4FAF6',
+    borderBottom: '2px solid #D0E8D0',
+    borderRight: '1px solid #E8EEE8',
   },
   dayFull: {
-    display: "block",
-    fontSize: "11px",
-    fontWeight: "700",
-    color: "#3B6D3B",
-    textTransform: "uppercase",
-    letterSpacing: "0.6px",
-    fontFamily: "'DM Sans', sans-serif",
-  },
-  dayShort: {
-    display: "none",
-    fontSize: "11px",
-    fontWeight: "700",
-    color: "#3B6D3B",
-    textTransform: "uppercase",
-    letterSpacing: "0.6px",
-    fontFamily: "'DM Sans', sans-serif",
+    display: 'block',
+    fontSize: '11px',
+    fontWeight: '700',
+    color: '#3B6D3B',
+    textTransform: 'uppercase',
+    letterSpacing: '0.8px',
   },
   timeCell: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-end",
-    padding: "8px 10px",
-    borderBottom: "1px solid #EEF4EE",
-    borderRight: "1px solid #E0EAE0",
-    minHeight: "80px",
-    gap: "3px",
-    background: "#FAFCFA",
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    padding: '6px 10px',
+    borderBottom: '1px solid #E0EAE0',
+    borderRight: '2px solid #D0E8D0',
+    background: '#F7FBF7',
+    gap: '2px',
   },
-  timeText: {
-    fontSize: "10px",
-    color: "#7AAE7A",
-    textAlign: "right",
-    letterSpacing: "0.2px",
-    fontFamily: "'DM Sans', sans-serif",
-  },
-  slotNum: {
-    fontSize: "9px",
-    color: "#AAC8AA",
-    textAlign: "right",
-    letterSpacing: "0.3px",
-    fontFamily: "'DM Sans', sans-serif",
-  },
+  timeStart: { fontSize: '10px', fontWeight: '700', color: '#2D5A2D', textAlign: 'right', whiteSpace: 'nowrap' },
+  timeSep: { fontSize: '9px', color: '#C8DEC8', textAlign: 'right' },
+  timeEnd: { fontSize: '10px', fontWeight: '700', color: '#2D5A2D', textAlign: 'right', whiteSpace: 'nowrap' },
   cell: {
-    borderBottom: "1px solid #EEF4EE",
-    borderRight: "1px solid #EEF4EE",
-    padding: "4px",
-    minHeight: "80px",
+    borderBottom: '1px solid #EEF4EE',
+    borderRight: '1px solid #EEF4EE',
+    padding: '5px',
   },
-  empty: {
-    height: "100%",
-    minHeight: "72px",
-    borderRadius: "6px",
-    background: "rgba(52,196,124,0.02)",
-  },
+  empty: { height: '100%', minHeight: '60px', borderRadius: '6px' },
   skeleton: {
-    height: "72px",
-    borderRadius: "6px",
-    background: "linear-gradient(90deg, #F4FAF6 25%, #E8F5EC 50%, #F4FAF6 75%)",
-    backgroundSize: "200% 100%",
-    animation: "shimmer 1.4s infinite",
+    borderRadius: '6px',
+    background: 'linear-gradient(90deg, #F4FAF6 25%, #E8F5EC 50%, #F4FAF6 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmer 1.4s infinite',
   },
 };

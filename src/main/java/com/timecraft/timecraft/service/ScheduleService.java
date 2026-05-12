@@ -45,15 +45,13 @@ public class ScheduleService {
     private final StudentProfileRepository studentProfileRepository;
 
     // ── Lookup ────────────────────────────────────────────────────────────────
-
     public Schedule findById(Long id) {
         return scheduleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Schedule not found: " + id));
+                "Schedule not found: " + id));
     }
 
     // ── Views ─────────────────────────────────────────────────────────────────
-
     public List<Schedule> findByTerm(Semester semester, String schoolYear) {
         return scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear);
     }
@@ -61,7 +59,10 @@ public class ScheduleService {
     public List<Schedule> findBySection(Long sectionId, Semester semester,
             String schoolYear) {
         return scheduleRepository.findBySectionIdAndSemesterAndSchoolYear(
-                sectionId, semester, schoolYear);
+                sectionId, semester, schoolYear)
+                .stream()
+                .filter(s -> s.getTimeslot() != null && s.getTimeslot2() != null)
+                .toList();
     }
 
     /**
@@ -91,14 +92,13 @@ public class ScheduleService {
     }
 
     // ── Back subjects for irregular students ──────────────────────────────────
-
     public List<Schedule> findBackSubjects(Long studentId,
             Semester semester, String schoolYear) {
 
         // Get student's current year level
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Student not found: " + studentId));
+                "Student not found: " + studentId));
 
         // Get student's profile to find year level
         // Back subjects = published schedules where section year_level < student year_level
@@ -126,23 +126,22 @@ public class ScheduleService {
     }
 
     // ── Conflict checks ───────────────────────────────────────────────────────
-
     public boolean hasTeacherConflict(Long teacherId, Long timeslotId,
             Semester semester, String schoolYear) {
         return !scheduleRepository.findTeacherConflicts(
-                teacherId, timeslotId, semester, schoolYear).isEmpty();
+                teacherId, timeslotId, semester.name(), schoolYear).isEmpty();
     }
 
     public boolean hasRoomConflict(Long roomId, Long timeslotId,
             Semester semester, String schoolYear) {
         return !scheduleRepository.findRoomConflicts(
-                roomId, timeslotId, semester, schoolYear).isEmpty();
+                roomId, timeslotId, semester.name(), schoolYear).isEmpty();
     }
 
     public boolean hasSectionConflict(Long sectionId, Long timeslotId,
             Semester semester, String schoolYear) {
         return !scheduleRepository.findSectionConflicts(
-                sectionId, timeslotId, semester, schoolYear).isEmpty();
+                sectionId, timeslotId, semester.name(), schoolYear).isEmpty();
     }
 
     public boolean hasStudentConflict(Long studentId, Long timeslotId,
@@ -152,7 +151,6 @@ public class ScheduleService {
     }
 
     // ── Manual create (admin override) ────────────────────────────────────────
-
     @Transactional
     public Schedule createManual(Long subjectId, Long roomId, Long teacherId,
             Long timeslotId, Long timeslot2Id,
@@ -160,25 +158,25 @@ public class ScheduleService {
             String schoolYear, Long campusId) {
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Subject not found: " + subjectId));
+                "Subject not found: " + subjectId));
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Room not found: " + roomId));
+                "Room not found: " + roomId));
         User teacher = userRepository.findById(teacherId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Teacher not found: " + teacherId));
+                "Teacher not found: " + teacherId));
         Timeslot ts1 = timeslotRepository.findById(timeslotId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Timeslot not found: " + timeslotId));
+                "Timeslot not found: " + timeslotId));
         Timeslot ts2 = timeslotRepository.findById(timeslot2Id)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Timeslot2 not found: " + timeslot2Id));
+                "Timeslot2 not found: " + timeslot2Id));
         Section section = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Section not found: " + sectionId));
+                "Section not found: " + sectionId));
         Campus campus = campusRepository.findById(campusId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Campus not found: " + campusId));
+                "Campus not found: " + campusId));
 
         if (ts1.getId().equals(ts2.getId())) {
             throw new IllegalArgumentException(
@@ -206,7 +204,6 @@ public class ScheduleService {
     }
 
     // ── Publish / unpublish ───────────────────────────────────────────────────
-
     @Transactional
     public Schedule publish(Long scheduleId) {
         Schedule schedule = findById(scheduleId);
@@ -228,7 +225,6 @@ public class ScheduleService {
     }
 
     // ── Irregular student assignment ──────────────────────────────────────────
-
     @Transactional
     public StudentSchedule assignIrregularStudent(Long studentId,
             Long scheduleId) {
@@ -254,7 +250,7 @@ public class ScheduleService {
 
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Student not found: " + studentId));
+                "Student not found: " + studentId));
 
         return studentScheduleRepository.save(StudentSchedule.builder()
                 .student(student)
@@ -268,13 +264,12 @@ public class ScheduleService {
         StudentSchedule ss = studentScheduleRepository
                 .findByStudentIdAndScheduleId(studentId, scheduleId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Assignment not found for student " + studentId +
-                                " and schedule " + scheduleId));
+                "Assignment not found for student " + studentId
+                + " and schedule " + scheduleId));
         studentScheduleRepository.delete(ss);
     }
 
     // ── Lock check ────────────────────────────────────────────────────────────
-
     public boolean isLockedForCourse(Long courseId, Semester semester,
             String schoolYear) {
         return scheduleRepository
@@ -283,7 +278,6 @@ public class ScheduleService {
     }
 
     // ── Reporting ─────────────────────────────────────────────────────────────
-
     public List<Object[]> getTeachingLoadReport(Semester semester,
             String schoolYear) {
         return scheduleRepository.getTeachingLoadReport(semester, schoolYear);

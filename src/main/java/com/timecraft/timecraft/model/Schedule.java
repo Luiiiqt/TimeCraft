@@ -56,8 +56,8 @@ public class Schedule {
         @JoinColumn(name = "subject_id", nullable = false)
         private Subject subject;
 
-        @ManyToOne(fetch = FetchType.LAZY, optional = false)
-        @JoinColumn(name = "room_id", nullable = false)
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "room_id")
         private Room room;
 
         /**
@@ -130,4 +130,8 @@ public class Schedule {
         @Enumerated(EnumType.STRING)
         @Column(name = "session_type")
         private SessionType sessionType; // LECTURE or LABORATORY — per schedule row
+
+        @Column(name = "is_online", nullable = false)
+        @Builder.Default
+        private boolean isOnline = false;
 }

@@ -4,7 +4,7 @@ const CSS = `
 `;
 
 export default function ScheduleSlot({ schedule, onClick }) {
-  const { subjectCode, subjectName, teacherName, roomName, sessionType, subjectType, status, campusCode } = schedule;
+  const { subjectCode, subjectName, teacherName, roomName, sessionType, subjectType, status, campusCode, isOnline } = schedule;
   const isLab      = sessionType === "LABORATORY";
   const isConflict = status === "CONFLICTED";
   const isDraft    = status === "DRAFT";
@@ -39,7 +39,11 @@ export default function ScheduleSlot({ schedule, onClick }) {
             <span style={{ color:"#AAC8AA" }}>·</span>{teacherName.split(" ").pop()}
           </span>
         )}
-        {roomName && (
+        {isOnline ? (
+          <span style={{ fontSize:"10px", color:"#6330B4", display:"flex", alignItems:"center", gap:"4px" }}>
+            <span style={{ color:"#AAC8AA" }}>◫</span>Online Class
+          </span>
+        ) : roomName && (
           <span style={{ fontSize:"10px", color:"#7AAE7A", display:"flex", alignItems:"center", gap:"4px" }}>
             <span style={{ color:"#AAC8AA" }}>◫</span>{roomName}
             {campusCode && <span style={{ fontWeight:"700", fontSize:"9px", color:"#AAC8AA", textTransform:"uppercase", marginLeft:"2px" }}>{campusCode}</span>}
@@ -49,6 +53,7 @@ export default function ScheduleSlot({ schedule, onClick }) {
           {isConflict && <span style={{ fontSize:"9px", fontWeight:"600", padding:"1px 5px", borderRadius:"4px", background:"rgba(226,75,74,0.15)", color:"#E24B4A", textTransform:"uppercase", letterSpacing:"0.3px" }}>⚠ conflict</span>}
           {isDraft    && <span style={{ fontSize:"9px", fontWeight:"600", padding:"1px 5px", borderRadius:"4px", background:"rgba(136,135,128,0.1)", color:"#888780", textTransform:"uppercase", letterSpacing:"0.3px" }}>draft</span>}
           {isLab      && <span style={{ fontSize:"9px", fontWeight:"600", padding:"1px 5px", borderRadius:"4px", background:"rgba(24,95,165,0.12)", color:"#185FA5", textTransform:"uppercase", letterSpacing:"0.3px" }}>lab</span>}
+          {isOnline   && <span style={{ fontSize:"9px", fontWeight:"600", padding:"1px 5px", borderRadius:"4px", background:"rgba(99,60,180,0.12)", color:"#6330B4", textTransform:"uppercase", letterSpacing:"0.3px" }}>🌐 online</span>}
         </div>
       </button>
     </>

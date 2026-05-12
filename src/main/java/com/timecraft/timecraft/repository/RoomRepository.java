@@ -38,65 +38,76 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
          * Filters by campus, room type, min capacity, and excludes rooms already
          * booked in either session timeslot for the given term.
          */
-        @Query("SELECT r FROM Room r " +
-                        "WHERE r.campus.id = :campusId " +
-                        "AND r.roomType = :roomType " +
-                        "AND r.capacity >= :minCapacity " +
-                        "AND r.isActive = true " +
-                        "AND r.id NOT IN (" +
-                        "  SELECT s.room.id FROM Schedule s " +
-                        "  WHERE s.room IS NOT NULL " +
-                        "  AND s.status <> com.timecraft.timecraft.model.Schedule.ScheduleStatus.CONFLICTED " +
-                        "  AND (s.timeslot.id = :timeslotId OR s.timeslot2.id = :timeslotId) " +
-                        "  AND s.semester = :semester " +
-                        "  AND s.schoolYear = :schoolYear) " +
-                        "ORDER BY FUNCTION('RANDOM')")
-        List<Room> findAvailableRooms(
-                        @Param("campusId") Long campusId,
-                        @Param("roomType") RoomType roomType,
-                        @Param("minCapacity") int minCapacity,
-                        @Param("timeslotId") Long timeslotId,
-                        @Param("semester") com.timecraft.timecraft.model.CourseSubject.Semester semester,
-                        @Param("schoolYear") String schoolYear);
+        @Query(value = "SELECT r.* FROM rooms r " +
+        "WHERE r.campus_id = :campusId " +
+        "AND r.room_type = :#{#roomType.name()} " +
+        "AND r.capacity >= :minCapacity " +
+        "AND r.is_active = true " +
+        "AND r.id NOT IN (" +
+        "  SELECT s.room_id FROM schedules s " +
+        "  LEFT JOIN timeslots ts1 ON ts1.id = s.timeslot_id " +
+        "  LEFT JOIN timeslots ts2 ON ts2.id = s.timeslot2_id " +
+        "  JOIN timeslots chk1 ON chk1.id = :timeslotId " +
+        "  JOIN timeslots chk2 ON chk2.id = :timeslot2Id " +
+        "  WHERE s.room_id IS NOT NULL " +
+        "  AND s.status <> 'CONFLICTED' " +
+        "  AND s.semester = :semester AND s.school_year = :schoolYear " +
+        "  AND (" +
+        "    (ts1.day_of_week = chk1.day_of_week AND ts1.start_time < chk1.end_time AND chk1.start_time < ts1.end_time) " +
+        "    OR (ts2.day_of_week = chk1.day_of_week AND ts2.start_time < chk1.end_time AND chk1.start_time < ts2.end_time) " +
+        "    OR (ts1.day_of_week = chk2.day_of_week AND ts1.start_time < chk2.end_time AND chk2.start_time < ts1.end_time) " +
+        "    OR (ts2.day_of_week = chk2.day_of_week AND ts2.start_time < chk2.end_time AND chk2.start_time < ts2.end_time)" +
+        "  )" +
+        ") " +
+        "ORDER BY RANDOM()",
+        nativeQuery = true)
+List<Room> findAvailableRooms(
+        @Param("campusId") Long campusId,
+        @Param("roomType") RoomType roomType,
+        @Param("minCapacity") int minCapacity,
+        @Param("timeslotId") Long timeslotId,
+        @Param("timeslot2Id") Long timeslot2Id,
+        @Param("semester") String semester,
+        @Param("schoolYear") String schoolYear);
 
-        // ── Scheduling engine: campus-flexible room lookup (GE teachers) ──────────
-
-        /**
-         * Returns available rooms across BOTH campuses for GE (campus-flexible)
-         * teachers.
-         * Results are ordered so preferred campus rooms appear first,
-         * minimizing unnecessary cross-campus travel.
-         * Use only when teacher.campusFlexible = true.
-         */
-        @Query("SELECT r FROM Room r " +
-                        "WHERE r.roomType = :roomType " +
-                        "AND r.capacity >= :minCapacity " +
-                        "AND r.isActive = true " +
-                        "AND r.id NOT IN (" +
-                        "  SELECT s.room.id FROM Schedule s " +
-                        "  WHERE s.room IS NOT NULL " +
-                        "  AND s.status <> com.timecraft.timecraft.model.Schedule.ScheduleStatus.CONFLICTED " +
-                        "  AND (s.timeslot.id = :timeslotId OR s.timeslot2.id = :timeslotId) " +
-                        "  AND s.semester = :semester " +
-                        "  AND s.schoolYear = :schoolYear) " +
-                        "ORDER BY CASE WHEN r.campus.id = :preferredCampusId THEN 0 ELSE 1 END")
-        List<Room> findAvailableRoomsFlexible(
-                        @Param("roomType") RoomType roomType,
-                        @Param("minCapacity") int minCapacity,
-                        @Param("timeslotId") Long timeslotId,
-                        @Param("semester") com.timecraft.timecraft.model.CourseSubject.Semester semester,
-                        @Param("schoolYear") String schoolYear,
-                        @Param("preferredCampusId") Long preferredCampusId);
-
-        // ── Room utilisation report ───────────────────────────────────────────────
+@Query(value = "SELECT r.* FROM rooms r " +
+        "WHERE r.room_type = :#{#roomType.name()} " +
+        "AND r.capacity >= :minCapacity " +
+        "AND r.is_active = true " +
+        "AND r.id NOT IN (" +
+        "  SELECT s.room_id FROM schedules s " +
+        "  LEFT JOIN timeslots ts1 ON ts1.id = s.timeslot_id " +
+        "  LEFT JOIN timeslots ts2 ON ts2.id = s.timeslot2_id " +
+        "  JOIN timeslots chk1 ON chk1.id = :timeslotId " +
+        "  JOIN timeslots chk2 ON chk2.id = :timeslot2Id " +
+        "  WHERE s.room_id IS NOT NULL " +
+        "  AND s.status <> 'CONFLICTED' " +
+        "  AND s.semester = :semester AND s.school_year = :schoolYear " +
+        "  AND (" +
+        "    (ts1.day_of_week = chk1.day_of_week AND ts1.start_time < chk1.end_time AND chk1.start_time < ts1.end_time) " +
+        "    OR (ts2.day_of_week = chk1.day_of_week AND ts2.start_time < chk1.end_time AND chk1.start_time < ts2.end_time) " +
+        "    OR (ts1.day_of_week = chk2.day_of_week AND ts1.start_time < chk2.end_time AND chk2.start_time < ts1.end_time) " +
+        "    OR (ts2.day_of_week = chk2.day_of_week AND ts2.start_time < chk2.end_time AND chk2.start_time < ts2.end_time)" +
+        "  )" +
+        ") " +
+        "ORDER BY CASE WHEN r.campus_id = :preferredCampusId THEN 0 ELSE 1 END",
+        nativeQuery = true)
+List<Room> findAvailableRoomsFlexible(
+        @Param("roomType") RoomType roomType,
+        @Param("minCapacity") int minCapacity,
+        @Param("timeslotId") Long timeslotId,
+        @Param("timeslot2Id") Long timeslot2Id,
+        @Param("semester") String semester,
+        @Param("schoolYear") String schoolYear,
+        @Param("preferredCampusId") Long preferredCampusId);
 
         @Query("SELECT r, COUNT(s) AS scheduledCount FROM Room r " +
-                        "LEFT JOIN Schedule s ON s.room = r " +
-                        "AND s.semester = :semester AND s.schoolYear = :schoolYear " +
-                        "WHERE r.campus.id = :campusId " +
-                        "GROUP BY r")
-        List<Object[]> getRoomUtilisationByCampusAndTerm(
-                        @Param("campusId") Long campusId,
-                        @Param("semester") com.timecraft.timecraft.model.CourseSubject.Semester semester,
-                        @Param("schoolYear") String schoolYear);
+        "LEFT JOIN Schedule s ON s.room = r " +
+        "AND s.semester = :semester AND s.schoolYear = :schoolYear " +
+        "WHERE r.campus.id = :campusId " +
+        "GROUP BY r")
+List<Object[]> getRoomUtilisationByCampusAndTerm(
+        @Param("campusId") Long campusId,
+        @Param("semester") com.timecraft.timecraft.model.CourseSubject.Semester semester,
+        @Param("schoolYear") String schoolYear);
 }

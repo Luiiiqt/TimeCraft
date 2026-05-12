@@ -78,6 +78,8 @@ public class ConflictLog {
         /** Health-related course scheduled at the wrong campus. */
         WRONG_CAMPUS,
         /** Teacher assigned to a subject outside their department. */
-        WRONG_DEPARTMENT
+        WRONG_DEPARTMENT,
+        /** Two subjects assigned to the same section at the same timeslot. */
+        SECTION_CONFLICT
     }
 }
