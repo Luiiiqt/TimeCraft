@@ -139,12 +139,7 @@ ON CONFLICT DO NOTHING;
 
 INSERT INTO dean_courses (dean_user_id, course_id)
 SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'dean.ccse1@timecraft.edu' AND c.code IN ('BSIT','BSCS','BSCPE')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO dean_courses (dean_user_id, course_id)
-SELECT u.id, c.id FROM users u, courses c
-WHERE u.email = 'dean.ccse2@timecraft.edu' AND c.code IN ('BECT','DIT','MIS')
+WHERE u.email = 'dean.ccse@timecraft.edu' AND c.code IN ('BSIT','BSCS','BSCPE','BECT','DIT','MIS')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO dean_courses (dean_user_id, course_id)

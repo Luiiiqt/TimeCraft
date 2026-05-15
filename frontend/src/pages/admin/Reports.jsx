@@ -41,6 +41,49 @@ export default function Reports() {
   const [auditResult,     setAuditResult]     = useState(null);
   const [summaryLoading,  setSummaryLoading]  = useState(false);
 
+  // Resolve modal state
+  const [resolving,     setResolving]     = useState(null); // conflict log object
+  const [resolveForm,   setResolveForm]   = useState({ teacherId:"", roomId:"", timeslotId:"", timeslot2Id:"" });
+  const [resolveMsg,    setResolveMsg]    = useState("");
+  const [resolveLoading,setResolveLoading]= useState(false);
+  const [teachers,      setTeachers]      = useState([]);
+  const [rooms,         setRooms]         = useState([]);
+  const [timeslots,     setTimeslots]     = useState([]);
+
+  const openResolveModal = async (conflict) => {
+    setResolving(conflict);
+    setResolveForm({ teacherId:"", roomId:"", timeslotId:"", timeslot2Id:"" });
+    setResolveMsg("");
+    try {
+      const [t, r, ts] = await Promise.all([
+        api.get("/teachers"),
+        api.get("/rooms"),
+        api.get("/timeslots"),
+      ]);
+      setTeachers(t.data?.data ?? t.data ?? []);
+      setRooms(r.data?.data ?? r.data ?? []);
+      setTimeslots(ts.data?.data ?? ts.data ?? []);
+    } catch { /* silent */ }
+  };
+
+  const submitResolve = async () => {
+    if (!resolving?.schedule?.id) return;
+    setResolveLoading(true); setResolveMsg("");
+    try {
+      await api.put(`/schedules/${resolving.schedule.id}/resolve`, {
+        teacherId:   resolveForm.teacherId   || null,
+        roomId:      resolveForm.roomId      || null,
+        timeslotId:  resolveForm.timeslotId  || null,
+        timeslot2Id: resolveForm.timeslot2Id || null,
+      });
+      await resolveOne(resolving.id);
+      setResolveMsg("✓ Resolved");
+      setTimeout(() => { setResolving(null); handleFetchConflicts(); }, 800);
+    } catch (e) {
+      setResolveMsg("✗ " + (e.response?.data?.message ?? "Failed"));
+    } finally { setResolveLoading(false); }
+  };
+
   // ── Fetch campuses for room filter ────────────────────────────────────────
   const ensureCampuses = useCallback(async () => {
     if (campuses.length > 0) return;
@@ -189,14 +232,13 @@ export default function Reports() {
                       <td style={styles.td}>{c.schedule?.id ?? "—"}</td>
                       <td style={styles.td}>
                         <div style={{ display: "flex", gap: "0.5rem" }}>
-                          <button onClick={() => resolveOne(c.id)} style={styles.resolveBtn}
-                            disabled={actionLoading}>
-                            Resolve
+                          <button onClick={() => openResolveModal(c)} style={styles.resolveBtn}>
+                            Reassign & Resolve
                           </button>
                           {c.schedule?.id && (
                             <button onClick={() => resolveAllForSchedule(c.schedule.id)}
                               style={styles.resolveAllBtn} disabled={actionLoading}>
-                              Resolve All
+                              Dismiss All
                             </button>
                           )}
                         </div>
@@ -289,6 +331,55 @@ export default function Reports() {
           )}
         </div>
       )}
+
+      {/* ── Resolve Modal ───────────────────────────────────────────────── */}
+      {resolving && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <h3 style={{ margin:"0 0 0.5rem", fontFamily:"'Playfair Display',serif", fontSize:"1.1rem", color:"#112A17" }}>
+              Reassign Schedule #{resolving.schedule?.id}
+            </h3>
+            <p style={{ margin:"0 0 1rem", fontSize:"0.82rem", color:"#7AAE7A" }}>
+              {resolving.conflictType} — {resolving.description}
+            </p>
+            <p style={{ fontSize:"0.78rem", color:"#AAC8AA", marginBottom:"1rem" }}>
+              Leave fields blank to keep the current value.
+            </p>
+
+            {[
+              { label:"New Teacher",   key:"teacherId",   opts:teachers,  labelFn: t => t.fullName },
+              { label:"New Room",      key:"roomId",      opts:rooms,     labelFn: r => `${r.name ?? r.roomNumber} (${r.roomType})` },
+              { label:"New Timeslot 1",key:"timeslotId",  opts:timeslots, labelFn: ts => ts.label },
+              { label:"New Timeslot 2",key:"timeslot2Id", opts:timeslots, labelFn: ts => ts.label },
+            ].map(f => (
+              <div key={f.key} style={{ marginBottom:"0.75rem" }}>
+                <label style={{ fontSize:"0.78rem", fontWeight:600, color:"#7AAE7A", display:"block", marginBottom:"0.3rem" }}>
+                  {f.label}
+                </label>
+                <select value={resolveForm[f.key]}
+                  onChange={e => setResolveForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  style={{ width:"100%", padding:"0.5rem 0.75rem", border:"1.5px solid #D8EAD8", borderRadius:"7px", fontSize:"0.88rem", color:"#112A17", backgroundColor:"#fff" }}>
+                  <option value="">— Keep current —</option>
+                  {f.opts.map(o => <option key={o.id} value={o.id}>{f.labelFn(o)}</option>)}
+                </select>
+              </div>
+            ))}
+
+            {resolveMsg && (
+              <p style={{ fontSize:"0.82rem", color: resolveMsg.startsWith("✓") ? "#16a34a" : "#dc2626", margin:"0.5rem 0" }}>
+                {resolveMsg}
+              </p>
+            )}
+
+            <div style={{ display:"flex", gap:"0.75rem", justifyContent:"flex-end", marginTop:"1rem" }}>
+              <button onClick={() => setResolving(null)} style={styles.secondaryBtn}>Cancel</button>
+              <button onClick={submitResolve} disabled={resolveLoading} style={styles.primaryBtn}>
+                {resolveLoading ? "Saving…" : "Save & Resolve"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -355,5 +446,7 @@ const styles = {
   th          : { padding:"0.85rem 1.25rem", textAlign:"left", fontSize:"0.78rem", fontWeight:"700", color:"#3B6D3B", textTransform:"uppercase", letterSpacing:"0.05em", backgroundColor:"#F4FAF6", borderBottom:"1px solid #E0EAE0" },
   td          : { padding:"0.85rem 1.25rem", fontSize:"0.9rem", color:"#112A17", borderBottom:"1px solid #EEF4EE", fontFamily:"'DM Sans', sans-serif" },
   resolveBtn  : { padding:"0.3rem 0.75rem", backgroundColor:"rgba(52,196,124,0.1)", border:"1px solid rgba(52,196,124,0.25)", color:"#1A6A2A", borderRadius:"6px", fontSize:"0.8rem", fontWeight:"600", cursor:"pointer" },
-  resolveAllBtn: { padding:"0.3rem 0.75rem", backgroundColor:"transparent", border:"1px solid #D8EAD8", color:"#3B6D3B", borderRadius:"6px", fontSize:"0.8rem", fontWeight:"600", cursor:"pointer" },
+  resolveAllBtn : { padding:"0.3rem 0.75rem", backgroundColor:"transparent", border:"1px solid #D8EAD8", color:"#3B6D3B", borderRadius:"6px", fontSize:"0.8rem", fontWeight:"600", cursor:"pointer" },
+  modalOverlay  : { position:"fixed", inset:0, backgroundColor:"rgba(0,0,0,0.35)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000 },
+  modal         : { backgroundColor:"#fff", borderRadius:"14px", padding:"1.75rem", width:"440px", maxWidth:"95vw", boxShadow:"0 20px 60px rgba(0,0,0,0.18)", fontFamily:"'DM Sans',sans-serif" },
 };

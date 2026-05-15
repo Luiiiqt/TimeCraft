@@ -367,7 +367,7 @@ export default function ViewMySchedule() {
 
   useEffect(() => {
     if (teacherId) fetchPublishedByTeacher(teacherId, term.semester, term.schoolYear);
-  }, [teacherId, term.semester, term.schoolYear]);
+  }, [teacherId, term.semester, term.schoolYear, fetchPublishedByTeacher]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#F7F8FC", fontFamily: "'DM Sans', sans-serif" }}>

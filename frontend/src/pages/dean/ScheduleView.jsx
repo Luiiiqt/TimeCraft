@@ -45,7 +45,9 @@ export default function ScheduleView() {
         const filtered = list.filter(s => s.schoolYear === activeSchoolYear || !s.schoolYear);
         const final = filtered.length > 0 ? filtered : list;
         setSections(final);
-        setSectionId(final.length > 0 ? final[0].id : null);
+        // Default to first section with schedules, fallback to first section
+        const firstWithSchedules = final.find(s => s.hasSchedules) ?? final[0];
+        setSectionId(firstWithSchedules ? firstWithSchedules.id : null);
       })
       .catch(() => setLoading(false));
   }, [activeCourseId, activeSemester, activeSchoolYear]);

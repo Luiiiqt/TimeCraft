@@ -236,6 +236,23 @@ public class ScheduleController {
                         ScheduleResponse.from(schedule)));
     }
 
+    // ── PUT /api/v1/schedules/{id}/resolve ────────────────────────────────────
+
+    @PutMapping("/{id}/resolve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ScheduleResponse>> resolveConflict(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+
+        Long teacherId  = body.get("teacherId")  != null ? Long.valueOf(body.get("teacherId").toString())  : null;
+        Long roomId     = body.get("roomId")      != null ? Long.valueOf(body.get("roomId").toString())     : null;
+        Long timeslotId = body.get("timeslotId")  != null ? Long.valueOf(body.get("timeslotId").toString()) : null;
+        Long timeslot2Id= body.get("timeslot2Id") != null ? Long.valueOf(body.get("timeslot2Id").toString()): null;
+
+        Schedule resolved = scheduleService.resolveConflict(id, teacherId, roomId, timeslotId, timeslot2Id);
+        return ResponseEntity.ok(ApiResponse.success("Conflict resolved", ScheduleResponse.from(resolved)));
+    }
+
     // ── PUT /api/v1/schedules/{id}/publish ────────────────────────────────────
 
     @PutMapping("/{id}/publish")

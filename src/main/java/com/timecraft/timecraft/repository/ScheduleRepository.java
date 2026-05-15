@@ -64,10 +64,13 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     // ── Section view ──────────────────────────────────────────────────────────
     @Query("SELECT DISTINCT s FROM Schedule s "
-            + "WHERE s.section.id = :sectionId "
-            + "AND s.semester = :semester "
+            + "WHERE s.semester = :semester "
             + "AND s.schoolYear = :schoolYear "
-            + "AND s.status != com.timecraft.timecraft.model.Schedule.ScheduleStatus.CONFLICTED")
+            + "AND s.status != com.timecraft.timecraft.model.Schedule.ScheduleStatus.CONFLICTED "
+            + "AND ("
+            + "  s.section.id = :sectionId "
+            + "  OR s.mergedSection.secondarySection.id = :sectionId"
+            + ")")
     List<Schedule> findBySectionIdAndSemesterAndSchoolYear(
             @Param("sectionId") Long sectionId,
             @Param("semester") Semester semester,
@@ -87,6 +90,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByCampusIdAndSemesterAndSchoolYear(Long campusId,
             Semester semester,
             String schoolYear);
+
+        
 
     // ── Status ────────────────────────────────────────────────────────────────
     List<Schedule> findByStatus(ScheduleStatus status);
@@ -257,4 +262,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findMergedSchedulesByTerm(
             @Param("semester") Semester semester,
             @Param("schoolYear") String schoolYear);
+
+
 }

@@ -49,7 +49,7 @@ public class TeacherProfile {
      * FALSE = Department-specific teacher.
      *         Locked to the campus that serves their college.
      */
-    @Column(name = "campus_flexible", nullable = false)
+    @Column(name = "is_ge_teacher", nullable = false)
     @Builder.Default
     private boolean campusFlexible = false;
 

@@ -292,7 +292,7 @@ export default function ViewTimetable() {
         section: user?.section,
       } : null
     );
-  }, [term.semester, term.schoolYear, user?.sectionId]);
+  }, [term.semester, term.schoolYear, user?.sectionId, fetchMySchedule]);
 
   const handleTermChange = (newTerm) => setTerm(newTerm);
 

@@ -90,10 +90,11 @@ export default function ProgramHeadGenerateSchedule() {
         schoolYear: form.schoolYear,
         autoPublish: form.autoPublish,
         clearDraftsFirst: true,
-      });
+      }, { timeout: 120000 });
       setResult(res.data?.data ?? res.data);
     } catch (e) {
-      setError(e.response?.data?.message ?? "Schedule generation failed.");
+      const detail = e.response?.data?.message ?? e.response?.data?.error ?? e.message ?? "";
+      setError(`Schedule generation failed. ${detail}`.trim());
     } finally {
       setLoading(false);
       setConfirmed(false);

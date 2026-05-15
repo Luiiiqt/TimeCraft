@@ -203,6 +203,40 @@ public class ScheduleService {
         return scheduleRepository.save(schedule);
     }
 
+    // ── Conflict resolution ───────────────────────────────────────────────────
+    @Transactional
+    public Schedule resolveConflict(Long scheduleId,
+            Long teacherId, Long roomId,
+            Long timeslotId, Long timeslot2Id) {
+
+        Schedule schedule = findById(scheduleId);
+
+        if (teacherId != null) {
+            User teacher = userRepository.findById(teacherId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found: " + teacherId));
+            schedule.setTeacher(teacher);
+        }
+        if (roomId != null) {
+            Room room = roomRepository.findById(roomId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Room not found: " + roomId));
+            schedule.setRoom(room);
+        }
+        if (timeslotId != null) {
+            Timeslot ts1 = timeslotRepository.findById(timeslotId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Timeslot not found: " + timeslotId));
+            schedule.setTimeslot(ts1);
+        }
+        if (timeslot2Id != null) {
+            Timeslot ts2 = timeslotRepository.findById(timeslot2Id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Timeslot2 not found: " + timeslot2Id));
+            schedule.setTimeslot2(ts2);
+        }
+
+        // Promote to DRAFT so it can be published
+        schedule.setStatus(ScheduleStatus.DRAFT);
+        return scheduleRepository.save(schedule);
+    }
+
     // ── Publish / unpublish ───────────────────────────────────────────────────
     @Transactional
     public Schedule publish(Long scheduleId) {
