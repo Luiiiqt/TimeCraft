@@ -6,7 +6,7 @@ import useAuth from "../hooks/useAuth";
 import Navbar from "../components/layout/Navbar";
 import Sidebar from "../components/layout/Sidebar";
 import ProtectedRoute from "../components/layout/ProtectedRoute";
-import OllamaChat from "../components/ui/OllamaChat";
+
 import SchedulePrint from "../pages/dean/SchedulePrint";
 
 // ── Lazy pages ────────────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ function AppShell({ children }) {
           {children}
         </main>
       </div>
-      <OllamaChat />
+      
     </div>
   );
 }

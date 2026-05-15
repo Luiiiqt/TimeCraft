@@ -23,7 +23,6 @@ import com.timecraft.timecraft.model.CourseSubject.Semester;
 import com.timecraft.timecraft.model.Schedule;
 import com.timecraft.timecraft.model.StudentSchedule;
 import com.timecraft.timecraft.repository.UserRepository;
-import com.timecraft.timecraft.service.OllamaScheduleAdvisorService;
 import com.timecraft.timecraft.service.ScheduleService;
 import com.timecraft.timecraft.service.SchedulingEngine;
 
@@ -37,7 +36,7 @@ public class ScheduleController {
 
     private final ScheduleService            scheduleService;
     private final SchedulingEngine           schedulingEngine;
-    private final OllamaScheduleAdvisorService ollamaAdvisor;
+    
     private final UserRepository userRepository;
 
     // ── GET /api/v1/schedules ─────────────────────────────────────────────────
@@ -200,16 +199,7 @@ public class ScheduleController {
                     request.getSemester(), request.getSchoolYear());
         }
 
-        // Ask Ollama to explain the result in plain language (safe fallback)
         String ollamaExplanation = "";
-        try {
-            ollamaExplanation = ollamaAdvisor.explainGenerationResult(
-                    (int) success, (int) conflicted,
-                    request.getSemester().getLabel(),
-                    request.getSchoolYear());
-        } catch (Exception e) {
-            ollamaExplanation = "AI summary unavailable.";
-        }
 
         Map<String, Object> summary = Map.of(
                 "total",           total,
@@ -319,35 +309,6 @@ public class ScheduleController {
         return ResponseEntity.ok(ApiResponse.of(
                 scheduleService.getTeachingLoadReport(
                         Semester.valueOf(semester), schoolYear)));
-    }
-
-    // ── POST /api/v1/schedules/ask ────────────────────────────────────────────
-    // Natural language query on the current schedule (Ollama-powered)
-
-    @PostMapping("/ask")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseEntity<ApiResponse<Map<String, String>>> askSchedule(
-            @RequestParam String semester,
-            @RequestParam String schoolYear,
-            @RequestBody Map<String, String> body) {
-
-        String question = body.get("question");
-        if (question == null || question.isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Question must not be empty"));
-        }
-
-        List<Schedule> schedules = scheduleService.findByTerm(
-                Semester.valueOf(semester), schoolYear);
-
-        String answer;
-        try {
-            answer = ollamaAdvisor.answerQuery(question, schedules);
-        } catch (Exception e) {
-            answer = "AI assistant is currently unavailable.";
-        }
-
-        return ResponseEntity.ok(ApiResponse.of(Map.of("answer", answer)));
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

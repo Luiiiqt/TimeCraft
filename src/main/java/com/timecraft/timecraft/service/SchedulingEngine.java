@@ -79,7 +79,7 @@ public class SchedulingEngine {
     private final TeacherProfileRepository teacherProfileRepository;
     private final StudentChecklistRepository studentChecklistRepository;
     private final ConflictLogService conflictLogService;
-    private final OllamaScheduleAdvisorService ollamaAdvisor;
+    
     private final SubjectAssignmentRepository subjectAssignmentRepository;
     private final TeacherAvailabilityRepository teacherAvailabilityRepository;
     private final SectionConfigRepository sectionConfigRepository;
@@ -156,25 +156,6 @@ public class SchedulingEngine {
                 allSchedules.stream()
                         .filter(s -> s.getStatus() == ScheduleStatus.CONFLICTED)
                         .count());
-
-        // ── Ollama advisory pass (non-blocking) ──────────────────────
-        // Runs AFTER the CSP engine and conflict checks are complete.
-        // Ollama explains the result and flags soft issues only.
-        // Any exception from Ollama must NOT break the schedule result.
-        try {
-            List<Schedule> successfulOnly = allSchedules.stream()
-                    .filter(s -> s.getStatus() == ScheduleStatus.DRAFT)
-                    .toList();
-
-            if (!successfulOnly.isEmpty()) {
-                String summary = ollamaAdvisor.summarizeSchedule(
-                        successfulOnly, semester, schoolYear);
-                log.info("Ollama schedule summary:\n{}", summary);
-            }
-        } catch (Exception e) {
-            log.warn("Ollama advisory pass failed (non-critical): {}", e.getMessage());
-        }
-
         return allSchedules;
     }
 
