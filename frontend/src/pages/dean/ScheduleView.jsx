@@ -24,8 +24,12 @@ export default function ScheduleView() {
   const [sectionId, setSectionId] = useState(null);
   const [courses, setCourses] = useState([]);
   const [activeCourseId, setActiveCourseId] = useState(courseId ? Number(courseId) : null);
-  const [activeSemester, setActiveSemester] = useState(defaults.semester);
-  const [activeSchoolYear, setActiveSchoolYear] = useState(defaults.schoolYear);
+  const [activeSemester, setActiveSemester] = useState(
+    params.get("semester") || defaults.semester
+  );
+  const [activeSchoolYear, setActiveSchoolYear] = useState(
+    params.get("schoolYear") || defaults.schoolYear
+  );
 
   useEffect(() => {
     api.get("/dean/my-courses")
@@ -34,7 +38,7 @@ export default function ScheduleView() {
         setCourses(list);
         if (!activeCourseId && list.length > 0) setActiveCourseId(list[0].id);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -42,11 +46,15 @@ export default function ScheduleView() {
     api.get(`/sections`, { params: { courseId: activeCourseId, semester: activeSemester, schoolYear: activeSchoolYear } })
       .then(r => {
         const list = r.data?.data ?? [];
-        const filtered = list.filter(s => s.schoolYear === activeSchoolYear || !s.schoolYear);
-        const final = filtered.length > 0 ? filtered : list;
+        // Only keep sections belonging to the active course
+        const filtered = list.filter(s =>
+          (s.schoolYear === activeSchoolYear || !s.schoolYear) &&
+          s.courseId === activeCourseId
+        );
+        const final = filtered.length > 0 ? filtered : list.filter(s => s.courseId === activeCourseId);
         setSections(final);
-        // Default to first section with schedules, fallback to first section
-        const firstWithSchedules = final.find(s => s.hasSchedules) ?? final[0];
+        const sorted = [...final].sort((a, b) => a.yearLevel - b.yearLevel);
+        const firstWithSchedules = sorted.find(s => s.hasSchedules) ?? sorted[0];
         setSectionId(firstWithSchedules ? firstWithSchedules.id : null);
       })
       .catch(() => setLoading(false));
@@ -82,7 +90,7 @@ export default function ScheduleView() {
           <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", display: "block", marginBottom: 3 }}>SCHOOL YEAR</label>
           <select value={activeSchoolYear} onChange={e => { setActiveSchoolYear(e.target.value); setSectionId(null); }}
             style={{ padding: "6px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 13 }}>
-            {["2024-2025","2025-2026","2026-2027","2027-2028"].map(y => (
+            {["2024-2025", "2025-2026", "2026-2027", "2027-2028"].map(y => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
@@ -93,7 +101,7 @@ export default function ScheduleView() {
         {courses.length > 1 && (
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", marginRight: 8 }}>COURSE</label>
-            <select value={activeCourseId ?? ""} onChange={e => setActiveCourseId(Number(e.target.value))}
+            <select value={activeCourseId ?? ""} onChange={e => { setActiveCourseId(Number(e.target.value)); setSectionId(null); setSections([]); }}
               style={{ padding: "6px 12px", borderRadius: 7, border: "1.5px solid #d1d5db", fontSize: 13 }}>
               {courses.map(c => <option key={c.id} value={c.id}>{c.code}</option>)}
             </select>
@@ -123,8 +131,8 @@ export default function ScheduleView() {
 
       <TimetableGrid schedules={schedules} loading={loading} />
     </div>
-    
+
   );
 
-  
+
 }

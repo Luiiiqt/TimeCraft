@@ -12,7 +12,6 @@ import com.timecraft.timecraft.model.MergedSection;
 public interface MergedSectionRepository extends JpaRepository<MergedSection, Long> {
 
     List<MergedSection> findBySemesterAndSchoolYear(String semester, String schoolYear);
-
     Optional<MergedSection> findByPrimarySectionIdAndSecondarySectionIdAndSubjectIdAndSemesterAndSchoolYear(
             Long primarySectionId,
             Long secondarySectionId,

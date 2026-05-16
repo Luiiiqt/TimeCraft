@@ -1,5 +1,6 @@
 package com.timecraft.timecraft.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -43,6 +44,7 @@ public class ScheduleService {
     private final UserRepository userRepository;
     private final CampusRepository campusRepository;
     private final StudentProfileRepository studentProfileRepository;
+    private final com.timecraft.timecraft.repository.MergedSectionRepository mergedSectionRepository;
 
     // ── Lookup ────────────────────────────────────────────────────────────────
     public Schedule findById(Long id) {
@@ -58,11 +60,35 @@ public class ScheduleService {
 
     public List<Schedule> findBySection(Long sectionId, Semester semester,
             String schoolYear) {
-        return scheduleRepository.findBySectionIdAndSemesterAndSchoolYear(
+        // Own schedules
+        List<Schedule> own = scheduleRepository.findBySectionIdAndSemesterAndSchoolYear(
                 sectionId, semester, schoolYear)
                 .stream()
                 .filter(s -> s.getTimeslot() != null && s.getTimeslot2() != null)
                 .toList();
+
+        // Merged schedules: this section is a secondary (BSIT) — include BSCS rows
+        List<Schedule> merged = mergedSectionRepository
+                .findBySecondarySectionId(sectionId)
+                .stream()
+                .filter(ms -> ms.getSemester().equals(semester.name())
+                        && ms.getSchoolYear().equals(schoolYear))
+                .map(ms -> scheduleRepository.findBySubjectIdAndSemesterAndSchoolYear(
+                        ms.getSubject().getId(), semester, schoolYear))
+                .flatMap(List::stream)
+                .filter(s -> s.getTimeslot() != null && s.getTimeslot2() != null)
+                .filter(s -> s.getSection() != null
+                        && s.getSection().getCourse().getCode().equals("BSCS"))
+                .distinct()
+                .toList();
+
+        List<Schedule> combined = new ArrayList<>(own);
+        merged.forEach(s -> {
+            if (combined.stream().noneMatch(e -> e.getId().equals(s.getId()))) {
+                combined.add(s);
+            }
+        });
+        return combined;
     }
 
     /**

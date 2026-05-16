@@ -4,7 +4,8 @@ const CSS = `
 `;
 
 export default function ScheduleSlot({ schedule, onClick }) {
-  const { subjectCode, subjectName, teacherName, roomName, sessionType, subjectType, status, campusCode, isOnline } = schedule;
+  const { subjectCode, subjectName, teacherName, roomName, sessionType, subjectType, status, campusCode } = schedule;
+  const isOnline   = schedule.online ?? schedule.isOnline ?? false;
   const isLab      = sessionType === "LABORATORY";
   const isConflict = status === "CONFLICTED";
   const isDraft    = status === "DRAFT";
@@ -26,7 +27,7 @@ export default function ScheduleSlot({ schedule, onClick }) {
           padding:"7px 9px", border:"none", borderRadius:"7px",
           borderLeft:`3px solid ${accent}`,
           background: bg,
-          opacity: isDraft ? 0.7 : 1,
+          opacity: isDraft ? 0.85 : 1,
           cursor:"pointer", textAlign:"left",
           transition:"filter 0.15s, transform 0.12s",
           overflow:"hidden", fontFamily:"'DM Sans', sans-serif",
@@ -43,12 +44,12 @@ export default function ScheduleSlot({ schedule, onClick }) {
           <span style={{ fontSize:"10px", color:"#6330B4", display:"flex", alignItems:"center", gap:"4px" }}>
             <span style={{ color:"#AAC8AA" }}>◫</span>Online Class
           </span>
-        ) : roomName && (
+        ) : roomName ? (
           <span style={{ fontSize:"10px", color:"#7AAE7A", display:"flex", alignItems:"center", gap:"4px" }}>
             <span style={{ color:"#AAC8AA" }}>◫</span>{roomName}
             {campusCode && <span style={{ fontWeight:"700", fontSize:"9px", color:"#AAC8AA", textTransform:"uppercase", marginLeft:"2px" }}>{campusCode}</span>}
           </span>
-        )}
+        ) : null}
         <div style={{ display:"flex", flexWrap:"wrap", gap:"3px", marginTop:"2px" }}>
           {isConflict && <span style={{ fontSize:"9px", fontWeight:"600", padding:"1px 5px", borderRadius:"4px", background:"rgba(226,75,74,0.15)", color:"#E24B4A", textTransform:"uppercase", letterSpacing:"0.3px" }}>⚠ conflict</span>}
           {isDraft    && <span style={{ fontSize:"9px", fontWeight:"600", padding:"1px 5px", borderRadius:"4px", background:"rgba(136,135,128,0.1)", color:"#888780", textTransform:"uppercase", letterSpacing:"0.3px" }}>draft</span>}
@@ -58,4 +59,4 @@ export default function ScheduleSlot({ schedule, onClick }) {
       </button>
     </>
   );
-}
+}           

@@ -95,6 +95,9 @@ public class ScheduleResponse {
     private String status;
 
     /** TRUE if this is an online Saturday lecture */
+// REPLACE WITH:
+    /** TRUE if this is an online Saturday lecture */
+    @com.fasterxml.jackson.annotation.JsonProperty("isOnline")
     private boolean isOnline;
 
     // ── Static mapper ─────────────────────────────────────────────────────────

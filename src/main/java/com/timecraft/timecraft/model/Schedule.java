@@ -134,4 +134,14 @@ public class Schedule {
         @Column(name = "is_online", nullable = false)
         @Builder.Default
         private boolean isOnline = false;
+
+        /** TRUE if the first session (timeslot) is conducted online. */
+        @Column(name = "is_online_ts1", nullable = false)
+        @Builder.Default
+        private boolean isOnlineTs1 = false;
+
+        /** TRUE if the second session (timeslot2) is conducted online. */
+        @Column(name = "is_online_ts2", nullable = false)
+        @Builder.Default
+        private boolean isOnlineTs2 = false;
 }

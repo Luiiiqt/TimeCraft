@@ -1,7 +1,8 @@
 import React from 'react'
 import ScheduleSlot from './ScheduleSlot'
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 function fmt(t) {
   if (!t) return '';
@@ -9,73 +10,148 @@ function fmt(t) {
   return `${((h % 12) || 12)}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
 }
 
-function getDuration(start, end) {
-  if (!start || !end) return 90;
-  const [sh, sm] = start.split(':').map(Number);
-  const [eh, em] = end.split(':').map(Number);
-  return (eh * 60 + em) - (sh * 60 + sm);
-}
-
-// Find which row (by startTime) this time belongs to
-function findRowKey(startTime, timeblocks) {
-  const match = timeblocks.find(tb => tb.startTime === startTime);
-  return match ? match.startTime : startTime;
+function toMinutes(t) {
+  if (!t) return 0;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
 }
 
 export default function TimetableGrid({ schedules = [], onSlotClick, loading = false }) {
 
-  // Build rows: one per unique startTime, keep the LONGEST endTime for that start
-  const timeRowMap = new Map();
-  schedules.forEach(s => {
-    ['1', '2'].forEach(n => {
-      const start = s[`startTime${n}`]?.substring(0, 5);
-      const end = s[`endTime${n}`]?.substring(0, 5);
-      if (!start) return;
-      if (!timeRowMap.has(start)) {
-        timeRowMap.set(start, { startTime: start, endTime: end ?? '' });
-      } else if (end && end > timeRowMap.get(start).endTime) {
-        timeRowMap.get(start).endTime = end;
+  const daySlotMap = {};
+  DAYS.forEach(d => { daySlotMap[d] = new Map(); });
+
+  schedules.forEach(entry => {
+    const day1 = entry.day1?.toUpperCase();
+    const day2 = entry.day2?.toUpperCase();
+    const isOnline = entry.online === true || entry.isOnline === true || false;
+
+    const sessionType = entry.sessionType;
+
+    // For with-lab subjects: the grid receives both a LECTURE row and a LAB row
+    // for the same subject. Each row already has its own ts1+ts2 pair.
+    // We render each row on its own two days — no special merging needed.
+    // The LECTURE row shows on its 2 days, the LAB row shows on its 2 days.
+
+    const toRender = [];
+
+    if (isOnline && day1 === 'SATURDAY' && day2 === 'SATURDAY') {
+      // Rule 10: fully online minor — one card on Saturday
+      if (entry.startTime1) {
+        toRender.push({
+          day: 'SATURDAY',
+          start: entry.startTime1.substring(0, 5),
+          end: entry.endTime1?.substring(0, 5),
+          session: '1',
+          onlineOnly: true
+        });
       }
+    } else if (isOnline && day1 === 'SATURDAY') {
+      // Rule 9: Saturday online card + weekday physical card (physical is NOT online)
+      if (entry.startTime1) {
+        toRender.push({
+          day: 'SATURDAY',
+          start: entry.startTime1.substring(0, 5),
+          end: entry.endTime1?.substring(0, 5),
+          session: '1',
+          onlineOnly: true
+        });
+      }
+      if (day2 && entry.startTime2) {
+        toRender.push({
+          day: day2,
+          start: entry.startTime2.substring(0, 5),
+          end: entry.endTime2?.substring(0, 5),
+          session: '2',
+          overrideOnline: false
+        });
+      }
+    } else if (isOnline && day2 === 'SATURDAY') {
+      // ts2 is Saturday — only show ts1 weekday physical session
+      if (day1 && entry.startTime1) {
+        toRender.push({
+          day: day1,
+          start: entry.startTime1.substring(0, 5),
+          end: entry.endTime1?.substring(0, 5),
+          session: '1'
+        });
+      }
+    } else {
+      // Normal: render both physical days
+      if (day1 && entry.startTime1) {
+        toRender.push({
+          day: day1,
+          start: entry.startTime1.substring(0, 5),
+          end: entry.endTime1?.substring(0, 5),
+          session: '1'
+        });
+      }
+      if (day2 && entry.startTime2) {
+        toRender.push({
+          day: day2,
+          start: entry.startTime2.substring(0, 5),
+          end: entry.endTime2?.substring(0, 5),
+          session: '2'
+        });
+      }
+    }
+
+    toRender.forEach(({ day, start, end, session, onlineOnly, overrideOnline }) => {
+      if (!day || !start || !end || !DAYS.includes(day)) return;
+      if (!daySlotMap[day].has(start)) {
+        daySlotMap[day].set(start, { endTime: end, entries: [] });
+      } else {
+        const existing = daySlotMap[day].get(start);
+        if (toMinutes(end) > toMinutes(existing.endTime)) existing.endTime = end;
+      }
+      const slot = daySlotMap[day].get(start);
+      // Deduplicate: same schedule id + same session
+      const already = slot.entries.some(e => e.id === entry.id && e._session === session && e.sessionType === entry.sessionType);
+      if (!already) slot.entries.push({
+        ...entry,
+        _session: session,
+        isOnline: overrideOnline !== undefined ? overrideOnline : (entry.online ?? entry.isOnline ?? false),
+        online: overrideOnline !== undefined ? overrideOnline : (entry.online ?? entry.isOnline ?? false),
+      });
     });
   });
 
-  const TIMEBLOCKS = Array.from(timeRowMap.values())
-    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  // Collect all unique startTimes → grid rows
+  const allStartTimes = new Set();
+  DAYS.forEach(d => daySlotMap[d].forEach((_, start) => allStartTimes.add(start)));
+  const TIMEROWS = Array.from(allStartTimes).sort();
 
-  // Build slotMap: key = DAY|startTime, deduplicate by id+sessionType
-  const slotMap = {};
-  schedules.forEach(entry => {
-    ['1', '2'].forEach(n => {
-      const day = entry[`day${n}`];
-      const start = entry[`startTime${n}`]?.substring(0, 5);
-      if (!day || !start) return;
-      const rowKey = findRowKey(start, TIMEBLOCKS);
-      const k = `${day.toUpperCase()}|${rowKey}`;
-      if (!slotMap[k]) slotMap[k] = [];
-      const exists = slotMap[k].some(e => e.id === entry.id && e.sessionType === entry.sessionType);
-      if (!exists) slotMap[k].push(entry);
+  // Per row: use the max endTime across all days for consistent row height
+  const rowEndTime = {};
+  TIMEROWS.forEach(start => {
+    let maxEnd = '';
+    DAYS.forEach(d => {
+      const slot = daySlotMap[d].get(start);
+      if (slot && toMinutes(slot.endTime) > toMinutes(maxEnd)) maxEnd = slot.endTime;
     });
+    rowEndTime[start] = maxEnd;
   });
 
   return (
     <div style={styles.wrapper}>
       <div style={styles.grid}>
         <div style={styles.cornerCell} />
-        {DAYS.map(day => (
+        {DAY_LABELS.map(day => (
           <div key={day} style={styles.dayHeader}>
             <span style={styles.dayFull}>{day}</span>
           </div>
         ))}
 
-        {TIMEBLOCKS.map(({ startTime, endTime }) => {
-          const dur = getDuration(startTime, endTime);
-          const rowHeight = dur <= 60 ? '80px' : '110px';
+        {TIMEROWS.map(startTime => {
+          const endTime = rowEndTime[startTime];
+          const dur = toMinutes(endTime) - toMinutes(startTime);
+          const rowHeight = dur <= 60 ? '90px' : dur <= 90 ? '110px' : '130px';
 
           return (
             <React.Fragment key={startTime}>
               <div style={{ ...styles.timeCell, minHeight: rowHeight }}>
                 <span style={styles.timeStart}>{fmt(startTime)}</span>
-                <span style={styles.timeSep}>—</span>
+                <span style={styles.timeSep}>–</span>
                 <span style={styles.timeEnd}>{fmt(endTime)}</span>
                 <span style={{
                   fontSize: '8px', fontWeight: '700', marginTop: '2px',
@@ -88,15 +164,16 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
               </div>
 
               {DAYS.map(day => {
-                const entries = slotMap[`${day.toUpperCase()}|${startTime}`] ?? [];
+                const slot = daySlotMap[day].get(startTime);
+                const entries = slot?.entries ?? [];
                 return (
                   <div key={`${day}|${startTime}`} style={{ ...styles.cell, minHeight: rowHeight }}>
                     {loading ? (
-                      <div style={{ ...styles.skeleton, height: '90px' }} />
+                      <div style={{ ...styles.skeleton, height: '80px' }} />
                     ) : entries.length > 0 ? (
                       entries.map((entry, i) => (
                         <ScheduleSlot
-                          key={`${entry.id}-${entry.sessionType ?? i}`}
+                          key={`${entry.id}-${entry._session}-${i}`}
                           schedule={entry}
                           onClick={() => onSlotClick?.(entry)}
                         />
@@ -166,6 +243,9 @@ const styles = {
     borderBottom: '1px solid #EEF4EE',
     borderRight: '1px solid #EEF4EE',
     padding: '5px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
   },
   empty: { height: '100%', minHeight: '60px', borderRadius: '6px' },
   skeleton: {

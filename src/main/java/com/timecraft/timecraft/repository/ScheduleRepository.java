@@ -64,12 +64,13 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     // ── Section view ──────────────────────────────────────────────────────────
     @Query("SELECT DISTINCT s FROM Schedule s "
+            + "LEFT JOIN s.mergedSection ms "
             + "WHERE s.semester = :semester "
             + "AND s.schoolYear = :schoolYear "
             + "AND s.status != com.timecraft.timecraft.model.Schedule.ScheduleStatus.CONFLICTED "
             + "AND ("
             + "  s.section.id = :sectionId "
-            + "  OR s.mergedSection.secondarySection.id = :sectionId"
+            + "  OR ms.secondarySection.id = :sectionId"
             + ")")
     List<Schedule> findBySectionIdAndSemesterAndSchoolYear(
             @Param("sectionId") Long sectionId,
