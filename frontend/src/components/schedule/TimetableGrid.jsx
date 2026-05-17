@@ -24,6 +24,9 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
   schedules.forEach(entry => {
     const day1 = entry.day1?.toUpperCase();
     const day2 = entry.day2?.toUpperCase();
+    // Use actual end times per session for correct row keying
+    const end1 = entry.endTime1?.substring(0, 5);
+    const end2 = entry.endTime2?.substring(0, 5);
     const isOnline = entry.online === true || entry.isOnline === true || false;
 
     const sessionType = entry.sessionType;
@@ -77,13 +80,16 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
         });
       }
     } else {
-      // Normal: render both physical days
+      // Normal: render both days, but respect per-session online flags
+      const ts1Online = entry.isOnlineTs1 === true || entry.onlineTs1 === true;
+      const ts2Online = entry.isOnlineTs2 === true || entry.onlineTs2 === true;
       if (day1 && entry.startTime1) {
         toRender.push({
           day: day1,
           start: entry.startTime1.substring(0, 5),
           end: entry.endTime1?.substring(0, 5),
-          session: '1'
+          session: '1',
+          overrideOnline: ts1Online
         });
       }
       if (day2 && entry.startTime2) {
@@ -91,21 +97,20 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
           day: day2,
           start: entry.startTime2.substring(0, 5),
           end: entry.endTime2?.substring(0, 5),
-          session: '2'
+          session: '2',
+          overrideOnline: ts2Online
         });
       }
     }
 
     toRender.forEach(({ day, start, end, session, onlineOnly, overrideOnline }) => {
       if (!day || !start || !end || !DAYS.includes(day)) return;
-      if (!daySlotMap[day].has(start)) {
-        daySlotMap[day].set(start, { endTime: end, entries: [] });
-      } else {
-        const existing = daySlotMap[day].get(start);
-        if (toMinutes(end) > toMinutes(existing.endTime)) existing.endTime = end;
+      // Key by "start|end" so different durations at same start get separate rows
+      const rowKey = `${start}|${end}`;
+      if (!daySlotMap[day].has(rowKey)) {
+        daySlotMap[day].set(rowKey, { startTime: start, endTime: end, entries: [] });
       }
-      const slot = daySlotMap[day].get(start);
-      // Deduplicate: same schedule id + same session
+      const slot = daySlotMap[day].get(rowKey);      // Deduplicate: same schedule id + same session
       const already = slot.entries.some(e => e.id === entry.id && e._session === session && e.sessionType === entry.sessionType);
       if (!already) slot.entries.push({
         ...entry,
@@ -117,19 +122,18 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
   });
 
   // Collect all unique startTimes → grid rows
-  const allStartTimes = new Set();
-  DAYS.forEach(d => daySlotMap[d].forEach((_, start) => allStartTimes.add(start)));
-  const TIMEROWS = Array.from(allStartTimes).sort();
+  const allRowKeys = new Set();
+  DAYS.forEach(d => daySlotMap[d].forEach((_, key) => allRowKeys.add(key)));
+  const TIMEROWS = Array.from(allRowKeys).sort(); // sorts by "HH:MM|HH:MM" which is correct
 
-  // Per row: use the max endTime across all days for consistent row height
   const rowEndTime = {};
-  TIMEROWS.forEach(start => {
-    let maxEnd = '';
-    DAYS.forEach(d => {
-      const slot = daySlotMap[d].get(start);
-      if (slot && toMinutes(slot.endTime) > toMinutes(maxEnd)) maxEnd = slot.endTime;
-    });
-    rowEndTime[start] = maxEnd;
+  const rowStartTime = {};
+  const rowMinEnd = {};
+  TIMEROWS.forEach(key => {
+    const [start, end] = key.split('|');
+    rowStartTime[key] = start;
+    rowEndTime[key] = end;
+    rowMinEnd[key] = end;
   });
 
   return (
@@ -142,39 +146,56 @@ export default function TimetableGrid({ schedules = [], onSlotClick, loading = f
           </div>
         ))}
 
-        {TIMEROWS.map(startTime => {
-          const endTime = rowEndTime[startTime];
+        {TIMEROWS.map(rowKey => {
+          const startTime = rowStartTime[rowKey];
+          const endTime = rowEndTime[rowKey];
           const dur = toMinutes(endTime) - toMinutes(startTime);
           const rowHeight = dur <= 60 ? '90px' : dur <= 90 ? '110px' : '130px';
 
           return (
-            <React.Fragment key={startTime}>
+            <React.Fragment key={rowKey}>
               <div style={{ ...styles.timeCell, minHeight: rowHeight }}>
                 <span style={styles.timeStart}>{fmt(startTime)}</span>
                 <span style={styles.timeSep}>–</span>
-                <span style={styles.timeEnd}>{fmt(endTime)}</span>
-                <span style={{
-                  fontSize: '8px', fontWeight: '700', marginTop: '2px',
-                  background: dur <= 60 ? '#FEF3C7' : '#E8F5E9',
-                  color: dur <= 60 ? '#92400E' : '#2D6A4F',
-                  borderRadius: '4px', padding: '1px 5px',
-                }}>
-                  {dur} min
+                <span style={styles.timeEnd}>
+                  {rowMinEnd[startTime] !== endTime
+                    ? `${fmt(rowMinEnd[startTime])} / ${fmt(endTime)}`
+                    : fmt(endTime)}
                 </span>
+                {(() => {
+                  const durs = new Set();
+                  DAYS.forEach(d => {
+                    const slot = daySlotMap[d].get(rowKey);
+                    if (slot) slot.entries.forEach(e => {
+                      const eEnd = e._session === '1' ? e.endTime1 : e.endTime2;
+                      if (eEnd) durs.add(toMinutes(eEnd.substring(0, 5)) - toMinutes(startTime));
+                    });
+                  });
+                  return Array.from(durs).sort().map(d => (
+                    <span key={d} style={{
+                      fontSize: '8px', fontWeight: '700', marginTop: '2px',
+                      background: d <= 60 ? '#FEF3C7' : '#E8F5E9',
+                      color: d <= 60 ? '#92400E' : '#2D6A4F',
+                      borderRadius: '4px', padding: '1px 5px',
+                    }}>{d} min</span>
+                  ));
+                })()}
               </div>
-
               {DAYS.map(day => {
-                const slot = daySlotMap[day].get(startTime);
+                const slot = daySlotMap[day].get(rowKey);
                 const entries = slot?.entries ?? [];
                 return (
-                  <div key={`${day}|${startTime}`} style={{ ...styles.cell, minHeight: rowHeight }}>
+                  <div key={`${day}|${rowKey}`} style={{ ...styles.cell, minHeight: rowHeight }}>
                     {loading ? (
                       <div style={{ ...styles.skeleton, height: '80px' }} />
                     ) : entries.length > 0 ? (
                       entries.map((entry, i) => (
                         <ScheduleSlot
                           key={`${entry.id}-${entry._session}-${i}`}
-                          schedule={entry}
+                          schedule={{
+                            ...entry,
+                            _displayEnd: entry._session === '1' ? entry.endTime1 : entry.endTime2,
+                          }}
                           onClick={() => onSlotClick?.(entry)}
                         />
                       ))

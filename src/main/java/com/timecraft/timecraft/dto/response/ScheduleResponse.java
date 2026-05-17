@@ -100,6 +100,14 @@ public class ScheduleResponse {
     @com.fasterxml.jackson.annotation.JsonProperty("isOnline")
     private boolean isOnline;
 
+    /** TRUE if session 1 (ts1) is online */
+    @com.fasterxml.jackson.annotation.JsonProperty("isOnlineTs1")
+    private boolean isOnlineTs1;
+
+    /** TRUE if session 2 (ts2) is online */
+    @com.fasterxml.jackson.annotation.JsonProperty("isOnlineTs2")
+    private boolean isOnlineTs2;
+
     // ── Static mapper ─────────────────────────────────────────────────────────
 
     /**
@@ -189,6 +197,8 @@ public class ScheduleResponse {
                 // Status
                 .status(schedule.getStatus().name())
                 .isOnline(schedule.isOnline())
+                .isOnlineTs1(schedule.isOnlineTs1())
+                .isOnlineTs2(schedule.isOnlineTs2())
 
                 .build();
     }

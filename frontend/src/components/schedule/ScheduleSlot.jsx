@@ -1,3 +1,9 @@
+function toMinutes(t) {
+  if (!t) return 0;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
 const CSS = `
   .tc-slot:hover { filter: brightness(1.06); transform: translateY(-1px); }
   .tc-slot:active { transform: scale(0.98); }
@@ -5,6 +11,11 @@ const CSS = `
 
 export default function ScheduleSlot({ schedule, onClick }) {
   const { subjectCode, subjectName, teacherName, roomName, sessionType, subjectType, status, campusCode } = schedule;
+  const displayEnd = schedule._displayEnd;
+  const displayStart = schedule._session === '1' ? schedule.startTime1 : schedule.startTime2;
+  const slotDur = displayStart && displayEnd
+    ? toMinutes(displayEnd.substring(0,5)) - toMinutes(displayStart.substring(0,5))
+    : null;
   const isOnline   = schedule.online ?? schedule.isOnline ?? false;
   const isLab      = sessionType === "LABORATORY";
   const isConflict = status === "CONFLICTED";
@@ -53,6 +64,7 @@ export default function ScheduleSlot({ schedule, onClick }) {
         <div style={{ display:"flex", flexWrap:"wrap", gap:"3px", marginTop:"2px" }}>
           {isConflict && <span style={{ fontSize:"9px", fontWeight:"600", padding:"1px 5px", borderRadius:"4px", background:"rgba(226,75,74,0.15)", color:"#E24B4A", textTransform:"uppercase", letterSpacing:"0.3px" }}>⚠ conflict</span>}
           {isDraft    && <span style={{ fontSize:"9px", fontWeight:"600", padding:"1px 5px", borderRadius:"4px", background:"rgba(136,135,128,0.1)", color:"#888780", textTransform:"uppercase", letterSpacing:"0.3px" }}>draft</span>}
+               {slotDur && <span style={{ fontSize:'9px', fontWeight:'600', padding:'1px 5px', borderRadius:'4px', background: slotDur <= 60 ? '#FEF3C7' : '#E8F5E9', color: slotDur <= 60 ? '#92400E' : '#2D6A4F' }}>{slotDur} min</span>}
           {isLab      && <span style={{ fontSize:"9px", fontWeight:"600", padding:"1px 5px", borderRadius:"4px", background:"rgba(24,95,165,0.12)", color:"#185FA5", textTransform:"uppercase", letterSpacing:"0.3px" }}>lab</span>}
           {isOnline   && <span style={{ fontSize:"9px", fontWeight:"600", padding:"1px 5px", borderRadius:"4px", background:"rgba(99,60,180,0.12)", color:"#6330B4", textTransform:"uppercase", letterSpacing:"0.3px" }}>🌐 online</span>}
         </div>
