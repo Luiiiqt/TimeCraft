@@ -58,10 +58,10 @@ public class AuthController {
                     request.getSchoolId(),
                     request.getEmail(),
                     request.getPassword(),
-                    request.getDepartmentId(),
+                    request.getDepartmentId(),   // nullable — derived from course
                     request.getCourseId(),
-                    request.getYearLevel(),
-                    request.getSection(),
+                    request.getYearLevel() != null ? request.getYearLevel() : 1,
+                    request.getSection(),        // nullable — auto irregular
                     request.isIrregular());
         } else {
             teacherService.createTeacher(

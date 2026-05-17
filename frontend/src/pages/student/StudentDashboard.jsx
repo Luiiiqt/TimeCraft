@@ -10,7 +10,7 @@ function getDefaultTerm() {
   const now = new Date();
   const month = now.getMonth() + 1;
   const year  = now.getFullYear();
-  const semester = month >= 6 && month <= 10 ? "FIRST" : "SECOND";
+  const semester = month >= 6 && month <= 10 ? "FIRST" : month >= 11 || month <= 3 ? "SECOND" : "FIRST";
   const schoolYear = `${year}-${year + 1}`;
   return { semester, schoolYear };
 }
@@ -263,7 +263,7 @@ export default function StudentDashboard() {
                   <span style={{ color: "rgba(255,255,255,0.35)" }}>{label}</span>
                   <span style={{
                     color: "#F1F5F9", fontWeight: 500,
-                    textAlign: "right", maxWidth: 150,
+                    textAlign: "right", maxWidth: 200,
                     fontSize: 12, fontFamily: label === "School ID" || label === "Email" ? "'DM Mono', monospace" : "'DM Sans', sans-serif",
                   }}>{val || "—"}</span>
                 </div>

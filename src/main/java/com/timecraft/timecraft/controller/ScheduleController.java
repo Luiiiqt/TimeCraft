@@ -42,15 +42,19 @@ public class ScheduleController {
     // ── GET /api/v1/schedules ─────────────────────────────────────────────────
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','STUDENT','TEACHER','DEAN','PROGRAM_HEAD','GE_COORDINATOR')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> findAll(
             @RequestParam String semester,
             @RequestParam String schoolYear,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long courseId) {
 
         List<Schedule> schedules;
         if (status != null) {
-            schedules = scheduleService.findConflicted(); // expand as needed
+            schedules = scheduleService.findConflicted();
+        } else if (courseId != null) {
+            schedules = scheduleService.findByCourse(
+                    courseId, Semester.valueOf(semester), schoolYear);
         } else {
             schedules = scheduleService.findByTerm(
                     Semester.valueOf(semester), schoolYear);
@@ -352,6 +356,22 @@ public class ScheduleController {
         List<Schedule> deleted = scheduleService.getDeletedSchedules(sem, schoolYear);
         return ResponseEntity.ok(ApiResponse.of(
                 deleted.stream().map(ScheduleResponse::from).toList()));
+    }
+
+    // ── GET /api/v1/schedules/back-subjects ───────────────────────────────────
+
+    @GetMapping("/back-subjects")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getBackSubjects(
+            @RequestParam Long studentId,
+            @RequestParam String semester,
+            @RequestParam String schoolYear) {
+
+        List<Schedule> schedules = scheduleService.findBackSubjects(
+                studentId, Semester.valueOf(semester), schoolYear);
+
+        return ResponseEntity.ok(ApiResponse.of(
+                schedules.stream().map(ScheduleResponse::from).toList()));
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

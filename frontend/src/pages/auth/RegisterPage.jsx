@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 
@@ -7,10 +7,18 @@ export default function RegisterPage() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    fullName: "", schoolId: "", email: "", password: "",
-    departmentId: "", courseId: "", yearLevel: "1",
-    section: "", isIrregular: false,
+    firstName: "", middleName: "", lastName: "",
+    schoolId: "", email: "", password: "",
+    courseId: "", yearLevel: "1", isIrregular: false,
   });
+  const [courses, setCourses] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/v1/courses/public")
+      .then(r => r.json())
+      .then(data => setCourses(data?.data ?? data ?? []))
+      .catch(() => {});
+  }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -28,11 +36,12 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register({
-        ...form,
-        departmentId: Number(form.departmentId) || undefined,
+        fullName: `${form.firstName} ${form.middleName} ${form.lastName}`.replace(/\s+/g, " ").trim(),
+        schoolId: form.schoolId,
+        email: form.email,
+        password: form.password,
         courseId: Number(form.courseId) || undefined,
         yearLevel: Number(form.yearLevel),
-        section: form.isIrregular ? null : form.section,
         userType: "STUDENT",
       });
       setSuccess(true);
@@ -143,16 +152,24 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit}>
 
-            {/* Row 1 */}
+            {/* Row 1 — Name */}
             <div style={grid2}>
               <div className="tc-field">
-                <label className="tc-label">Full Name</label>
-                <input {...field("fullName")} placeholder="Juan dela Cruz" required />
+                <label className="tc-label">First Name</label>
+                <input {...field("firstName")} placeholder="Juan" required />
               </div>
               <div className="tc-field">
-                <label className="tc-label">School ID</label>
-                <input {...field("schoolId")} placeholder="2024-0001" required />
+                <label className="tc-label">Last Name</label>
+                <input {...field("lastName")} placeholder="dela Cruz" required />
               </div>
+            </div>
+            <div className="tc-field">
+              <label className="tc-label">Middle Name</label>
+              <input {...field("middleName")} placeholder="Santos (optional)" />
+            </div>
+            <div className="tc-field">
+              <label className="tc-label">School ID</label>
+              <input {...field("schoolId")} placeholder="2024-0001" required />
             </div>
 
             {/* Email */}
@@ -178,50 +195,43 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Row 2 */}
-            <div style={grid2}>
-              <div className="tc-field">
-                <label className="tc-label">Department ID</label>
-                <input {...field("departmentId")} type="number" placeholder="e.g. 1" required />
-              </div>
-              <div className="tc-field">
-                <label className="tc-label">Course ID</label>
-                <input {...field("courseId")} type="number" placeholder="e.g. 3" required />
-              </div>
+            {/* Course dropdown */}
+            <div className="tc-field">
+              <label className="tc-label">Course</label>
+              <select
+                className="tc-input"
+                name="courseId" value={form.courseId}
+                onChange={handleChange}
+                onFocus={() => setFocused("courseId")}
+                onBlur={() => setFocused(null)}
+                style={focused === "courseId" ? focusedStyle : {}}
+                required
+              >
+                <option value="">Select your course…</option>
+                {courses.map(c => (
+                  <option key={c.id} value={c.id}>{c.name ?? c.code}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Row 3 */}
-            <div style={grid2}>
-              <div className="tc-field">
-                <label className="tc-label">Year Level</label>
-                <select
-                  className="tc-input"
-                  name="yearLevel" value={form.yearLevel}
-                  onChange={handleChange}
-                  onFocus={() => setFocused("yearLevel")}
-                  onBlur={() => setFocused(null)}
-                  style={focused === "yearLevel" ? focusedStyle : {}}
-                >
-                  {[1, 2, 3, 4, 5].map(y => (
-                    <option key={y} value={y}>Year {y}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="tc-field">
-                <label className="tc-label">Section</label>
-                <input
-                  {...field("section")}
-                  placeholder="A / B / C…"
-                  disabled={form.isIrregular}
-                  style={{
-                    ...(focused === "section" ? focusedStyle : {}),
-                    ...(form.isIrregular ? { opacity: 0.35, cursor: "not-allowed" } : {}),
-                  }}
-                />
-              </div>
+            {/* Year Level */}
+            <div className="tc-field">
+              <label className="tc-label">Year Level</label>
+              <select
+                className="tc-input"
+                name="yearLevel" value={form.yearLevel}
+                onChange={handleChange}
+                onFocus={() => setFocused("yearLevel")}
+                onBlur={() => setFocused(null)}
+                style={focused === "yearLevel" ? focusedStyle : {}}
+              >
+                {[1, 2, 3, 4, 5].map(y => (
+                  <option key={y} value={y}>Year {y}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Irregular checkbox */}
+{/* Irregular checkbox */}
             <div style={checkRow}>
               <label style={checkLabel}>
                 <div
@@ -234,11 +244,6 @@ export default function RegisterPage() {
                 >
                   {form.isIrregular && <span style={{ fontSize: 10, color: "#fff", fontWeight: 900, lineHeight: 1 }}>✓</span>}
                 </div>
-                <input
-                  type="checkbox" name="isIrregular"
-                  checked={form.isIrregular} onChange={handleChange}
-                  style={{ display: "none" }}
-                />
                 <span style={checkText}>
                   I am an <strong style={{ color: "rgba(255,255,255,0.7)" }}>irregular student</strong> — no fixed section
                 </span>

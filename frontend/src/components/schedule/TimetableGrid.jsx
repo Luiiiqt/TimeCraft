@@ -1,378 +1,283 @@
-import React from 'react'
-import ScheduleSlot from './ScheduleSlot'
+import React, { useMemo } from 'react'
 
-const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
-const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const DAYS = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY']
+const DAY_LABELS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
 const START_HOUR = 7
-const START_MIN = 30
-const END_HOUR = 18
-const END_MIN = 0
-const BAND_MINUTES = 30
+const START_MIN  = 30
+const END_HOUR   = 18
+const END_MIN    = 0
+const BAND_MIN   = 30
 
-function totalBands() {
-  const startTotal = START_HOUR * 60 + START_MIN
-  const endTotal = END_HOUR * 60 + END_MIN
-  return (endTotal - startTotal) / BAND_MINUTES
-}
+const TOTAL_BANDS = ((END_HOUR * 60 + END_MIN) - (START_HOUR * 60 + START_MIN)) / BAND_MIN
 
-const TOTAL_BANDS = totalBands() // 21
-
-function timeToBand(timeStr) {
-  if (!timeStr) return 0
-  const [h, m] = timeStr.split(':').map(Number)
-  const minutes = h * 60 + m
-  const startMinutes = START_HOUR * 60 + START_MIN
-  return Math.round((minutes - startMinutes) / BAND_MINUTES)
+function timeToBand(t) {
+  if (!t) return 0
+  const [h, m] = t.split(':').map(Number)
+  return Math.round(((h * 60 + m) - (START_HOUR * 60 + START_MIN)) / BAND_MIN)
 }
 
 function bandToLabel(band) {
-  const minutes = START_HOUR * 60 + START_MIN + band * BAND_MINUTES
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const h12 = ((h % 12) || 12)
-  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`
+  const mins = START_HOUR * 60 + START_MIN + band * BAND_MIN
+  const h = Math.floor(mins / 60), m = mins % 60
+  const ampm = h >= 12 ? 'pm' : 'am'
+  return `${((h % 12) || 12)}:${String(m).padStart(2,'0')} ${ampm}`
 }
 
-// Deduplicate schedule entries: same subjectCode + day + startTime = same visual block
-function deduplicateEntries(items) {
-  const seen = new Set()
-  return items.filter(item => {
-    const key = `${item.entry.subjectCode ?? item.entry.subject?.code}-${item.startBand}-${item.endBand}`
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
-}
-
-// Color palette for subjects — cycles through green-family hues
-const SUBJECT_COLORS = [
-  { bg: '#C8E6C9', border: '#388E3C', text: '#1B5E20', label: '#2E7D32' },  // green
-  { bg: '#FFF9C4', border: '#F9A825', text: '#E65100', label: '#F57F17' },  // yellow
-  { bg: '#F8BBD0', border: '#C2185B', text: '#880E4F', label: '#AD1457' },  // pink
-  { bg: '#B2EBF2', border: '#0097A7', text: '#004D40', label: '#00838F' },  // teal
-  { bg: '#D1C4E9', border: '#7B1FA2', text: '#4A148C', label: '#6A1B9A' },  // purple
-  { bg: '#FFE0B2', border: '#EF6C00', text: '#BF360C', label: '#E64A19' },  // orange
-  { bg: '#CFD8DC', border: '#546E7A', text: '#263238', label: '#455A64' },  // slate
-  { bg: '#DCEDC8', border: '#558B2F', text: '#33691E', label: '#558B2F' },  // lime
+const SUBJECT_BGS = [
+  'rgba(34,197,94,0.12)', 'rgba(16,185,129,0.12)', 'rgba(20,184,166,0.11)',
+  'rgba(6,182,212,0.10)', 'rgba(74,222,128,0.09)', 'rgba(52,211,153,0.11)',
+  'rgba(34,197,94,0.08)', 'rgba(20,184,166,0.08)',
 ]
-
-const subjectColorMap = {}
+const SUBJECT_ACCENTS = ['#22C55E','#10B981','#14B8A6','#06B6D4','#4ADE80','#34D399','#22C55E','#14B8A6']
+const colorMap = {}
 let colorIdx = 0
-function getSubjectColor(code) {
-  if (!code) return SUBJECT_COLORS[0]
-  if (!subjectColorMap[code]) {
-    subjectColorMap[code] = SUBJECT_COLORS[colorIdx % SUBJECT_COLORS.length]
-    colorIdx++
+function getSubjectStyle(code) {
+  if (!code) return { bg: SUBJECT_BGS[0], accent: SUBJECT_ACCENTS[0] }
+  if (!colorMap[code]) {
+    const i = colorIdx++ % SUBJECT_BGS.length
+    colorMap[code] = { bg: SUBJECT_BGS[i], accent: SUBJECT_ACCENTS[i] }
   }
-  return subjectColorMap[code]
+  return colorMap[code]
 }
 
-const BAND_HEIGHT = 50 // px per 30-min band
-const HEADER_HEIGHT = 48
-const TIME_COL_WIDTH = 82
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500;600&display=swap');
+  @keyframes tg-in { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .tg-root { animation: tg-in 0.3s ease both; }
+  .tg-row:hover .tg-td { background-color: rgba(34,197,94,0.035) !important; }
+  .tg-slot { transition: filter 0.12s; cursor: pointer; }
+  .tg-slot:hover { filter: brightness(1.15); }
+`
 
 export default function TimetableGrid({ schedules = [], onSlotClick, loading = false }) {
-  // Reset color map on each render so colors are stable per subject code
-  // (do NOT reset colorIdx here — keep it module-level for consistency)
+  const bandMap = useMemo(() => {
+    const map = {}
+    for (let i = 0; i < TOTAL_BANDS; i++) map[i] = {}
 
-  // Build: day → list of placed entries (NO side-by-side, just stack by start time)
-  const dayEntries = {}
-  DAYS.forEach(d => { dayEntries[d] = [] })
+    schedules.forEach(entry => {
+      const place = (day, s, e, forceOnline) => {
+        if (!day || !s || !e) return
+        const d = day.toUpperCase()
+        if (!DAYS.includes(d)) return
+        const sb = timeToBand(s.substring(0, 5))
+        const eb = timeToBand(e.substring(0, 5))
+        if (sb < 0 || eb > TOTAL_BANDS || sb >= eb) return
+        for (let b = sb; b < eb; b++) {
+          if (!map[b]) map[b] = {}
+          if (!map[b][d]) {
+            map[b][d] = { entry, startBand: sb, endBand: eb, span: eb - sb, isFirst: b === sb, forceOnline }
+          }
+        }
+      }
+      const online = entry.isOnline || entry.online
+      place(entry.day1, entry.startTime1, entry.endTime1, entry.isOnlineTs1 || entry.onlineTs1 || online)
+      if (entry.day2) place(entry.day2, entry.startTime2, entry.endTime2, entry.isOnlineTs2 || entry.onlineTs2)
+    })
+    return map
+  }, [schedules])
 
-  schedules.forEach(entry => {
-    const day1 = entry.day1?.toUpperCase()
-    const day2 = entry.day2?.toUpperCase()
-    const ts1Online = entry.isOnlineTs1 === true || entry.onlineTs1 === true
-    const ts2Online = entry.isOnlineTs2 === true || entry.onlineTs2 === true
+  const now = new Date()
+  const nowMins = now.getHours() * 60 + now.getMinutes()
+  const nowBand = Math.floor((nowMins - (START_HOUR * 60 + START_MIN)) / BAND_MIN)
+  const todayKey = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
 
-    const place = (day, startStr, endStr, session, forceOnline) => {
-      if (!day || !startStr || !endStr || !DAYS.includes(day)) return
-      const start = startStr.substring(0, 5)
-      const end = endStr.substring(0, 5)
-      const startBand = timeToBand(start)
-      const endBand = timeToBand(end)
-      if (startBand < 0 || endBand > TOTAL_BANDS || startBand >= endBand) return
-      dayEntries[day].push({ startBand, endBand, session, entry: { ...entry, _forceOnline: forceOnline } })
-    }
-
-    const isOnline = entry.isOnline === true || entry.online === true
-
-    if (isOnline && day1 === 'SATURDAY') {
-      if (entry.startTime1) place('SATURDAY', entry.startTime1, entry.endTime1, '1', true)
-      if (day2 && entry.startTime2) place(day2, entry.startTime2, entry.endTime2, '2', false)
-    } else {
-      if (day1 && entry.startTime1) place(day1, entry.startTime1, entry.endTime1, '1', ts1Online)
-      if (day2 && entry.startTime2) place(day2, entry.startTime2, entry.endTime2, '2', ts2Online)
-    }
+  // Only show bands that have content or are on-the-hour
+  const bands = Array.from({ length: TOTAL_BANDS }, (_, i) => i).filter(i => {
+    const mins = START_HOUR * 60 + START_MIN + i * BAND_MIN
+    return mins % 60 === 0 || DAYS.some(d => bandMap[i]?.[d])
   })
 
-  // Deduplicate per day
-  DAYS.forEach(day => {
-    dayEntries[day] = deduplicateEntries(dayEntries[day])
-  })
-
-  const totalHeight = TOTAL_BANDS * BAND_HEIGHT
+  const ROW_H = 44
 
   return (
-    <div style={{ overflowX: 'auto', fontFamily: "'DM Sans', 'Segoe UI', sans-serif" }}>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: `${TIME_COL_WIDTH}px repeat(6, 1fr)`,
-        minWidth: 820,
-        border: '2px solid #A5D6A7',
-        borderRadius: 14,
-        overflow: 'hidden',
-        background: '#fff',
-        boxShadow: '0 2px 16px rgba(56,142,60,0.08)',
-      }}>
+    <div className="tg-root" style={{ fontFamily: "'DM Sans',sans-serif" }}>
+      <style>{CSS}</style>
 
-        {/* ── Corner cell ── */}
-        <div style={styles.cornerCell} />
+      <div style={{ overflowX: 'auto', borderRadius: 14, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(8,16,30,0.8)', backdropFilter: 'blur(20px)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 780, tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: 128 }} />
+            {DAYS.map(d => <col key={d} />)}
+          </colgroup>
 
-        {/* ── Day headers ── */}
-        {DAY_LABELS.map((label, i) => (
-          <div key={label} style={{
-            ...styles.dayHeader,
-            borderLeft: i === 0 ? '2px solid #A5D6A7' : '1px solid #C8E6C9',
-          }}>
-            {label.toUpperCase()}
-          </div>
-        ))}
-
-        {/* ── Time column ── */}
-        <div style={{ position: 'relative', height: totalHeight, borderRight: '2px solid #A5D6A7', background: '#F1F8E9' }}>
-          {Array.from({ length: TOTAL_BANDS + 1 }, (_, i) => {
-            const label = bandToLabel(i)
-            return (
-              <div key={i} style={{
-                position: 'absolute',
-                top: i * BAND_HEIGHT,
-                right: 0,
-                left: 0,
-                height: 0,
-                display: 'flex',
-                justifyContent: 'flex-end',
-                alignItems: 'flex-start',
-                paddingRight: 6,
-                zIndex: 1,
-                transform: 'translateY(-50%)',
-              }}>
-                <span style={{
-                  fontSize: 8,
-                  fontWeight: 600,
-                  color: '#4CAF50',
-                  letterSpacing: 0.1,
-                  whiteSpace: 'nowrap',
-                }}>{label}</span>
-              </div>
-            )
-          })}
-          {/* Grid lines in time col */}
-          {Array.from({ length: TOTAL_BANDS }, (_, i) => (
-            <div key={`tl-${i}`} style={{
-              position: 'absolute',
-              top: i * BAND_HEIGHT,
-              left: 0, right: 0,
-              borderTop: '1px solid #C8E6C9',
-            }} />
-          ))}
-        </div>
-
-        {/* ── Day columns ── */}
-        {DAYS.map((day, di) => {
-          const items = dayEntries[day]
-
-          return (
-            <div key={day} style={{
-              position: 'relative',
-              height: totalHeight,
-              borderLeft: di === 0 ? '2px solid #A5D6A7' : '1px solid #C8E6C9',
-              background: '#fff',
-            }}>
-              {/* Grid lines — every 30 min */}
-              {Array.from({ length: TOTAL_BANDS }, (_, i) => (
-                <div key={`bg-${i}`} style={{
-                  position: 'absolute',
-                  top: i * BAND_HEIGHT,
-                  left: 0, right: 0,
-                  height: BAND_HEIGHT,
-                  borderTop: '1px solid #E8F5E9',
-                  pointerEvents: 'none',
-                }} />
-              ))}
-
-              {/* Schedule blocks — solid fill, centered, Image-1 style */}
-              {!loading && items.map((item, idx) => {
-                const spanBands = item.endBand - item.startBand
-                const heightPx = spanBands * BAND_HEIGHT - 3
-                const topPx = item.startBand * BAND_HEIGHT + 1
-                const subjectCode = item.entry.subjectCode ?? item.entry.subject?.code ?? ''
-                const color = getSubjectColor(subjectCode)
-                const isOnline = item.entry._forceOnline || item.entry.isOnline || item.entry.online
-                const isLab = item.entry.sessionType === 'LABORATORY'
-                const teacherName = item.entry.teacherName ?? item.entry.teacher?.fullName ?? ''
-                const roomName = item.entry.roomName ?? item.entry.room?.roomNumber ?? ''
-                const subjectName = item.entry.subjectName ?? item.entry.subject?.name ?? subjectCode
-                const blockBg = isOnline ? '#BBDEFB' : color.bg
-                const blockText = isOnline ? '#0D47A1' : color.text
-                const blockSub = isOnline ? '#1565C0' : color.label
-
-                // Layout tiers — with BAND_HEIGHT=50: 1band=50px, 2bands=100px, 3bands=150px
-                const tiny = heightPx < 48       // 1 band: code only
-                const compact = heightPx < 96    // 2 bands: code + name + teacher, no room
-                // 3+ bands: full content
-
+          {/* Header row */}
+          <thead>
+            <tr>
+              <th style={{ ...TH, background: 'rgba(255,255,255,0.025)', borderRight: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.2)', fontSize: 9 }}>
+                TIME
+              </th>
+              {DAY_LABELS.map((label, i) => {
+                const isToday = DAYS[i] === todayKey
                 return (
-                  <div
-                    key={`${item.entry.id}-${item.session}-${idx}`}
-                    onClick={() => onSlotClick?.(item.entry)}
-                    title={`${subjectCode} — ${subjectName}\n${teacherName}\n${roomName}`}
-                    style={{
-                      position: 'absolute',
-                      top: topPx,
-                      left: 2,
-                      right: 2,
-                      height: heightPx,
-                      borderRadius: 8,
-                      background: blockBg,
-                      border: 'none',
-                      cursor: onSlotClick ? 'pointer' : 'default',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'flex-start',
-                      alignItems: 'stretch',
-                      padding: tiny ? '3px 6px' : compact ? '5px 8px' : '7px 10px',
-                      boxSizing: 'border-box',
-                      zIndex: 2,
-                      transition: 'filter 0.15s',
-                      gap: 0,
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.filter = 'brightness(0.93)'}
-                    onMouseLeave={e => e.currentTarget.style.filter = 'none'}
-                  >
-                    {/* Row 1: Subject code + badges */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                      <span style={{
-                        fontSize: tiny ? 9 : 11,
-                        fontWeight: 800,
-                        color: blockText,
-                        letterSpacing: 0.3,
-                        lineHeight: 1.3,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        flexShrink: 1,
-                      }}>{subjectCode}</span>
-                      {isLab && (
-                        <span style={{ fontSize: 7, fontWeight: 700, color: blockText, background: `${blockText}25`, borderRadius: 3, padding: '1px 4px', letterSpacing: 0.4, flexShrink: 0 }}>LAB</span>
-                      )}
-                      {isOnline && (
-                        <span style={{ fontSize: 7, fontWeight: 700, color: '#0D47A1', background: '#0D47A122', borderRadius: 3, padding: '1px 4px', letterSpacing: 0.4, flexShrink: 0 }}>ONLINE</span>
-                      )}
-                    </div>
-
-                    {/* Row 2: Subject name — 1 line clamp */}
-                    {!tiny && (
-                      <div style={{
-                        fontSize: 10,
-                        color: blockSub,
-                        fontWeight: 500,
-                        lineHeight: 1.3,
-                        marginTop: 2,
-                        flexShrink: 0,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        width: '100%',
-                      }}>{subjectName}</div>
-                    )}
-
-                    {/* Row 3: Teacher */}
-                    {!tiny && teacherName && (
-                      <div style={{
-                        fontSize: 9,
-                        color: blockSub,
-                        fontWeight: 400,
-                        lineHeight: 1.3,
-                        marginTop: 3,
-                        flexShrink: 0,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        width: '100%',
-                        opacity: 0.9,
-                      }}>· {teacherName}</div>
-                    )}
-
-                    {/* Row 4: Room */}
-                    {!tiny && (
-                      <div style={{
-                        fontSize: 8.5,
-                        color: blockSub,
-                        fontWeight: 400,
-                        lineHeight: 1.3,
-                        marginTop: 2,
-                        flexShrink: 0,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        width: '100%',
-                        opacity: 0.85,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 3,
-                      }}>
-                        □ {isOnline ? 'Online Class' : roomName || '—'}
-                      </div>
-                    )}
-                  </div>
+                  <th key={label} style={{
+                    ...TH,
+                    color: isToday ? '#4ADE80' : 'rgba(255,255,255,0.45)',
+                    borderLeft: '1px solid rgba(255,255,255,0.06)',
+                    background: isToday ? 'rgba(34,197,94,0.07)' : 'rgba(255,255,255,0.015)',
+                    borderBottom: isToday ? '2px solid #22C55E' : '1px solid rgba(255,255,255,0.08)',
+                    position: 'relative',
+                  }}>
+                    {label}
+                    {isToday && <div style={{ position:'absolute', bottom:0, left:'20%', right:'20%', height:2, background:'#22C55E', borderRadius:2 }} />}
+                  </th>
                 )
               })}
-            </div>
-          )
-        })}
+            </tr>
+          </thead>
 
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={7} style={{ padding: 56, textAlign: 'center', color: 'rgba(255,255,255,0.18)', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '0.08em' }}>
+                  LOADING SCHEDULE…
+                </td>
+              </tr>
+            ) : schedules.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ padding: 72, textAlign: 'center', color: 'rgba(255,255,255,0.12)', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '0.08em' }}>
+                  NO SCHEDULE FOUND FOR THIS TERM
+                </td>
+              </tr>
+            ) : bands.map((band, ri) => {
+              const bandMins = START_HOUR * 60 + START_MIN + band * BAND_MIN
+              const isHour = bandMins % 60 === 0
+              const isCurrent = band === nowBand
+              const timeStr = `${bandToLabel(band)} – ${bandToLabel(band + 1)}`
+
+              return (
+                <tr key={band} className="tg-row">
+                  {/* Time column */}
+                  <td style={{
+                    height: ROW_H,
+                    padding: '0 14px',
+                    borderTop: isHour ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.04)',
+                    borderRight: '1px solid rgba(255,255,255,0.08)',
+                    background: isCurrent ? 'rgba(34,197,94,0.07)' : 'rgba(255,255,255,0.012)',
+                    verticalAlign: 'middle',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{
+                        fontSize: 10,
+                        fontWeight: isHour ? 600 : 400,
+                        color: isCurrent ? '#4ADE80' : isHour ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.22)',
+                        fontFamily: "'DM Mono',monospace",
+                        letterSpacing: '0.02em',
+                      }}>{timeStr}</span>
+                      {isCurrent && <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#22C55E', flexShrink: 0, boxShadow: '0 0 5px #22C55E' }} />}
+                    </div>
+                  </td>
+
+                  {/* Day cells */}
+                  {DAYS.map(day => {
+                    const slot = bandMap[band]?.[day]
+                    const isToday = day === todayKey
+                    const borderTop = isHour ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(255,255,255,0.03)'
+
+                    if (!slot) {
+                      return (
+                        <td key={day} className="tg-td" style={{
+                          height: ROW_H,
+                          borderTop,
+                          borderLeft: '1px solid rgba(255,255,255,0.05)',
+                          background: isToday ? 'rgba(34,197,94,0.012)' : 'transparent',
+                        }} />
+                      )
+                    }
+
+                    if (!slot.isFirst) return null
+
+                    const { entry } = slot
+                    const code    = entry.subjectCode ?? entry.subject?.code ?? ''
+                    const name    = entry.subjectName ?? entry.subject?.name ?? code
+                    const teacher = entry.teacherName ?? entry.teacher?.fullName ?? ''
+                    const room    = entry.roomName ?? entry.room?.roomNumber ?? ''
+                    const isLab   = entry.sessionType === 'LABORATORY'
+                    const isOnline = slot.forceOnline || entry.isOnline || entry.online
+                    const { bg, accent } = getSubjectStyle(code)
+                    const textColor = isOnline ? '#93C5FD' : isLab ? '#FCD34D' : accent
+
+                    return (
+                      <td
+                        key={day}
+                        rowSpan={slot.span}
+                        onClick={() => onSlotClick?.(entry)}
+                        className="tg-slot"
+                        style={{
+                          height: ROW_H * slot.span,
+                          borderTop,
+                          borderLeft: '1px solid rgba(255,255,255,0.05)',
+                          background: isOnline ? 'rgba(59,130,246,0.1)' : isLab ? 'rgba(245,158,11,0.1)' : bg,
+                          verticalAlign: 'top',
+                          padding: '7px 10px 7px 13px',
+                          position: 'relative',
+                        }}
+                      >
+                        {/* Left accent bar */}
+                        <div style={{ position: 'absolute', left: 0, top: 3, bottom: 3, width: 3, borderRadius: '0 2px 2px 0', background: isOnline ? '#3B82F6' : isLab ? '#F59E0B' : accent }} />
+
+                        {/* Subject code + badges */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: textColor, fontFamily: "'DM Mono',monospace", letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{code}</span>
+                          {isLab && <Badge label="LAB" color="#F59E0B" />}
+                          {isOnline && <Badge label="ONLINE" color="#3B82F6" />}
+                        </div>
+
+                        {/* Subject name */}
+                        {slot.span >= 2 && name !== code && (
+                          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.4 }}>{name}</div>
+                        )}
+
+                        {/* Teacher */}
+                        {slot.span >= 2 && teacher && (
+                          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {teacher}
+                          </div>
+                        )}
+
+                        {/* Room */}
+                        {slot.span >= 3 && room && (
+                          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {isOnline ? 'Online Class' : room}
+                          </div>
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )
 }
 
-function badgeStyle(borderColor, bgColor) {
-  return {
-    fontSize: 7,
-    fontWeight: 700,
-    color: borderColor,
-    background: bgColor,
-    border: `1px solid ${borderColor}40`,
-    borderRadius: 3,
-    padding: '0px 3px',
-    letterSpacing: 0.4,
-    lineHeight: '12px',
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-  }
+function Badge({ label, color }) {
+  return (
+    <span style={{
+      fontSize: 7, fontWeight: 700, color,
+      background: `${color}20`,
+      border: `1px solid ${color}40`,
+      borderRadius: 3, padding: '1px 4px',
+      letterSpacing: '0.06em',
+      fontFamily: "'DM Mono',monospace",
+      flexShrink: 0,
+    }}>{label}</span>
+  )
 }
 
-const styles = {
-  cornerCell: {
-    height: HEADER_HEIGHT,
-    background: '#F1F8E9',
-    borderBottom: '2px solid #A5D6A7',
-    borderRight: '2px solid #A5D6A7',
-  },
-  dayHeader: {
-    height: HEADER_HEIGHT,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#F1F8E9',
-    borderBottom: '2px solid #A5D6A7',
-    fontSize: 11,
-    fontWeight: 800,
-    color: '#2E7D32',
-    letterSpacing: 1,
-  },
+const TH = {
+  height: 44,
+  padding: '0 12px',
+  textAlign: 'center',
+  fontSize: 11,
+  fontWeight: 800,
+  letterSpacing: '0.08em',
+  fontFamily: "'DM Mono',monospace",
+  textTransform: 'uppercase',
+  borderBottom: '1px solid rgba(255,255,255,0.08)',
+  whiteSpace: 'nowrap',
 }

@@ -38,5 +38,5 @@ public interface TeacherSubjectPreferenceRepository
     List<TeacherSubjectPreference> findBySubjectIdInAndStatusAndSemesterAndSchoolYear(
             List<Long> subjectIds, Status status, Semester semester, String schoolYear);
 
-        
+        List<TeacherSubjectPreference> findBySubjectIdIn(List<Long> subjectIds);
 }

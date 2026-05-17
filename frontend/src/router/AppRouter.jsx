@@ -39,8 +39,8 @@ const DeanGenerateSchedule = GenerateSchedule;
 const PHScheduleView = lazy(() => import("../pages/programhead/ScheduleView"));
 const ScheduleView = lazy(() => import("../pages/dean/ScheduleView"));
 const DeanSubjects = lazy(() => import("../pages/programhead/ManageSubjects"));
-const ManageStudents = lazy(() => import("../pages/admin/ManageStudents"));
-const IrregularEnrollment = lazy(() => import("../pages/admin/ManageStudents"));
+const ManageStudents = ManageAccounts;
+const IrregularEnrollment = lazy(() => import("../pages/dean/IrregularStudents"));
 const CurriculumImport = lazy(() => import("../pages/dean/CurriculumImport"));
 const IrregularStudents = lazy(() => import("../pages/dean/IrregularStudents"));
 const PHDashboard = lazy(() => import("../pages/programhead/Dashboard"));
@@ -49,6 +49,7 @@ const PHPreferenceReview = lazy(() => import("../pages/programhead/PreferenceRev
 const GEPreferenceReview = lazy(() => import("../pages/ge/GEPreferenceReview"));
 const GEDashboard = lazy(() => import("../pages/ge/GEDashboard"));
 const HistoryPage = lazy(() => import("../pages/admin/HistoryPage"));
+const ManageAccounts = lazy(() => import("../pages/admin/ManageAccounts"));
 
 // ── Loader ────────────────────────────────────────────────────────────────────
 
@@ -166,6 +167,7 @@ export default function AppRouter() {
             <Route path="/dean/curriculum" element={<Page roles={["DEAN", "ADMIN"]}><CurriculumImport /></Page>} />
             <Route path="/dean/irregular" element={<Page roles={["DEAN", "ADMIN"]}><IrregularStudents /></Page>} />
             <Route path="/admin/history" element={<Page roles={["ADMIN"]}><HistoryPage /></Page>} />
+            <Route path="/admin/accounts" element={<Page roles={["ADMIN"]}><ManageAccounts /></Page>} />
 
             {/* Program Head */}
             <Route path="/ph" element={<Page roles={["PROGRAM_HEAD","DEAN","ADMIN"]}><PHDashboard /></Page>} />

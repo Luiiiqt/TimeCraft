@@ -29,7 +29,6 @@ public class RegisterRequest {
     @NotNull(message = "User type is required")
     private UserType userType;
 
-    @NotNull(message = "Department ID is required")
     private Long departmentId;
 
     // ── Student-only fields ───────────────────────────────────────────────────

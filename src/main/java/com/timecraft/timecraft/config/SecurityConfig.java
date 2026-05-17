@@ -59,12 +59,15 @@ public class SecurityConfig {
                 .permitAll()
                 // Actuator health check — public
                 .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/courses/public").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/courses/public").permitAll()
                 // WebSocket handshake
                 .requestMatchers("/ws/**").permitAll()
                 // ── Student endpoints ─────────────────────────────────────────
                 // Students can only view their own schedule
                 .requestMatchers(HttpMethod.GET,
                         "/api/v1/schedules/my",
+                        "/api/v1/schedules/back-subjects",
                         "/api/v1/students/me")
                 .hasRole("STUDENT")
                 // ── Teacher endpoints ─────────────────────────────────────────
@@ -99,12 +102,13 @@ public class SecurityConfig {
                         "/api/v1/teachers/**",
                         "/api/v1/subjects/**",
                         "/api/v1/courses/**",
+                        "/api/v1/courses",
                         "/api/v1/schedules/section/**",
                         "/api/v1/schedules/published/**",
                         "/api/v1/schedules/conflicted",
                         "/api/v1/timeslots/**")
                 .hasAnyRole("ADMIN", "DEAN", "TEACHER",
-                        "PROGRAM_HEAD", "GE_COORDINATOR")
+                        "PROGRAM_HEAD", "GE_COORDINATOR", "STUDENT")
                 .requestMatchers(HttpMethod.POST,
                         "/api/v1/teachers",
                         "/api/v1/students",

@@ -1,79 +1,134 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../../services/api";
 
-const TC = `
+// ── Design tokens matching TimeCraft dark theme ───────────────────────────────
+const TC_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500;600&display=swap');
-  @keyframes tcFadeUp { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
 
-  .tc-dept * { box-sizing:border-box; }
+  @keyframes tcFadeUp   { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
+  @keyframes tcSlideIn  { from{opacity:0;transform:translateY(-8px) scale(0.98);}to{opacity:1;transform:translateY(0) scale(1);} }
+  @keyframes tcBlink    { 0%,100%{opacity:1;} 50%{opacity:0;} }
+  @keyframes tcSpin     { to{transform:rotate(360deg);} }
 
-  .tc-input-dark {
-    width:100%; padding:9px 12px;
-    background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.08);
-    border-radius:8px; font-size:13px; color:#fff; outline:none;
-    font-family:'DM Sans',sans-serif; transition:border-color 0.2s,background 0.2s;
+  .tc-page * { box-sizing:border-box; }
+  .tc-page { animation:tcFadeUp 0.45s ease both; }
+
+  /* ── Inputs ────────────────────────────────── */
+  .tc-input {
+    width:100%; padding:10px 14px;
+    background:rgba(255,255,255,0.04);
+    border:1.5px solid rgba(255,255,255,0.08);
+    border-radius:10px; font-size:13px; color:#fff; outline:none;
+    font-family:'DM Sans',sans-serif;
+    transition:border-color 0.2s,background 0.2s,box-shadow 0.2s;
   }
-  .tc-input-dark::placeholder{color:rgba(255,255,255,0.2);}
-  .tc-input-dark:focus{border-color:rgba(34,197,94,0.5);background:rgba(34,197,94,0.04);}
-  .tc-input-dark option{background:#0f1a2e;}
+  .tc-input::placeholder { color:rgba(255,255,255,0.18); }
+  .tc-input:focus {
+    border-color:rgba(34,197,94,0.5);
+    background:rgba(34,197,94,0.04);
+    box-shadow:0 0 0 3px rgba(34,197,94,0.08);
+  }
+  .tc-input option { background:#0f1a2e; color:#fff; }
 
-  .tc-label-dark {
+  /* ── Label ─────────────────────────────────── */
+  .tc-label {
     display:block; font-size:10px; font-weight:700;
     color:rgba(255,255,255,0.3); margin-bottom:5px;
-    letter-spacing:0.1em; text-transform:uppercase;
+    letter-spacing:0.12em; text-transform:uppercase;
     font-family:'DM Mono',monospace;
   }
 
-  .tc-btn-green {
-    padding:9px 20px; border-radius:9px; border:none;
+  /* ── Buttons ───────────────────────────────── */
+  .tc-btn-primary {
+    display:inline-flex; align-items:center; gap:7px;
+    padding:10px 20px; border:none; border-radius:10px;
     background:linear-gradient(135deg,#22C55E,#16A34A);
     color:#fff; font-size:13px; font-weight:700;
     cursor:pointer; font-family:'DM Sans',sans-serif;
-    transition:all 0.2s; box-shadow:0 4px 16px rgba(34,197,94,0.25);
+    transition:all 0.2s; letter-spacing:0.01em;
+    box-shadow:0 4px 16px rgba(34,197,94,0.3);
     white-space:nowrap;
   }
-  .tc-btn-green:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(34,197,94,0.4);}
-  .tc-btn-green:disabled{opacity:.5;cursor:not-allowed;}
+  .tc-btn-primary:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 28px rgba(34,197,94,0.45); }
+  .tc-btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
 
   .tc-btn-ghost {
-    padding:8px 16px; border-radius:9px;
+    display:inline-flex; align-items:center; gap:7px;
+    padding:9px 18px; border-radius:10px;
     border:1.5px solid rgba(255,255,255,0.1);
-    background:rgba(255,255,255,0.03);
-    color:rgba(255,255,255,0.5); font-size:13px; font-weight:600;
+    background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.55);
+    font-size:13px; font-weight:600;
     cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s;
   }
-  .tc-btn-ghost:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);}
+  .tc-btn-ghost:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.85); border-color:rgba(255,255,255,0.2); }
 
-  .tc-btn-danger-sm {
-    padding:5px 12px; border-radius:7px; font-size:11px; font-weight:700;
+  .tc-btn-danger {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:6px 13px; border-radius:8px; font-size:11px; font-weight:700;
     border:1px solid rgba(220,38,38,0.25); background:rgba(220,38,38,0.08);
     color:#fca5a5; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s;
   }
-  .tc-btn-danger-sm:hover{background:rgba(220,38,38,0.18);}
+  .tc-btn-danger:hover { background:rgba(220,38,38,0.18); border-color:rgba(220,38,38,0.4); }
 
+  /* ── Table ─────────────────────────────────── */
   .tc-table-wrap {
-    background:rgba(255,255,255,0.025);
+    background:rgba(15,23,42,0.6);
+    backdrop-filter:blur(20px);
     border:1px solid rgba(255,255,255,0.07);
-    border-radius:14px; overflow:hidden;
+    border-radius:18px; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.03) inset;
   }
   .tc-table { width:100%; border-collapse:collapse; }
-  .tc-table thead tr { background:rgba(255,255,255,0.04); border-bottom:1px solid rgba(255,255,255,0.07); }
-  .tc-table th {
-    padding:12px 18px; text-align:left;
-    font-size:10px; font-weight:700; color:rgba(255,255,255,0.3);
-    letter-spacing:0.1em; text-transform:uppercase; font-family:'DM Mono',monospace;
+  .tc-table thead tr {
+    background:rgba(255,255,255,0.03);
+    border-bottom:1px solid rgba(255,255,255,0.07);
   }
-  .tc-table td { padding:12px 18px; font-size:13px; color:rgba(255,255,255,0.75); border-bottom:1px solid rgba(255,255,255,0.04); font-family:'DM Sans',sans-serif; }
+  .tc-table th {
+    padding:13px 20px; text-align:left;
+    font-size:10px; font-weight:700; color:rgba(255,255,255,0.28);
+    letter-spacing:0.12em; text-transform:uppercase;
+    font-family:'DM Mono',monospace;
+  }
+  .tc-table td {
+    padding:14px 20px; font-size:13px;
+    color:rgba(255,255,255,0.7);
+    border-bottom:1px solid rgba(255,255,255,0.04);
+    font-family:'DM Sans',sans-serif;
+    transition:background 0.15s;
+  }
   .tc-table tbody tr:last-child td { border-bottom:none; }
-  .tc-table tbody tr:hover td { background:rgba(255,255,255,0.03); }
+  .tc-table tbody tr:hover td { background:rgba(34,197,94,0.04); }
 
-  .tc-alert-ok  { padding:10px 14px; border-radius:9px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); color:#86efac; font-size:13px; margin-bottom:14px; font-family:'DM Sans',sans-serif; }
-  .tc-alert-err { padding:10px 14px; border-radius:9px; background:rgba(220,38,38,0.1); border:1px solid rgba(220,38,38,0.2); color:#fca5a5; font-size:13px; margin-bottom:14px; font-family:'DM Sans',sans-serif; }
+  /* ── Alerts ─────────────────────────────────── */
+  .tc-alert-ok {
+    padding:11px 16px; border-radius:10px;
+    background:rgba(34,197,94,0.09); border:1px solid rgba(34,197,94,0.2);
+    color:#86efac; font-size:13px; margin-bottom:16px;
+    font-family:'DM Sans',sans-serif; animation:tcSlideIn 0.25s ease both;
+  }
+  .tc-alert-err {
+    padding:11px 16px; border-radius:10px;
+    background:rgba(220,38,38,0.09); border:1px solid rgba(220,38,38,0.2);
+    color:#fca5a5; font-size:13px; margin-bottom:16px;
+    font-family:'DM Sans',sans-serif; animation:tcSlideIn 0.25s ease both;
+  }
 
+  /* ── Create panel ───────────────────────────── */
   .tc-create-panel {
-    background:rgba(34,197,94,0.04); border:1px solid rgba(34,197,94,0.15);
-    border-radius:14px; padding:22px 24px; margin-bottom:20px;
-    animation:tcFadeUp 0.3s ease both;
+    background:rgba(34,197,94,0.04);
+    border:1px solid rgba(34,197,94,0.18);
+    border-radius:16px; padding:24px 26px; margin-bottom:22px;
+    animation:tcSlideIn 0.3s ease both;
+    backdrop-filter:blur(12px);
+  }
+
+  /* ── Search input icon wrapper ──────────────── */
+  .tc-search-wrap { position:relative; }
+  .tc-search-wrap .tc-input { padding-left:36px; }
+  .tc-search-icon {
+    position:absolute; left:12px; top:50%;
+    transform:translateY(-50%); font-size:13px;
+    color:rgba(255,255,255,0.22); pointer-events:none;
   }
 `;
 
@@ -92,8 +147,9 @@ export default function ManageDepartments() {
     try {
       const res = await api.get("/departments");
       setDepts(res.data?.data ?? res.data ?? []);
-    } catch (e) { setError(e?.response?.data?.message ?? "Failed to load departments."); }
-    finally { setLoading(false); }
+    } catch (e) {
+      setError(e?.response?.data?.message ?? "Failed to load departments.");
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -123,56 +179,86 @@ export default function ManageDepartments() {
   };
 
   return (
-    <div className="tc-dept" style={{ color: "#fff", fontFamily: "'DM Sans',sans-serif", animation: "tcFadeUp 0.4s ease both" }}>
-      <style>{TC}</style>
+    <div className="tc-page" style={{ color: "#fff", fontFamily: "'DM Sans',sans-serif", background:"#070f1e", minHeight:"100vh", padding:"32px" }}>
+      <style>{TC_STYLES}</style>
 
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontFamily: "'Sora',sans-serif", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em", margin: 0 }}>
+      {/* ── Page header ──────────────────────────────────────────── */}
+      <div style={{ marginBottom: 32 }}>
+        {/* Eyebrow */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 8,
+          background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.22)",
+          borderRadius: 100, padding: "5px 14px", marginBottom: 14,
+        }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E", display: "inline-block", animation: "tcBlink 2s ease infinite" }} />
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#4ADE80", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono',monospace" }}>
+            Admin · Academic Structure
+          </span>
+        </div>
+
+        <h1 style={{ fontFamily: "'Sora',sans-serif", fontSize: 28, fontWeight: 800, color: "#fff", letterSpacing: "-0.03em", margin: "0 0 6px" }}>
           Departments
         </h1>
-        <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>
-          Manage academic departments and their codes.
+        <p style={{ fontSize: 14, color: "rgba(255,255,255,0.38)", margin: 0, lineHeight: 1.6 }}>
+          Manage academic departments and their codes across Lorma College.
         </p>
       </div>
 
-      {/* Toolbar */}
+      {/* ── Stats strip ──────────────────────────────────────────── */}
+      <div style={{ display: "flex", gap: 14, marginBottom: 28, flexWrap: "wrap" }}>
+        {[
+          { label: "Total", value: depts.length, color: "#22C55E" },
+          { label: "Active", value: depts.filter(d => d.active || d.isActive).length, color: "#3B82F6" },
+          { label: "Inactive", value: depts.filter(d => !(d.active || d.isActive)).length, color: "rgba(255,255,255,0.25)" },
+        ].map(s => (
+          <div key={s.label} style={{
+            background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 12, padding: "12px 20px", display: "flex", alignItems: "center", gap: 12,
+          }}>
+            <span style={{ fontFamily: "'Sora',sans-serif", fontSize: 24, fontWeight: 800, color: s.color, letterSpacing: "-0.03em", lineHeight: 1 }}>{s.value}</span>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'DM Mono',monospace" }}>{s.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Toolbar ──────────────────────────────────────────────── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 12, flexWrap: "wrap" }}>
-        <div style={{ position: "relative" }}>
-          <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "rgba(255,255,255,0.25)" }}>🔍</span>
-          <input className="tc-input-dark" style={{ paddingLeft: 32, width: 260 }}
-            placeholder="Search departments…"
-            value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="tc-search-wrap" style={{ width: 280 }}>
+          <span className="tc-search-icon">🔍</span>
+          <input className="tc-input" placeholder="Search departments…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <button className={showForm ? "tc-btn-ghost" : "tc-btn-green"}
+        <button className={showForm ? "tc-btn-ghost" : "tc-btn-primary"}
           onClick={() => { setShowForm(f => !f); setSaveMsg(null); }}>
-          {showForm ? "✕ Cancel" : "+ Add Department"}
+          {showForm ? "✕  Cancel" : "+ Add Department"}
         </button>
       </div>
 
-      {/* Create form */}
+      {/* ── Create form ──────────────────────────────────────────── */}
       {showForm && (
         <div className="tc-create-panel">
-          <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 14, fontWeight: 700, color: "#86efac", marginBottom: 16 }}>
-            New Department
-          </h3>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 9, background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🏫</div>
+            <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 14, fontWeight: 700, color: "#86efac", margin: 0 }}>New Department</h3>
+          </div>
+
           {saveMsg && <div className={saveMsg.ok ? "tc-alert-ok" : "tc-alert-err"}>{saveMsg.text}</div>}
+
           <form onSubmit={handleCreate}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 180px", gap: 12, marginBottom: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 200px", gap: 14, marginBottom: 16 }}>
               <div>
-                <label className="tc-label-dark">Department Name</label>
-                <input className="tc-input-dark" value={form.name} required
+                <label className="tc-label">Department Name</label>
+                <input className="tc-input" value={form.name} required
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="College of Nursing" />
+                  placeholder="e.g. College of Nursing" />
               </div>
               <div>
-                <label className="tc-label-dark">Code</label>
-                <input className="tc-input-dark" value={form.code} required
+                <label className="tc-label">Code</label>
+                <input className="tc-input" value={form.code} required maxLength={20}
                   onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
-                  placeholder="CON" maxLength={20} />
+                  placeholder="e.g. CON" />
               </div>
             </div>
-            <button type="submit" className="tc-btn-green" disabled={saving}>
+            <button type="submit" className="tc-btn-primary" disabled={saving}>
               {saving ? "Saving…" : "Create Department"}
             </button>
           </form>
@@ -181,11 +267,32 @@ export default function ManageDepartments() {
 
       {error && <div className="tc-alert-err">{error}</div>}
 
-      {/* Table */}
+      {/* ── Table ────────────────────────────────────────────────── */}
       <div className="tc-table-wrap">
+        {/* Table chrome header */}
+        <div style={{
+          padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", gap: 5 }}>
+              {["#FF5F57","#FFBD2E","#28C840"].map((c, i) => (
+                <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: c }} />
+              ))}
+            </div>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono',monospace", letterSpacing: "0.08em", marginLeft: 6 }}>
+              DEPARTMENTS — {filtered.length} RECORDS
+            </span>
+          </div>
+          {loading && (
+            <div style={{ width: 14, height: 14, border: "2px solid rgba(34,197,94,0.2)", borderTopColor: "#22C55E", borderRadius: "50%", animation: "tcSpin 0.7s linear infinite" }} />
+          )}
+        </div>
+
         <table className="tc-table">
           <thead>
             <tr>
+              <th>#</th>
               <th>Department Name</th>
               <th>Code</th>
               <th>Status</th>
@@ -194,42 +301,66 @@ export default function ManageDepartments() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={4} style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.25)" }}>Loading…</td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={4} style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.25)" }}>No departments found.</td></tr>
-            ) : filtered.map(d => (
-              <tr key={d.id}>
-                <td style={{ fontWeight: 600, color: "#fff" }}>{d.name}</td>
-                <td>
-                  <span style={{ background: "rgba(34,197,94,0.12)", color: "#86efac", padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, border: "1px solid rgba(34,197,94,0.2)", fontFamily: "'DM Mono',monospace" }}>
-                    {d.code}
-                  </span>
-                </td>
-                <td>
-                  <span style={{
-                    padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700,
-                    background: (d.active || d.isActive) ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.05)",
-                    color: (d.active || d.isActive) ? "#86efac" : "rgba(255,255,255,0.3)",
-                    border: `1px solid ${(d.active || d.isActive) ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.08)"}`,
-                  }}>
-                    {(d.active || d.isActive) ? "● Active" : "○ Inactive"}
-                  </span>
-                </td>
-                <td style={{ textAlign: "right" }}>
-                  {(d.active || d.isActive) && (
-                    <button className="tc-btn-danger-sm" onClick={() => handleDeactivate(d.id, d.name)}>
-                      Deactivate
-                    </button>
-                  )}
+              <tr>
+                <td colSpan={5} style={{ textAlign: "center", padding: 48, color: "rgba(255,255,255,0.2)" }}>
+                  <div style={{ display: "inline-block", width: 20, height: 20, border: "2px solid rgba(34,197,94,0.2)", borderTopColor: "#22C55E", borderRadius: "50%", animation: "tcSpin 0.7s linear infinite" }} />
                 </td>
               </tr>
-            ))}
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ textAlign: "center", padding: 56, color: "rgba(255,255,255,0.18)", fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: "0.06em" }}>
+                  NO DEPARTMENTS FOUND
+                </td>
+              </tr>
+            ) : filtered.map((d, i) => {
+              const isActive = d.active || d.isActive;
+              return (
+                <tr key={d.id} style={{ animationDelay: `${i * 0.03}s` }}>
+                  <td style={{ color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono',monospace", fontSize: 11 }}>
+                    {String(i + 1).padStart(2, "0")}
+                  </td>
+                  <td>
+                    <div style={{ fontWeight: 600, color: "#fff", fontSize: 14 }}>{d.name}</div>
+                  </td>
+                  <td>
+                    <span style={{
+                      background: "rgba(34,197,94,0.1)", color: "#86efac",
+                      padding: "4px 11px", borderRadius: 7, fontSize: 11, fontWeight: 700,
+                      border: "1px solid rgba(34,197,94,0.2)", fontFamily: "'DM Mono',monospace",
+                      letterSpacing: "0.06em",
+                    }}>
+                      {d.code}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", gap: 5,
+                      padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                      background: isActive ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.04)",
+                      color: isActive ? "#86efac" : "rgba(255,255,255,0.28)",
+                      border: `1px solid ${isActive ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.07)"}`,
+                    }}>
+                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: isActive ? "#22C55E" : "rgba(255,255,255,0.2)", display: "inline-block" }} />
+                      {isActive ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    {isActive && (
+                      <button className="tc-btn-danger" onClick={() => handleDeactivate(d.id, d.name)}>
+                        Deactivate
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      <div style={{ marginTop: 10, fontSize: 12, color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono',monospace" }}>
-        {filtered.length} department{filtered.length !== 1 ? "s" : ""}
+      <div style={{ marginTop: 12, fontSize: 11, color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono',monospace", letterSpacing: "0.06em" }}>
+        {filtered.length} DEPARTMENT{filtered.length !== 1 ? "S" : ""}
+        {search && ` · FILTERED FROM ${depts.length}`}
       </div>
     </div>
   );

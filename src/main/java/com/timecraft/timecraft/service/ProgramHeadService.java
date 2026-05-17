@@ -246,7 +246,28 @@ public class ProgramHeadService {
             return List.of();
         }
 
-        // Get department IDs from managed courses
+        // Get all subject IDs for managed courses
+        List<Long> subjectIds = courseSubjectRepository
+                .findByCourseIdIn(managedCourseIds)
+                .stream()
+                .map(cs -> cs.getSubject().getId())
+                .distinct()
+                .toList();
+
+        if (subjectIds.isEmpty()) {
+            return List.of();
+        }
+
+        // Return ALL teachers who voted for any of these subjects
+        // (regardless of department — GE/service teachers cross departments)
+        List<Long> teacherIdsWithPrefs = preferenceRepository
+                .findBySubjectIdIn(subjectIds)
+                .stream()
+                .map(p -> p.getTeacher().getId())
+                .distinct()
+                .toList();
+
+        // Also include all teachers from managed course departments as fallback
         List<Long> departmentIds = managedCourseIds.stream()
                 .map(courseId -> courseRepository.findById(courseId).orElse(null))
                 .filter(c -> c != null && c.getDepartment() != null)
@@ -254,15 +275,13 @@ public class ProgramHeadService {
                 .distinct()
                 .toList();
 
-        if (departmentIds.isEmpty()) {
-            return List.of();
-        }
-
         return userRepository.findAll().stream()
                 .filter(u -> com.timecraft.timecraft.model.User.UserType.TEACHER == u.getUserType())
-                .filter(u -> u.getTeacherProfile() != null
-                && u.getTeacherProfile().getDepartment() != null
-                && departmentIds.contains(u.getTeacherProfile().getDepartment().getId()))
+                .filter(u -> u.isActive())
+                .filter(u -> teacherIdsWithPrefs.contains(u.getId())
+                        || (u.getTeacherProfile() != null
+                        && u.getTeacherProfile().getDepartment() != null
+                        && departmentIds.contains(u.getTeacherProfile().getDepartment().getId())))
                 .toList();
     }
 

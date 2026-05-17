@@ -58,6 +58,16 @@ public class ScheduleService {
         return scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear);
     }
 
+        public List<Schedule> findByCourse(Long courseId, Semester semester, String schoolYear) {
+        return scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear)
+                .stream()
+                .filter(s -> s.getSection() != null
+                        && s.getSection().getCourse() != null
+                        && s.getSection().getCourse().getId().equals(courseId))
+                .filter(s -> s.getStatus() == ScheduleStatus.PUBLISHED)
+                .toList();
+    }
+
     public List<Schedule> findBySection(Long sectionId, Semester semester,
             String schoolYear) {
         // Own schedules
@@ -157,10 +167,14 @@ public class ScheduleService {
     }
 
     private int getStudentYearLevel(User student) {
-        return studentProfileRepository
-                .findByUserId(student.getId())
-                .map(p -> (int) p.getYearLevel())
-                .orElse(2);
+        try {
+            return studentProfileRepository
+                    .findByUserId(student.getId())
+                    .map(p -> (int) p.getYearLevel())
+                    .orElse(1);
+        } catch (Exception e) {
+            return 1;
+        }
     }
 
     // ── Conflict checks ───────────────────────────────────────────────────────

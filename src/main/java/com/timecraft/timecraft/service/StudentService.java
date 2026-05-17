@@ -1,5 +1,6 @@
 package com.timecraft.timecraft.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,17 +11,16 @@ import com.timecraft.timecraft.exception.DuplicateResourceException;
 import com.timecraft.timecraft.exception.ResourceNotFoundException;
 import com.timecraft.timecraft.model.Course;
 import com.timecraft.timecraft.model.Department;
+import com.timecraft.timecraft.model.IrregularStudentDocument;
 import com.timecraft.timecraft.model.StudentProfile;
+import com.timecraft.timecraft.model.StudentProfile.ApplicationStatus;
 import com.timecraft.timecraft.model.User;
 import com.timecraft.timecraft.model.User.UserType;
 import com.timecraft.timecraft.repository.CourseRepository;
 import com.timecraft.timecraft.repository.DepartmentRepository;
+import com.timecraft.timecraft.repository.IrregularStudentDocumentRepository;
 import com.timecraft.timecraft.repository.StudentProfileRepository;
 import com.timecraft.timecraft.repository.UserRepository;
-import com.timecraft.timecraft.model.IrregularStudentDocument;
-import com.timecraft.timecraft.model.StudentProfile.ApplicationStatus;
-import com.timecraft.timecraft.repository.IrregularStudentDocumentRepository;
-import java.time.LocalDateTime;
 
 import lombok.RequiredArgsConstructor;
 
@@ -95,23 +95,25 @@ public class StudentService {
                     "School ID already in use: " + schoolId);
         }
 
-        // Validate irregular constraint: irregular = no section
-        if (isIrregular && section != null) {
-            throw new IllegalArgumentException(
-                    "Irregular students must not have a section assigned");
-        }
-        if (!isIrregular && section == null) {
-            throw new IllegalArgumentException(
-                    "Regular students must have a section assigned");
-        }
-
-        Department department = departmentRepository.findById(departmentId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Department not found: " + departmentId));
-
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Course not found: " + courseId));
+
+        // Derive department from course if not provided
+        Department department = null;
+        if (departmentId != null) {
+            department = departmentRepository.findById(departmentId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Department not found: " + departmentId));
+        } else if (course.getDepartment() != null) {
+            department = course.getDepartment();
+        }
+
+        // Auto-set irregular if no section provided
+        if (section == null || section.isBlank()) {
+            isIrregular = true;
+            section = null;
+        }
 
         User user = User.builder()
                 .userType(UserType.STUDENT)

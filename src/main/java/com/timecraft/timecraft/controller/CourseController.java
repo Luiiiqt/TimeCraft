@@ -22,8 +22,13 @@ public class CourseController {
 
     private final CourseRepository courseRepository;
 
+    @GetMapping("/public")
+    public ResponseEntity<ApiResponse<List<java.util.Map<String, Object>>>> getCoursesPublic() {
+        return getCourses(null);
+    }
+
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','DEAN','TEACHER')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN','TEACHER','STUDENT')")
     public ResponseEntity<ApiResponse<List<java.util.Map<String, Object>>>> getCourses(
             @RequestParam(required = false) Long departmentId) {
 
