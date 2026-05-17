@@ -267,7 +267,7 @@ export default function ManageAccounts() {
     (u.email    ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
-  const showDept   = ["DEAN","PROGRAM_HEAD","TEACHER"].includes(activeRole);
+  const showDept   = ["DEAN","TEACHER"].includes(activeRole);
   const showCourse = ["PROGRAM_HEAD","STUDENT"].includes(activeRole);
 
   return (

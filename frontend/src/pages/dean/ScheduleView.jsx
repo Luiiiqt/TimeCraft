@@ -22,6 +22,7 @@ export default function ScheduleView() {
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
   const [publishMsg, setPublishMsg] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [sections, setSections] = useState([]);
   const [sectionId, setSectionId] = useState(null);
   const [courses, setCourses] = useState([]);
@@ -45,10 +46,13 @@ export default function ScheduleView() {
 
   useEffect(() => {
     if (!activeCourseId || !activeSemester || !activeSchoolYear) return;
+    // Clear immediately so old schedules don't show while loading
+    setSchedules([]);
+    setSections([]);
+    setSectionId(null);
     api.get(`/sections`, { params: { courseId: activeCourseId, semester: activeSemester, schoolYear: activeSchoolYear } })
       .then(r => {
         const list = r.data?.data ?? [];
-        // Only keep sections belonging to the active course
         const filtered = list.filter(s =>
           (s.schoolYear === activeSchoolYear || !s.schoolYear) &&
           s.courseId === activeCourseId
@@ -59,11 +63,11 @@ export default function ScheduleView() {
         const firstWithSchedules = sorted.find(s => s.hasSchedules) ?? sorted[0];
         setSectionId(firstWithSchedules ? firstWithSchedules.id : null);
       })
-      .catch(() => setLoading(false));
+      .catch(() => { setLoading(false); setSchedules([]); });
   }, [activeCourseId, activeSemester, activeSchoolYear]);
 
   useEffect(() => {
-    if (!sectionId) return;
+    if (!sectionId) { setSchedules([]); setLoading(false); return; }
     setLoading(true);
     api.get(`/schedules/section/${sectionId}`, { params: { semester: activeSemester, schoolYear: activeSchoolYear } })
       .then(r => {
@@ -130,24 +134,7 @@ export default function ScheduleView() {
         )}
           {schedules.length > 0 && schedules.every(s => s.status !== "CONFLICTED") && schedules.some(s => s.status === "DRAFT") && (
           <button
-            onClick={async () => {
-              if (!window.confirm("Publish all schedules for this term? This cannot be undone.")) return;
-              setPublishing(true);
-              setPublishMsg(null);
-              try {
-                await api.put("/schedules/publish-all", null, {
-                  params: { semester: activeSemester, schoolYear: activeSchoolYear }
-                });
-                setPublishMsg({ type: "success", text: "Schedule published successfully!" });
-                // Refresh
-                const r = await api.get(`/schedules/section/${sectionId}`, { params: { semester: activeSemester, schoolYear: activeSchoolYear } });
-                setSchedules(r.data?.data ?? []);
-              } catch (e) {
-                setPublishMsg({ type: "error", text: e?.response?.data?.message ?? "Publish failed." });
-              } finally {
-                setPublishing(false);
-              }
-            }}
+            onClick={() => setShowConfirm(true)}
             disabled={publishing}
             style={{
               padding: "7px 18px", borderRadius: 8, fontSize: 13,
@@ -172,6 +159,64 @@ export default function ScheduleView() {
           Open Printable View
         </button>
       </div>
+
+      {/* ── Publish confirm modal ── */}
+      {showConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 14, padding: '28px 32px',
+            maxWidth: 420, width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 8 }}>
+              Publish Schedule
+            </div>
+            <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 24, lineHeight: 1.6 }}>
+              Are you sure you want to publish all schedules for this term?
+              <br /><strong style={{ color: '#B91C1C' }}>This cannot be undone.</strong>
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowConfirm(false)}
+                style={{
+                  padding: '9px 20px', borderRadius: 8, fontSize: 13,
+                  background: '#F9FAFB', color: '#374151',
+                  border: '1.5px solid #D1D5DB', cursor: 'pointer', fontWeight: 600,
+                }}>
+                Cancel
+              </button>
+              <button
+                disabled={publishing}
+                onClick={async () => {
+                  setShowConfirm(false);
+                  setPublishing(true);
+                  setPublishMsg(null);
+                  try {
+                    await api.put("/schedules/publish-all", null, {
+                      params: { semester: activeSemester, schoolYear: activeSchoolYear }
+                    });
+                    setPublishMsg({ type: "success", text: "Schedule published successfully!" });
+                    const r = await api.get(`/schedules/section/${sectionId}`, { params: { semester: activeSemester, schoolYear: activeSchoolYear } });
+                    setSchedules(r.data?.data ?? []);
+                  } catch (e) {
+                    setPublishMsg({ type: "error", text: e?.response?.data?.message ?? "Publish failed." });
+                  } finally {
+                    setPublishing(false);
+                  }
+                }}
+                style={{
+                  padding: '9px 20px', borderRadius: 8, fontSize: 13,
+                  background: '#1565C0', color: '#fff',
+                  border: 'none', cursor: 'pointer', fontWeight: 600,
+                }}>
+                Yes, Publish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <TimetableGrid schedules={schedules} loading={loading} />
     </div>

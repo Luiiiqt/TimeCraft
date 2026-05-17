@@ -538,7 +538,7 @@ public class SchedulingEngine {
                 false, true, section.getId());
         nonConsec.removeIf(p -> pairs.stream().anyMatch(
                 q -> q.ts1().getId().equals(p.ts1().getId())
-                  && q.ts2().getId().equals(p.ts2().getId())));
+                && q.ts2().getId().equals(p.ts2().getId())));
         pairs.addAll(nonConsec);
 
         // ── CSP search: teacher × pair × room ────────────────────────────────
@@ -1027,31 +1027,39 @@ public class SchedulingEngine {
             Semester semester, String schoolYear) {
         Map<DayOfWeek, List<int[]>> dayMap = sectionDaySlots.getOrDefault(sectionId, Map.of());
         List<int[]> slots = dayMap.getOrDefault(ts.getDayOfWeek(), List.of());
-        // Allow up to 2 classes per day without requiring a break
         if (slots.size() < 2) {
             return false;
         }
-        // After 2 classes already on this day, require a break before adding a 3rd
-        // A "break" means the new slot is NOT immediately adjacent to any existing slot
         int newStart = ts.getStartTime().getHour() * 60 + ts.getStartTime().getMinute();
         int newEnd = ts.getEndTime().getHour() * 60 + ts.getEndTime().getMinute();
-        // Check if there's already a chain of 2 consecutive slots on this day
-        for (int[] a : slots) {
-            for (int[] b : slots) {
-                if (a == b) {
-                    continue;
-                }
-                // a and b are consecutive (b starts when a ends)
-                if (a[1] == b[0] || b[1] == a[0]) {
-                    // There's already a consecutive pair — block any new adjacent slot
-                    if (newStart == a[0] || newStart == b[0] || newStart == a[1] || newStart == b[1]
-                            || newEnd == a[0] || newEnd == b[0] || newEnd == a[1] || newEnd == b[1]) {
-                        return true; // would extend the chain — require break
-                    }
-                }
+
+        // Count how many back-to-back classes already exist ending at newStart
+        // or starting at newEnd (i.e. the new slot would extend a consecutive chain)
+        int chainBefore = 0;
+        int scan = newStart;
+        for (int i = 0; i < 10; i++) {
+            final int s = scan;
+            int[] prev = slots.stream().filter(x -> x[1] == s).findFirst().orElse(null);
+            if (prev == null) {
+                break;
             }
+            chainBefore++;
+            scan = prev[0];
         }
-        return false;
+        int chainAfter = 0;
+        scan = newEnd;
+        for (int i = 0; i < 10; i++) {
+            final int e = scan;
+            int[] next = slots.stream().filter(x -> x[0] == e).findFirst().orElse(null);
+            if (next == null) {
+                break;
+            }
+            chainAfter++;
+            scan = next[1];
+        }
+        // Total chain length if we insert the new slot
+        int totalChain = chainBefore + 1 + chainAfter;
+        return totalChain > 2; // enforce max 2 consecutive classes
     }
 
     // Returns true if placing ts would create more than 2 back-to-back classes
@@ -1120,8 +1128,17 @@ public class SchedulingEngine {
                 DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY);
 
         // Collect timeslots grouped by day, sorted by start time
+        // Collect timeslots grouped by day, sorted by start time
         Map<DayOfWeek, List<Timeslot>> byDay = new java.util.LinkedHashMap<>();
-        for (DayOfWeek d : orderedDays) {
+        // Sort days so under-used days (fewer section slots) come first — spreads classes across all days
+        List<DayOfWeek> sortedDays = orderedDays.stream()
+                .sorted(Comparator
+                        .comparingInt((DayOfWeek d) -> d == DayOfWeek.SATURDAY ? 1 : 0)
+                        .thenComparingInt(d -> (int) sectionDaySlots.values().stream()
+                        .mapToLong(m -> m.getOrDefault(d, List.of()).size())
+                        .sum()))
+                .collect(Collectors.toList());
+        for (DayOfWeek d : sortedDays) {
             List<Timeslot> daySlots = candidates.stream()
                     .filter(ts -> ts.getDayOfWeek() == d)
                     .sorted(Comparator.comparingInt(
@@ -1144,6 +1161,17 @@ public class SchedulingEngine {
                     adjacentPairs.add(new DayOfWeek[]{d1, d2});
                 }
             }
+            // Sort pairs so least-loaded day-pairs come first
+            // This ensures Friday and Saturday get filled before Mon-Tue get overloaded
+            adjacentPairs.sort(Comparator.comparingInt(pair -> {
+                int load1 = (int) sectionDaySlots.values().stream()
+                        .mapToLong(m -> m.getOrDefault(pair[0], List.of()).size())
+                        .sum();
+                int load2 = (int) sectionDaySlots.values().stream()
+                        .mapToLong(m -> m.getOrDefault(pair[1], List.of()).size())
+                        .sum();
+                return load1 + load2;
+            }));
             for (DayOfWeek[] pair : adjacentPairs) {
                 // R8: LAB sessions never on Saturday
                 if (isLab && (pair[0] == DayOfWeek.SATURDAY || pair[1] == DayOfWeek.SATURDAY)) {
@@ -1344,10 +1372,27 @@ public class SchedulingEngine {
                 .filter(r -> r.getRoomType() == roomType)
                 .toList(); // capacity enforced below via sorting; all rooms considered
 
-        // Sort: 306 first for major lectures, then target campus, then others
+        // Sort: correct room type first, then least-used room (maximize spread),
+        // then 306 preferred for major lectures, then target campus
+// Sort: 401–408 first for major lectures (maximize usage), 306 as last resort, then least-used
         pool = pool.stream()
                 .sorted(Comparator
-                        .comparingInt((Room r) -> (!isLabSession && !isMinor && ROOM_306_NUMBER.equals(r.getRoomNumber())) ? 0 : 1)
+                        .comparingInt((Room r) -> {
+                            if (isLabSession) {
+                                return 0; // labs: no preference
+
+                                                        }if (isMinor) {
+                                return 0;      // minor: all valid rooms equal
+                            }                            // major lecture: prefer 401–408, deprioritize 306
+                            if (MINOR_ROOM_NUMBERS.contains(r.getRoomNumber())) {
+                                return 0;
+                            }
+                            if (ROOM_306_NUMBER.equals(r.getRoomNumber())) {
+                                return 1;
+                            }
+                            return 2;
+                        })
+                        .thenComparingInt(r -> roomLocks.getOrDefault(r.getId(), Set.of()).size())
                         .thenComparingInt(r -> r.getCampus() != null && r.getCampus().getId().equals(targetCampusId) ? 0 : 1))
                 .toList();
 
@@ -1382,8 +1427,9 @@ public class SchedulingEngine {
             if (isMinor && !MINOR_ROOM_NUMBERS.contains(num)) {
                 continue;
             }
-            // R12: 401–408 = minor/GE rooms only — major LECTURE and LAB must NOT use them
-            if (!isMinor && MINOR_ROOM_NUMBERS.contains(num)) {
+            // R12: 401–408 = minor/GE rooms — LAB must NOT use them,
+            // but major LECTURE can use them (306 is deprioritized, not exclusive)
+            if (!isMinor && isLabSession && MINOR_ROOM_NUMBERS.contains(num)) {
                 continue;
             }
 
@@ -1411,8 +1457,15 @@ public class SchedulingEngine {
         List<Room> pool = allRooms.stream()
                 .filter(r -> r.getRoomType() == roomType)
                 .sorted(Comparator
-                        .comparingInt((Room r) -> (!isLabSession && !isMinor
-                        && ROOM_306_NUMBER.equals(r.getRoomNumber())) ? 0 : 1)
+                        .comparingInt((Room r) -> {
+                            if (isLabSession) return 0;
+                            if (isMinor) return 0;
+                            // major lecture: prefer 401–408, deprioritize 306
+                            if (MINOR_ROOM_NUMBERS.contains(r.getRoomNumber())) return 0;
+                            if (ROOM_306_NUMBER.equals(r.getRoomNumber())) return 1;
+                            return 2;
+                        })
+                        .thenComparingInt(r -> roomLocks.getOrDefault(r.getId(), Set.of()).size())
                         .thenComparingInt(r -> r.getCampus() != null
                         && r.getCampus().getId().equals(targetCampusId) ? 0 : 1))
                 .toList();

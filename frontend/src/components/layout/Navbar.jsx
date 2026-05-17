@@ -32,6 +32,7 @@ const NAV_LINKS = {
     { path: "/admin/departments", label: "Departments", icon: "🏫" },
     { path: "/admin/rooms",       label: "Rooms",       icon: "🚪" },
     { path: "/admin/accounts",    label: "Accounts",    icon: "👥" },
+    { path: "/admin/history",     label: "History",     icon: "🗂️" },
   ],
   TEACHER: [
     { path: "/teacher",              label: "Dashboard",   icon: "⬡" },
