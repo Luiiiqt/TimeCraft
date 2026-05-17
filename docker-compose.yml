@@ -1,13 +1,13 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
     container_name: timecraft_db
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: timecraft_db
-      POSTGRES_USER: timecraft
-      POSTGRES_PASSWORD: timecraft123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -21,15 +21,20 @@ services:
   backend:
     build: .
     container_name: timecraft_backend
+    env_file:
+      - .env
     ports:
       - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/timecraft_db
-      SPRING_DATASOURCE_USERNAME: timecraft
-      SPRING_DATASOURCE_PASSWORD: timecraft123
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN}
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
 
   frontend:

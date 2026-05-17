@@ -139,11 +139,11 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((req, res, e) -> {
                     res.setStatus(401);
-                    res.getWriter().write("Unauthorized: " + e.getMessage());
+                    res.getWriter().write("Unauthorized");
                 })
                 .accessDeniedHandler((req, res, e) -> {
                     res.setStatus(403);
-                    res.getWriter().write("Forbidden: " + e.getMessage());
+                    res.getWriter().write("Forbidden");
                 }))
                 // Insert JWT filter before Spring's username/password filter
                 .addFilterBefore(jwtAuthFilter,
