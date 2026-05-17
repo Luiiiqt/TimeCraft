@@ -256,6 +256,15 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     /**
      * All schedules that are part of a merged class for a given term.
      */
+    // ── History (soft-deleted) ────────────────────────────────────────────────
+    @Query("SELECT s FROM Schedule s WHERE s.deletedAt IS NOT NULL ORDER BY s.deletedAt DESC")
+    List<Schedule> findAllDeleted();
+
+    @Query("SELECT s FROM Schedule s WHERE s.deletedAt IS NOT NULL AND s.semester = :semester AND s.schoolYear = :schoolYear ORDER BY s.deletedAt DESC")
+    List<Schedule> findDeletedByTerm(
+            @Param("semester") Semester semester,
+            @Param("schoolYear") String schoolYear);
+
     @Query("SELECT s FROM Schedule s "
             + "WHERE s.mergedSection IS NOT NULL "
             + "AND s.semester = :semester "

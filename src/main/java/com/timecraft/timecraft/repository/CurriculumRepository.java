@@ -11,4 +11,6 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
     List<Curriculum> findByCourseId(Long courseId);
     Optional<Curriculum> findByCourseIdAndEffectiveYear(Long courseId, String effectiveYear);
     List<Curriculum> findByIsActiveTrue();
+
+    List<Curriculum> findByCourseIdAndDeletedAtIsNotNull(Long courseId);
 }

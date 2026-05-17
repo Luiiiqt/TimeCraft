@@ -20,6 +20,8 @@ export default function ScheduleView() {
 
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [publishing, setPublishing] = useState(false);
+  const [publishMsg, setPublishMsg] = useState(null);
   const [sections, setSections] = useState([]);
   const [sectionId, setSectionId] = useState(null);
   const [courses, setCourses] = useState([]);
@@ -125,6 +127,40 @@ export default function ScheduleView() {
               ))}
             </select>
           </div>
+        )}
+          {schedules.length > 0 && schedules.every(s => s.status !== "CONFLICTED") && schedules.some(s => s.status === "DRAFT") && (
+          <button
+            onClick={async () => {
+              if (!window.confirm("Publish all schedules for this term? This cannot be undone.")) return;
+              setPublishing(true);
+              setPublishMsg(null);
+              try {
+                await api.put("/schedules/publish-all", null, {
+                  params: { semester: activeSemester, schoolYear: activeSchoolYear }
+                });
+                setPublishMsg({ type: "success", text: "Schedule published successfully!" });
+                // Refresh
+                const r = await api.get(`/schedules/section/${sectionId}`, { params: { semester: activeSemester, schoolYear: activeSchoolYear } });
+                setSchedules(r.data?.data ?? []);
+              } catch (e) {
+                setPublishMsg({ type: "error", text: e?.response?.data?.message ?? "Publish failed." });
+              } finally {
+                setPublishing(false);
+              }
+            }}
+            disabled={publishing}
+            style={{
+              padding: "7px 18px", borderRadius: 8, fontSize: 13,
+              background: publishing ? "#9ca3af" : "#1565C0", color: "#fff",
+              border: "none", cursor: publishing ? "not-allowed" : "pointer", fontWeight: 600,
+            }}>
+            {publishing ? "Publishing…" : "🚀 Publish Schedule"}
+          </button>
+        )}
+        {publishMsg && (
+          <span style={{ fontSize: 13, fontWeight: 600, color: publishMsg.type === "success" ? "#15803d" : "#dc2626" }}>
+            {publishMsg.text}
+          </span>
         )}
         <button
           onClick={() => navigate(`/dean/schedule-print?courseId=${activeCourseId}&semester=${activeSemester}&schoolYear=${activeSchoolYear}`)}

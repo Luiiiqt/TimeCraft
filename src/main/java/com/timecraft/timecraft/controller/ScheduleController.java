@@ -328,6 +328,32 @@ public class ScheduleController {
                         Semester.valueOf(semester), schoolYear)));
     }
 
+    // ── DELETE /api/v1/schedules/term (soft delete entire term) ───────────────
+
+    @DeleteMapping("/term")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteTermSchedules(
+            @RequestParam String semester,
+            @RequestParam String schoolYear,
+            Principal principal) {
+        scheduleService.deleteTermSchedules(
+                Semester.valueOf(semester), schoolYear, principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Schedule archived successfully"));
+    }
+
+    // ── GET /api/v1/schedules/history ─────────────────────────────────────────
+
+    @GetMapping("/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getHistory(
+            @RequestParam(required = false) String semester,
+            @RequestParam(required = false) String schoolYear) {
+        Semester sem = semester != null ? Semester.valueOf(semester) : null;
+        List<Schedule> deleted = scheduleService.getDeletedSchedules(sem, schoolYear);
+        return ResponseEntity.ok(ApiResponse.of(
+                deleted.stream().map(ScheduleResponse::from).toList()));
+    }
+
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private Long resolveUserId(String email) {

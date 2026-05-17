@@ -277,4 +277,21 @@ public class CurriculumService {
             return Semester.FIRST;
         }
     }
+
+    // ── Soft delete (archive) ─────────────────────────────────────────────────
+
+    @Transactional
+    public void softDelete(Long curriculumId, String deletedBy) {
+        Curriculum c = curriculumRepository.findById(curriculumId)
+                .orElseThrow(() -> new com.timecraft.timecraft.exception.ResourceNotFoundException(
+                        "Curriculum not found: " + curriculumId));
+        c.setActive(false);
+        c.setDeletedAt(java.time.LocalDateTime.now());
+        c.setDeletedBy(deletedBy);
+        curriculumRepository.save(c);
+    }
+
+    public List<Curriculum> getDeletedByCourse(Long courseId) {
+        return curriculumRepository.findByCourseIdAndDeletedAtIsNotNull(courseId);
+    }
 }

@@ -349,6 +349,21 @@ public class ScheduleService {
                         courseId, semester, schoolYear, ScheduleStatus.PUBLISHED);
     }
 
+    // ── Soft delete (archive) ─────────────────────────────────────────────────
+    @Transactional
+    public void deleteTermSchedules(Semester semester, String schoolYear, String deletedBy) {
+        List<Schedule> all = scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear);
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        all.forEach(s -> { s.setDeletedAt(now); s.setDeletedBy(deletedBy); });
+        scheduleRepository.saveAll(all);
+    }
+
+    public List<Schedule> getDeletedSchedules(Semester semester, String schoolYear) {
+        return semester != null && schoolYear != null
+                ? scheduleRepository.findDeletedByTerm(semester, schoolYear)
+                : scheduleRepository.findAllDeleted();
+    }
+
     // ── Reporting ─────────────────────────────────────────────────────────────
     public List<Object[]> getTeachingLoadReport(Semester semester,
             String schoolYear) {

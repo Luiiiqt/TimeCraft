@@ -3,16 +3,35 @@ import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import api from "../../services/api";
 
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500;600&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @keyframes slideUp   { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulse-glow { 0%,100%{ opacity:0.5; } 50%{ opacity:1; } }
+
+  .tc-card { background:rgba(15,23,42,0.72); backdrop-filter:blur(20px); border-radius:16px; border:1px solid rgba(255,255,255,0.07); transition:all .25s ease; }
+
+  .tc-select { padding:8px 12px; border-radius:9px; border:1.5px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:#F1F5F9; font-size:13px; font-family:'DM Sans',sans-serif; outline:none; cursor:pointer; transition:border-color .2s; }
+  .tc-select:focus { border-color:rgba(6,182,212,0.5); }
+  .tc-select option { background:#0f172a; color:#F1F5F9; }
+
+  .tc-stat-card { background:rgba(15,23,42,0.72); backdrop-filter:blur(20px); border-radius:16px; border:1px solid rgba(255,255,255,0.07); padding:22px 24px; transition:all .25s ease; }
+  .tc-stat-card:hover { transform:translateY(-2px); }
+
+  .tc-quick-link { display:block; border-radius:16px; padding:24px 22px; border:1px solid rgba(255,255,255,0.07); text-decoration:none; background:rgba(15,23,42,0.6); backdrop-filter:blur(12px); transition:all .25s ease; position:relative; overflow:hidden; cursor:pointer; }
+  .tc-quick-link:hover { transform:translateY(-3px); border-color:rgba(255,255,255,0.15); }
+`;
+
 const SEMESTER_OPTIONS = [
-  { value: "FIRST", label: "1st Semester" },
+  { value: "FIRST",  label: "1st Semester" },
   { value: "SECOND", label: "2nd Semester" },
   { value: "SUMMER", label: "Summer" },
 ];
 const SCHOOL_YEARS = ["2024-2025", "2025-2026", "2026-2027"];
 
 function getCurrentTerm() {
-  const m = new Date().getMonth() + 1;
-  const y = new Date().getFullYear();
+  const m = new Date().getMonth() + 1, y = new Date().getFullYear();
   return { semester: m >= 6 && m <= 10 ? "FIRST" : "SECOND", schoolYear: `${y}-${y + 1}` };
 }
 
@@ -31,72 +50,91 @@ export default function GEDashboard() {
       .finally(() => setLoading(false));
   }, [term]);
 
-  const total = grouped.length;
+  const total     = grouped.length;
   const finalized = grouped.filter(g => g.assigned).length;
-  const pending = total - finalized;
+  const pending   = total - finalized;
 
   return (
-    <div style={{ padding: "2rem 2.5rem", maxWidth: 1100, margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#111827", margin: 0 }}>
-          GE Coordinator Dashboard
-        </h1>
-        <p style={{ color: "#6b7280", fontSize: 13, marginTop: 4 }}>
-          Welcome back, {user?.fullName}. Manage GE subject-teacher assignments.
-        </p>
+    <div style={{ minHeight: "100vh", background: "#060D1A", color: "#F1F5F9", fontFamily: "'DM Sans',sans-serif", padding: "2rem 2.5rem" }}>
+      <style>{STYLES}</style>
+
+      {/* Ambient blobs */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "-10%", left: "25%", width: 560, height: 560, borderRadius: "50%", background: "radial-gradient(circle,rgba(6,182,212,0.07) 0%,transparent 70%)", filter: "blur(60px)", animation: "pulse-glow 9s ease infinite" }} />
+        <div style={{ position: "absolute", bottom: "5%", right: "5%", width: 380, height: 380, borderRadius: "50%", background: "radial-gradient(circle,rgba(34,197,94,0.05) 0%,transparent 70%)", filter: "blur(60px)", animation: "pulse-glow 12s ease infinite 4s" }} />
       </div>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-        <select value={term.semester} onChange={e => setTerm(t => ({ ...t, semester: e.target.value }))}
-          style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
-          {SEMESTER_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
-        <select value={term.schoolYear} onChange={e => setTerm(t => ({ ...t, schoolYear: e.target.value }))}
-          style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
-          {SCHOOL_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
-      </div>
+      <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1 }}>
 
-      <div style={{ display: "flex", gap: 16, marginBottom: 32, flexWrap: "wrap" }}>
-        {[
-          { label: "GE Subjects with Votes", value: total, color: "#1a56db" },
-          { label: "Pending Assignment", value: pending, color: "#f59e0b" },
-          { label: "Finalized", value: finalized, color: "#16a34a" },
-        ].map(s => (
-          <div key={s.label} style={{
-            background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb",
-            padding: "20px 24px", borderLeft: `4px solid ${s.color}`, minWidth: 180,
-          }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>{s.label}</div>
+        {/* Header */}
+        <div style={{ marginBottom: 28, animation: "slideUp .5s ease both" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#06B6D4", boxShadow: "0 0 8px #06B6D4" }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#06B6D4", letterSpacing: ".12em", textTransform: "uppercase", fontFamily: "'DM Mono',monospace" }}>GE Coordinator Portal</span>
           </div>
-        ))}
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <div onClick={() => navigate("/ge/preferences")} style={{
-          background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb",
-          padding: "20px 24px", cursor: "pointer"
-        }}>
-          <div style={{ fontSize: 22, marginBottom: 8 }}>🗳️</div>
-          <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>Assign GE Teachers</div>
-          <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
-            Review teacher votes and assign GE teachers to minor subjects.
-          </div>
-          {pending > 0 && (
-            <div style={{ marginTop: 10, fontSize: 11, background: "#fef3c7", color: "#92400e", borderRadius: 6, padding: "3px 10px", display: "inline-block", fontWeight: 600 }}>
-              {pending} pending
-            </div>
-          )}
+          <h1 style={{ fontSize: "2rem", fontWeight: 800, color: "#fff", letterSpacing: "-.03em", fontFamily: "'Sora',sans-serif" }}>
+            Welcome back, {user?.fullName?.split(" ")[0] ?? "Coordinator"}
+          </h1>
+          <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 14, marginTop: 4 }}>
+            Manage GE subject-teacher assignments for the current term.
+          </p>
         </div>
-        <div onClick={() => navigate("/ge/schedule")} style={{
-          background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb",
-          padding: "20px 24px", cursor: "pointer"
-        }}>
-          <div style={{ fontSize: 22, marginBottom: 8 }}>📅</div>
-          <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>View Schedule</div>
-          <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
-            View the published timetable for GE subjects.
+
+        {/* Term selectors */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 26, animation: "slideUp .5s ease .06s both" }}>
+          <select className="tc-select" value={term.semester} onChange={e => setTerm(t => ({ ...t, semester: e.target.value }))}>
+            {SEMESTER_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+          <select className="tc-select" value={term.schoolYear} onChange={e => setTerm(t => ({ ...t, schoolYear: e.target.value }))}>
+            {SCHOOL_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+
+        {/* Stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, marginBottom: 28, animation: "slideUp .5s ease .1s both" }}>
+          {[
+            { label: "GE Subjects w/ Votes", value: loading ? "…" : total,     color: "#06B6D4", glow: "rgba(6,182,212,0.15)" },
+            { label: "Pending Assignment",    value: loading ? "…" : pending,   color: "#F59E0B", glow: "rgba(245,158,11,0.12)" },
+            { label: "Finalized",             value: loading ? "…" : finalized, color: "#22C55E", glow: "rgba(34,197,94,0.15)" },
+          ].map(s => (
+            <div key={s.label} className="tc-stat-card" style={{ boxShadow: s.value && s.value !== "…" && Number(s.value) > 0 ? `0 0 24px ${s.glow}` : "none" }}>
+              <div style={{ fontSize: 32, fontWeight: 800, color: s.color, fontFamily: "'Sora',sans-serif", letterSpacing: "-.03em", lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".08em" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Quick links */}
+        <div style={{ animation: "slideUp .5s ease .16s both" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 14, fontFamily: "'DM Mono',monospace" }}>Quick Access</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+
+            <div className="tc-quick-link" onClick={() => navigate("/ge/preferences")}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg,#06B6D480,transparent)", borderRadius: "16px 16px 0 0" }} />
+              <div style={{ fontSize: 28, marginBottom: 12 }}>🗳️</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Sora',sans-serif", letterSpacing: "-.01em", marginBottom: 6 }}>Assign GE Teachers</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", lineHeight: 1.6 }}>
+                Review teacher votes and assign GE teachers to minor subjects.
+              </div>
+              {pending > 0 && (
+                <div style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, background: "rgba(245,158,11,0.12)", color: "#FCD34D", borderRadius: 8, padding: "4px 12px", fontWeight: 700, border: "1px solid rgba(245,158,11,0.25)", fontFamily: "'DM Mono',monospace" }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#F59E0B", display: "inline-block", animation: "pulse-glow 2s ease infinite" }} />
+                  {pending} pending
+                </div>
+              )}
+              <div style={{ marginTop: 14, fontSize: 11, color: "#06B6D4", fontWeight: 700, letterSpacing: ".04em" }}>→ Open</div>
+            </div>
+
+            <div className="tc-quick-link" onClick={() => navigate("/ge/schedule")}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg,#22C55E80,transparent)", borderRadius: "16px 16px 0 0" }} />
+              <div style={{ fontSize: 28, marginBottom: 12 }}>📅</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Sora',sans-serif", letterSpacing: "-.01em", marginBottom: 6 }}>View Schedule</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", lineHeight: 1.6 }}>
+                View the published timetable for GE subjects across all departments.
+              </div>
+              <div style={{ marginTop: 14, fontSize: 11, color: "#22C55E", fontWeight: 700, letterSpacing: ".04em" }}>→ Open</div>
+            </div>
+
           </div>
         </div>
       </div>

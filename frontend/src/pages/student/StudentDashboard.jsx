@@ -3,12 +3,9 @@ import useAuth from "../../hooks/useAuth";
 import useSchedule from "../../hooks/useSchedule";
 import { Link } from "react-router-dom";
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
 const DAY_ORDER = ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"];
-const DAY_SHORT = { MONDAY:"Mon",TUESDAY:"Tue",WEDNESDAY:"Wed",THURSDAY:"Thu",FRIDAY:"Fri",SATURDAY:"Sat" };
+const DAY_SHORT = { MONDAY:"Mon", TUESDAY:"Tue", WEDNESDAY:"Wed", THURSDAY:"Thu", FRIDAY:"Fri", SATURDAY:"Sat" };
 
-/** Returns the current academic defaults — adjust logic as needed */
 function getDefaultTerm() {
   const now = new Date();
   const month = now.getMonth() + 1;
@@ -25,106 +22,98 @@ function fmt12(time24) {
   return `${((h % 12) || 12)}:${String(m).padStart(2,"0")} ${ampm}`;
 }
 
-const SESSION_COLOR = {
-  LECTURE: { bg: "#EEF4FF", border: "#6B8FFF", text: "#2A3FA0", badge: "#6B8FFF" },
-  LABORATORY: { bg: "#F0FBF4", border: "#52C27E", text: "#1A6640", badge: "#52C27E" },
+const SESSION_STYLE = {
+  LECTURE:    { color: "#3B82F6", bg: "rgba(59,130,246,0.1)",  border: "rgba(59,130,246,0.25)",  label: "LEC" },
+  LABORATORY: { color: "#22C55E", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.25)",   label: "LAB" },
 };
 
-// ─── Sub-components ─────────────────────────────────────────────────────────
-
-function StatCard({ label, value, icon, accent }) {
+// ── Stat Card ─────────────────────────────────────────────────────────────────
+function StatCard({ label, value, icon, color }) {
   return (
     <div style={{
-      background: "#fff",
-      border: "1.5px solid #E8EBF2",
-      borderRadius: 16,
-      padding: "20px 24px",
-      display: "flex",
-      alignItems: "center",
-      gap: 16,
-      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+      background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+      borderRadius: 16, padding: "20px 22px",
+      position: "relative", overflow: "hidden", flex: 1, minWidth: 150,
     }}>
       <div style={{
-        width: 44, height: 44, borderRadius: 12,
-        background: accent + "1A",
+        position: "absolute", top: 0, left: 0, right: 0, height: 2,
+        background: `linear-gradient(90deg, ${color}90, transparent)`,
+      }} />
+      <div style={{
+        width: 38, height: 38, borderRadius: 10,
+        background: color + "18", border: `1px solid ${color}30`,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 22,
+        fontSize: 17, marginBottom: 14,
       }}>{icon}</div>
-      <div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: "#111827", fontFamily: "'DM Serif Display', Georgia, serif" }}>{value}</div>
-        <div style={{ fontSize: 12, color: "#6B7280", fontFamily: "'DM Sans', sans-serif", marginTop: 1 }}>{label}</div>
+      <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, color: "#fff", lineHeight: 1, letterSpacing: "-0.03em", marginBottom: 5 }}>
+        {value}
       </div>
+      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 500 }}>{label}</div>
     </div>
   );
 }
 
+// ── Schedule Card ─────────────────────────────────────────────────────────────
 function ScheduleCard({ entry }) {
-  const colors = SESSION_COLOR[entry.sessionType] || SESSION_COLOR.LECTURE;
+  const s = SESSION_STYLE[entry.sessionType] ?? SESSION_STYLE.LECTURE;
   return (
     <div style={{
-      background: colors.bg,
-      border: `1.5px solid ${colors.border}`,
-      borderRadius: 12,
-      padding: "14px 16px",
-      marginBottom: 10,
-      position: "relative",
-      overflow: "hidden",
+      background: s.bg, border: `1px solid ${s.border}`,
+      borderRadius: 12, padding: "14px 16px",
+      marginBottom: 10, position: "relative", overflow: "hidden",
     }}>
-      {/* Left accent bar */}
-      <div style={{
-        position: "absolute", left: 0, top: 0, bottom: 0,
-        width: 4, background: colors.border, borderRadius: "12px 0 0 12px",
-      }} />
-      <div style={{ paddingLeft: 8 }}>
+      {/* Left accent */}
+      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: s.color, borderRadius: "0 0 0 0" }} />
+      <div style={{ paddingLeft: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <span style={{ fontWeight: 700, fontSize: 14, color: colors.text, fontFamily: "'DM Serif Display', serif" }}>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, color: s.color }}>
             {entry.subjectCode}
           </span>
           <span style={{
-            fontSize: 10, fontWeight: 600, color: "#fff",
-            background: colors.badge, borderRadius: 6,
-            padding: "2px 7px", letterSpacing: "0.5px",
-            fontFamily: "'DM Sans', sans-serif",
-          }}>{entry.sessionType}</span>
+            fontSize: 9, fontWeight: 700, color: s.color,
+            background: s.border, borderRadius: 4,
+            padding: "2px 6px", letterSpacing: "0.08em",
+            fontFamily: "'DM Mono', monospace",
+            border: `1px solid ${s.border}`,
+          }}>{s.label}</span>
         </div>
-        <div style={{ fontSize: 13, color: "#374151", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ fontSize: 13, color: "#F1F5F9", fontWeight: 500, marginBottom: 8 }}>
           {entry.subjectName}
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, color: "#6B7280", fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 14, fontSize: 12, color: "rgba(255,255,255,0.4)" }}>
           <span>👤 {entry.teacherName}</span>
           <span>🚪 {entry.roomName || entry.roomNumber}</span>
           <span>🏫 {entry.campusCode}</span>
         </div>
-        <div style={{ marginTop: 6, fontSize: 12, color: colors.text, fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
-          📅 {DAY_SHORT[entry.day1]} {fmt12(entry.startTime1)}–{fmt12(entry.endTime1)}
-          {entry.day2 && <>&nbsp;&nbsp;·&nbsp;&nbsp;{DAY_SHORT[entry.day2]} {fmt12(entry.startTime2)}–{fmt12(entry.endTime2)}</>}
+        <div style={{ marginTop: 8, fontSize: 12, color: s.color, fontWeight: 600, fontFamily: "'DM Mono', monospace" }}>
+          {DAY_SHORT[entry.day1]} · {fmt12(entry.startTime1)}–{fmt12(entry.endTime1)}
+          {entry.day2 && <> &nbsp;·&nbsp; {DAY_SHORT[entry.day2]} · {fmt12(entry.startTime2)}–{fmt12(entry.endTime2)}</>}
         </div>
       </div>
     </div>
   );
 }
 
+// ── Today's Schedule ──────────────────────────────────────────────────────────
 function TodaySchedule({ schedules }) {
-  const today = new Date().toLocaleDateString("en-US",{ weekday:"long" }).toUpperCase();
-  const todays = schedules.filter(s => s.day1 === today || s.day2 === today);
+  const today = new Date().toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
+  const todays = [...schedules.filter(s => s.day1 === today || s.day2 === today)]
+    .sort((a, b) => (a.startTime1 || "").localeCompare(b.startTime1 || ""));
 
   if (todays.length === 0) {
     return (
-      <div style={{ textAlign: "center", padding: "32px 0", color: "#9CA3AF", fontFamily: "'DM Sans', sans-serif" }}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>🎉</div>
-        <div style={{ fontWeight: 600 }}>No classes today!</div>
-        <div style={{ fontSize: 13, marginTop: 4 }}>Enjoy your free day.</div>
+      <div style={{ textAlign: "center", padding: "40px 0", color: "rgba(255,255,255,0.3)" }}>
+        <div style={{ fontSize: 36, marginBottom: 10 }}>🎉</div>
+        <div style={{ fontWeight: 600, color: "rgba(255,255,255,0.5)", fontSize: 15 }}>No classes today!</div>
+        <div style={{ fontSize: 13, marginTop: 6, color: "rgba(255,255,255,0.25)" }}>Enjoy your free day.</div>
       </div>
     );
   }
 
-  // Sort by start time
-  const sorted = [...todays].sort((a, b) => (a.startTime1 || "").localeCompare(b.startTime1 || ""));
-  return sorted.map(s => <ScheduleCard key={s.id} entry={s} />);
+  return todays.map(s => <ScheduleCard key={s.id} entry={s} />);
 }
 
-// ─── Main Component ──────────────────────────────────────────────────────────
-
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function StudentDashboard() {
   const { user } = useAuth();
   const { schedules, loading, error, fetchMySchedule } = useSchedule();
@@ -138,137 +127,179 @@ export default function StudentDashboard() {
     });
   }, [semester, schoolYear, user?.sectionId]);
 
-  // Derived stats
   const uniqueSubjects = new Set(schedules.map(s => s.subjectId)).size;
-  const lectures  = schedules.filter(s => s.sessionType === "LECTURE").length;
-  const labs      = schedules.filter(s => s.sessionType === "LABORATORY").length;
-  const totalUnits = schedules.reduce((sum, s) => sum + (s.units || 3), 0);
+  const lectures       = schedules.filter(s => s.sessionType === "LECTURE").length;
+  const labs           = schedules.filter(s => s.sessionType === "LABORATORY").length;
+  const totalUnits     = schedules.reduce((sum, s) => sum + (s.units || 3), 0);
+  const semLabel       = semester === "FIRST" ? "1st" : semester === "SECOND" ? "2nd" : "Summer";
+
+  const navLinkStyle = (color) => ({
+    display: "flex", alignItems: "center", gap: 10,
+    padding: "11px 14px", borderRadius: 10,
+    background: color + "12", border: `1px solid ${color}25`,
+    color: color === "#3B82F6" ? "#93C5FD" : "#FCD34D",
+    textDecoration: "none", fontSize: 13, fontWeight: 600,
+    marginBottom: 8, transition: "all 0.2s ease",
+    fontFamily: "'DM Sans', sans-serif",
+  });
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F7F8FC", fontFamily: "'DM Sans', sans-serif" }}>
-      {/* Google Font import via style tag */}
+    <div style={{ minHeight: "100vh", background: "#060D1A", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
+
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #c5c9d6; border-radius: 3px; }
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500;600&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        @keyframes pulse-glow { 0%,100% { opacity:0.6; } 50% { opacity:1; } }
+        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+        a.nav-link:hover { opacity: 0.85; transform: translateX(2px); }
       `}</style>
 
-      {/* Header Banner */}
-      <div style={{
-        background: "linear-gradient(135deg, #1A237E 0%, #3949AB 60%, #5C6BC0 100%)",
-        padding: "32px 40px 28px",
-        color: "#fff",
-        position: "relative",
-        overflow: "hidden",
-      }}>
-        {/* Decorative circle */}
+      {/* Ambient blobs */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "-5%", left: "25%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(34,197,94,0.07) 0%, transparent 70%)", filter: "blur(60px)", animation: "pulse-glow 8s ease infinite" }} />
+        <div style={{ position: "absolute", bottom: "20%", right: "0%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)", filter: "blur(60px)", animation: "pulse-glow 10s ease infinite 2s" }} />
         <div style={{
-          position: "absolute", right: -60, top: -60,
-          width: 280, height: 280, borderRadius: "50%",
-          background: "rgba(255,255,255,0.06)",
+          position: "absolute", inset: 0,
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+          maskImage: "radial-gradient(ellipse at 50% 20%, black 25%, transparent 75%)",
+          WebkitMaskImage: "radial-gradient(ellipse at 50% 20%, black 25%, transparent 75%)",
         }} />
-        <div style={{
-          position: "absolute", right: 80, bottom: -80,
-          width: 200, height: 200, borderRadius: "50%",
-          background: "rgba(255,255,255,0.04)",
-        }} />
-
-        <div style={{ position: "relative", maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 4, letterSpacing: "1px", textTransform: "uppercase" }}>
-            Student Portal
-          </div>
-          <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 30, fontWeight: 400, marginBottom: 4 }}>
-            Welcome back, {user?.fullName?.split(" ")[0] || "Student"} 👋
-          </h1>
-          <div style={{ fontSize: 14, opacity: 0.8 }}>
-            {user?.courseCode} · Year {user?.yearLevel}
-            {user?.isIrregular ? " · Irregular" : user?.section ? ` · Section ${user.section}` : ""}
-            &nbsp;·&nbsp; {semester === "FIRST" ? "1st" : semester === "SECOND" ? "2nd" : "Summer"} Sem {schoolYear}
-          </div>
-        </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 40px 60px", position: "relative", zIndex: 1 }}>
 
-        {/* Error */}
+        {/* ── Header ── */}
+        <div style={{ marginBottom: 32 }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)",
+            borderRadius: 100, padding: "4px 14px", marginBottom: 16,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E", display: "inline-block", animation: "blink 2s ease infinite" }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: "#4ADE80", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>
+              Student Portal · {semLabel} Sem {schoolYear}
+            </span>
+          </div>
+
+          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: "2.2rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#fff", marginBottom: 6 }}>
+            Welcome back, {user?.fullName?.split(" ")[0] ?? "Student"}.
+          </h1>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, lineHeight: 1.6 }}>
+            {user?.courseCode} · Year {user?.yearLevel}
+            {user?.isIrregular ? " · Irregular" : user?.section ? ` · Section ${user.section}` : ""}
+          </p>
+        </div>
+
+        {/* ── Error ── */}
         {error && (
-          <div style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", borderRadius: 10, padding: "12px 16px", marginBottom: 20, color: "#B91C1C", fontSize: 14 }}>
+          <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 10, padding: "11px 16px", marginBottom: 22, color: "#FCA5A5", fontSize: 13, display: "flex", gap: 8, alignItems: "center" }}>
             ⚠️ {error}
           </div>
         )}
 
-        {/* Stat Cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 28 }}>
-          <StatCard label="Enrolled Subjects" value={loading ? "…" : uniqueSubjects} icon="📚" accent="#3949AB" />
-          <StatCard label="Lecture Classes"   value={loading ? "…" : lectures}       icon="🎓" accent="#6B8FFF" />
-          <StatCard label="Laboratory Classes" value={loading ? "…" : labs}          icon="🔬" accent="#52C27E" />
-          <StatCard label="Total Units"        value={loading ? "…" : totalUnits}    icon="⭐" accent="#F59E0B" />
+        {/* ── Stat cards ── */}
+        <div style={{ display: "flex", gap: 14, marginBottom: 28, flexWrap: "wrap" }}>
+          <StatCard label="Enrolled Subjects"   value={loading ? "…" : uniqueSubjects} icon="📚" color="#3B82F6" />
+          <StatCard label="Lecture Classes"      value={loading ? "…" : lectures}       icon="🎓" color="#8B5CF6" />
+          <StatCard label="Laboratory Classes"   value={loading ? "…" : labs}           icon="🔬" color="#22C55E" />
+          <StatCard label="Total Units"          value={loading ? "…" : totalUnits}     icon="⭐" color="#F59E0B" />
         </div>
 
-        {/* Two-column layout */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20, alignItems: "start" }}>
+        {/* ── Two-column layout ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 18, alignItems: "start" }}>
 
-          {/* Today's Schedule */}
-          <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1.5px solid #E8EBF2", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 20, color: "#111827" }}>Today's Classes</h2>
-              <Link to="/student/timetable" style={{ fontSize: 13, color: "#3949AB", textDecoration: "none", fontWeight: 600 }}>
-                View Full Timetable →
+          {/* Today's Classes */}
+          <div style={{
+            background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 16, padding: "22px 24px",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace", marginBottom: 4 }}>Today</div>
+                <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 19, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+                  Today's Classes
+                </h2>
+              </div>
+              <Link
+                to="/student/timetable"
+                style={{ fontSize: 12, color: "#4ADE80", textDecoration: "none", fontWeight: 700, fontFamily: "'DM Mono', monospace", letterSpacing: "0.04em" }}
+              >
+                Full Timetable →
               </Link>
             </div>
+
             {loading
-              ? <div style={{ color: "#9CA3AF", fontSize: 14 }}>Loading schedule…</div>
+              ? <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 13, fontFamily: "'DM Mono', monospace", padding: "16px 0" }}>Loading schedule…</div>
               : <TodaySchedule schedules={schedules} />
             }
           </div>
 
-          {/* Quick Info Panel */}
+          {/* Right sidebar */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-            {/* Student Info Card */}
-            <div style={{ background: "#fff", borderRadius: 16, padding: 22, border: "1.5px solid #E8EBF2", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, color: "#111827", marginBottom: 14 }}>My Profile</h3>
+            {/* My Profile */}
+            <div style={{
+              background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 16, padding: "20px 20px",
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace", marginBottom: 14 }}>
+                My Profile
+              </div>
+
               {[
-                ["School ID", user?.schoolId],
-                ["Email",     user?.email],
-                ["Course",    user?.courseName || user?.courseCode],
-                ["Year",      user?.yearLevel ? `Year ${user.yearLevel}` : "—"],
-                ["Section",   user?.isIrregular ? "Irregular" : (user?.section || "—")],
-                ["Department",user?.departmentName],
+                ["School ID",   user?.schoolId],
+                ["Email",       user?.email],
+                ["Course",      user?.courseName || user?.courseCode],
+                ["Year",        user?.yearLevel ? `Year ${user.yearLevel}` : "—"],
+                ["Section",     user?.isIrregular ? "Irregular" : (user?.section || "—")],
+                ["Department",  user?.departmentName],
               ].map(([label, val]) => (
-                <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid #F3F4F6", fontSize: 13 }}>
-                  <span style={{ color: "#6B7280" }}>{label}</span>
-                  <span style={{ color: "#111827", fontWeight: 500, textAlign: "right", maxWidth: 170 }}>{val || "—"}</span>
+                <div key={label} style={{
+                  display: "flex", justifyContent: "space-between",
+                  padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  fontSize: 13,
+                }}>
+                  <span style={{ color: "rgba(255,255,255,0.35)" }}>{label}</span>
+                  <span style={{
+                    color: "#F1F5F9", fontWeight: 500,
+                    textAlign: "right", maxWidth: 150,
+                    fontSize: 12, fontFamily: label === "School ID" || label === "Email" ? "'DM Mono', monospace" : "'DM Sans', sans-serif",
+                  }}>{val || "—"}</span>
                 </div>
               ))}
             </div>
 
             {/* Quick Links */}
-            <div style={{ background: "#fff", borderRadius: 16, padding: 22, border: "1.5px solid #E8EBF2", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, color: "#111827", marginBottom: 14 }}>Quick Links</h3>
-              <Link to="/student/timetable" style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "10px 12px", borderRadius: 10,
-                background: "#EEF4FF", color: "#2A3FA0",
-                textDecoration: "none", fontSize: 13, fontWeight: 600,
-                marginBottom: 8,
-              }}>
-                📅 View Full Timetable
+            <div style={{
+              background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 16, padding: "20px 20px",
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace", marginBottom: 14 }}>
+                Quick Links
+              </div>
+
+              <Link
+                to="/student/timetable"
+                className="nav-link"
+                style={navLinkStyle("#3B82F6")}
+              >
+                <span style={{ fontSize: 16 }}>📅</span>
+                <span>View Full Timetable</span>
               </Link>
+
               {user?.isIrregular && (
-                <Link to="/student/enrollment" style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "10px 12px", borderRadius: 10,
-                  background: "#FEF9EE", color: "#92400E",
-                  textDecoration: "none", fontSize: 13, fontWeight: 600,
-                  marginBottom: 8,
-                }}>
-                  📋 Back Subject Enrollment
+                <Link
+                  to="/student/enrollment"
+                  className="nav-link"
+                  style={navLinkStyle("#F59E0B")}
+                >
+                  <span style={{ fontSize: 16 }}>📋</span>
+                  <span>Back Subject Enrollment</span>
                 </Link>
               )}
             </div>
+
           </div>
         </div>
 

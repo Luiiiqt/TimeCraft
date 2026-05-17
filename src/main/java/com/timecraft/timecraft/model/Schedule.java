@@ -126,6 +126,12 @@ public class Schedule {
         @JoinColumn(name = "merged_section_id")
         private MergedSection mergedSection;
 
+        @Column(name = "deleted_at")
+        private LocalDateTime deletedAt;
+
+        @Column(name = "deleted_by")
+        private String deletedBy;
+
         // In Schedule.java
         @Enumerated(EnumType.STRING)
         @Column(name = "session_type")

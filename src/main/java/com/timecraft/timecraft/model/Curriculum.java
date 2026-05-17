@@ -50,4 +50,10 @@ public class Curriculum {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private String deletedBy;
 }

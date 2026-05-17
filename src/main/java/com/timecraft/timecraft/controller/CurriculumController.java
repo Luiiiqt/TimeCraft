@@ -36,6 +36,23 @@ public class CurriculumController {
                 curriculumService.getByCourse(courseId)));
     }
 
+    @org.springframework.web.bind.annotation.DeleteMapping
+    @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteCurriculum(
+            @RequestParam Long curriculumId,
+            Principal principal) {
+        curriculumService.softDelete(curriculumId, principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Curriculum archived"));
+    }
+
+    @GetMapping("/history")
+    @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
+    public ResponseEntity<ApiResponse<List<Curriculum>>> getCurriculumHistory(
+            @RequestParam Long courseId) {
+        return ResponseEntity.ok(ApiResponse.of(
+                curriculumService.getDeletedByCourse(courseId)));
+    }
+
     @PostMapping(value = "/import",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('DEAN','ADMIN')")

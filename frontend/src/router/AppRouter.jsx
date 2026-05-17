@@ -48,6 +48,7 @@ const PHManageSubjects = lazy(() => import("../pages/programhead/ManageSubjects"
 const PHPreferenceReview = lazy(() => import("../pages/programhead/PreferenceReview"));
 const GEPreferenceReview = lazy(() => import("../pages/ge/GEPreferenceReview"));
 const GEDashboard = lazy(() => import("../pages/ge/GEDashboard"));
+const HistoryPage = lazy(() => import("../pages/admin/HistoryPage"));
 
 // ── Loader ────────────────────────────────────────────────────────────────────
 
@@ -164,6 +165,7 @@ export default function AppRouter() {
             <Route path="/dean/irregular-enrollment" element={<Page roles={["ADMIN", "DEAN"]}><IrregularEnrollment /></Page>} />
             <Route path="/dean/curriculum" element={<Page roles={["DEAN", "ADMIN"]}><CurriculumImport /></Page>} />
             <Route path="/dean/irregular" element={<Page roles={["DEAN", "ADMIN"]}><IrregularStudents /></Page>} />
+            <Route path="/admin/history" element={<Page roles={["ADMIN"]}><HistoryPage /></Page>} />
 
             {/* Program Head */}
             <Route path="/ph" element={<Page roles={["PROGRAM_HEAD","DEAN","ADMIN"]}><PHDashboard /></Page>} />
