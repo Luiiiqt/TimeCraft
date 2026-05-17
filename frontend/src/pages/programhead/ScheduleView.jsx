@@ -19,20 +19,22 @@ function getDefaultTerm() {
   };
 }
 
+const lbl = { fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 4, letterSpacing: "0.05em" };
+const sel = { padding: "7px 12px", borderRadius: 8, border: "1.5px solid #d1d5db", fontSize: 13, color: "#111827", background: "#fff" };
+
 export default function PHScheduleView() {
   const [params] = useSearchParams();
   const defaults = getDefaultTerm();
 
-  const [courses,         setCourses]         = useState([]);
-  const [activeCourseId,  setActiveCourseId]  = useState(params.get("courseId") ? Number(params.get("courseId")) : null);
-  const [activeSemester,  setActiveSemester]  = useState(params.get("semester")   || defaults.semester);
-  const [activeSchoolYear,setActiveSchoolYear]= useState(params.get("schoolYear") || defaults.schoolYear);
-  const [sections,        setSections]        = useState([]);
-  const [sectionId,       setSectionId]       = useState(null);
-  const [schedules,       setSchedules]       = useState([]);
-  const [loading,         setLoading]         = useState(false);
+  const [courses,          setCourses]          = useState([]);
+  const [activeCourseId,   setActiveCourseId]   = useState(params.get("courseId") ? Number(params.get("courseId")) : null);
+  const [activeSemester,   setActiveSemester]   = useState(params.get("semester")   || defaults.semester);
+  const [activeSchoolYear, setActiveSchoolYear] = useState(params.get("schoolYear") || defaults.schoolYear);
+  const [sections,         setSections]         = useState([]);
+  const [sectionId,        setSectionId]        = useState(null);
+  const [schedules,        setSchedules]        = useState([]);
+  const [loading,          setLoading]          = useState(false);
 
-  // Load managed courses
   useEffect(() => {
     const isGE = window.location.pathname.startsWith("/ge");
     const endpoint = isGE ? "/courses" : "/program-head/my-courses";
@@ -45,7 +47,6 @@ export default function PHScheduleView() {
       .catch(() => {});
   }, []);
 
-  // Load sections when course/term changes
   useEffect(() => {
     if (!activeCourseId) return;
     api.get(`/sections`, { params: { courseId: activeCourseId, semester: activeSemester, schoolYear: activeSchoolYear } })
@@ -57,7 +58,6 @@ export default function PHScheduleView() {
       .catch(() => setSections([]));
   }, [activeCourseId, activeSemester, activeSchoolYear]);
 
-  // Load schedule when section changes
   useEffect(() => {
     if (!sectionId) return;
     setLoading(true);
@@ -67,12 +67,8 @@ export default function PHScheduleView() {
       .finally(() => setLoading(false));
   }, [sectionId, activeSemester, activeSchoolYear]);
 
-  const published  = schedules.filter(s => s.status === "PUBLISHED").length;
-  const draft      = schedules.filter(s => s.status === "DRAFT").length;
-  const conflicted = schedules.filter(s => s.status === "CONFLICTED").length;
-
   return (
-    <div style={{ padding: "2rem 2.5rem", fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ padding: "1.5rem 1.5rem", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }}>
       <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#111827", marginBottom: 4 }}>
         Schedule View
       </h1>
@@ -112,37 +108,16 @@ export default function PHScheduleView() {
         )}
       </div>
 
-      {/* Stats */}
-      {schedules.length > 0 && (
-        <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-          {[
-            { label: "Published", value: published, color: "#16a34a", bg: "#f0fdf4" },
-          ].map(s => (
-            <div key={s.label} style={{ background: s.bg, borderRadius: 10, padding: "12px 20px", border: "1px solid #e5e7eb", minWidth: 100 }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: "#6b7280", fontWeight: 600 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* No schedule state */}
       {!loading && schedules.length === 0 && (
         <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 48, textAlign: "center" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-          <p style={{ color: "#9ca3af", fontSize: 14 }}>
-            No schedule found for this section and term.
-          </p>
+          <p style={{ color: "#9ca3af", fontSize: 14 }}>No schedule found for this section and term.</p>
         </div>
       )}
 
-      {/* Grid */}
       {(loading || schedules.length > 0) && (
         <TimetableGrid schedules={schedules} loading={loading} />
       )}
     </div>
   );
 }
-
-const lbl = { fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 4, letterSpacing: "0.05em" };
-const sel = { padding: "7px 12px", borderRadius: 8, border: "1.5px solid #d1d5db", fontSize: 13, color: "#111827", background: "#fff" };

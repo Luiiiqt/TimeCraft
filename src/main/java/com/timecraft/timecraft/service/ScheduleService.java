@@ -67,20 +67,32 @@ public class ScheduleService {
                 .filter(s -> s.getTimeslot() != null && s.getTimeslot2() != null)
                 .toList();
 
-        // Merged schedules: this section is a secondary (BSIT) — include BSCS rows
-        List<Schedule> merged = mergedSectionRepository
+        // Merged schedules: this section is a secondary (BSIT) — include only
+        // BSCS rows for subjects explicitly linked via MergedSection
+        List<Long> mergedSubjectIds = mergedSectionRepository
                 .findBySecondarySectionId(sectionId)
                 .stream()
                 .filter(ms -> ms.getSemester().equals(semester.name())
                         && ms.getSchoolYear().equals(schoolYear))
-                .map(ms -> scheduleRepository.findBySubjectIdAndSemesterAndSchoolYear(
-                        ms.getSubject().getId(), semester, schoolYear))
-                .flatMap(List::stream)
-                .filter(s -> s.getTimeslot() != null && s.getTimeslot2() != null)
-                .filter(s -> s.getSection() != null
-                        && s.getSection().getCourse().getCode().equals("BSCS"))
-                .distinct()
+                .map(ms -> ms.getSubject().getId())
                 .toList();
+
+        List<Schedule> merged = mergedSubjectIds.isEmpty()
+                ? List.of()
+                : mergedSectionRepository
+                        .findBySecondarySectionId(sectionId)
+                        .stream()
+                        .filter(ms -> ms.getSemester().equals(semester.name())
+                                && ms.getSchoolYear().equals(schoolYear))
+                        .map(ms -> scheduleRepository.findBySubjectIdAndSemesterAndSchoolYear(
+                                ms.getSubject().getId(), semester, schoolYear))
+                        .flatMap(List::stream)
+                        .filter(s -> s.getTimeslot() != null && s.getTimeslot2() != null)
+                        .filter(s -> s.getSection() != null
+                                && s.getSection().getCourse().getCode().equals("BSCS"))
+                        .filter(s -> mergedSubjectIds.contains(s.getSubject().getId()))
+                        .distinct()
+                        .toList();
 
         List<Schedule> combined = new ArrayList<>(own);
         merged.forEach(s -> {

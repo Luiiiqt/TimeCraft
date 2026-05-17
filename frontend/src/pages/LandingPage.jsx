@@ -1,700 +1,555 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// ── Static data ───────────────────────────────────────────────────────────────
-
-const ROLES = [
-  {
-    key   : "admin",
-    label : "Administrator",
-    icon  : "◈",
-    color : "#1D9E75",
-    bg    : "#085041",
-    light : "#E1F5EE",
-    desc  : "Generate conflict-free timetables in seconds. Manage departments, rooms, and faculty across multiple campuses.",
-    perks : ["Auto schedule generation", "Conflict detection", "Department & room management", "Reports & analytics"],
-  },
-  {
-    key   : "teacher",
-    label : "Faculty",
-    icon  : "◐",
-    color : "#0F6E56",
-    bg    : "#04342C",
-    light : "#9FE1CB",
-    desc  : "Set your availability preferences and let the system build a schedule that fits. View your assigned classes anytime.",
-    perks : ["Availability management", "Real-time schedule view", "Cross-campus support", "Section load summary"],
-  },
-  {
-    key   : "student",
-    label : "Student",
-    icon  : "◑",
-    color : "#3B6D11",
-    bg    : "#173404",
-    light : "#C0DD97",
-    desc  : "Access your personalised timetable the moment it's published. Know exactly when and where your classes are.",
-    perks : ["Personal timetable view", "Day-at-a-glance layout", "Subject & room details", "Irregular student support"],
-  },
-];
-
-// Decorative mini-timetable data
+// ── Demo timetable data ───────────────────────────────────────────────────────
 const DEMO_SLOTS = [
-  { day: "Mon", time: "7:30",  code: "CS101", type: "LEC", color: "#1D9E75" },
-  { day: "Mon", time: "10:00", code: "MATH2", type: "LEC", color: "#0F6E56" },
-  { day: "Tue", time: "7:30",  code: "CS101", type: "LAB", color: "#3B6D11" },
-  { day: "Tue", time: "13:00", code: "ENG01", type: "LEC", color: "#27500A" },
-  { day: "Wed", time: "10:00", code: "PE001", type: "LEC", color: "#639922" },
-  { day: "Wed", time: "7:30",  code: "PHYS1", type: "LAB", color: "#085041" },
-  { day: "Thu", time: "13:00", code: "CS101", type: "LEC", color: "#1D9E75" },
-  { day: "Thu", time: "10:00", code: "MATH2", type: "LAB", color: "#0F6E56" },
-  { day: "Fri", time: "7:30",  code: "ENG01", type: "LEC", color: "#3B6D11" },
-  { day: "Fri", time: "13:00", code: "PHYS1", type: "LEC", color: "#639922" },
+  { day: 0, band: 0, span: 3, code: "CS101", room: "Lab 301", color: "#22C55E", label: "LAB" },
+  { day: 1, band: 0, span: 3, code: "MATH2", room: "Rm 204",  color: "#3B82F6", label: "LEC" },
+  { day: 2, band: 0, span: 3, code: "ENG01", room: "Rm 102",  color: "#F59E0B", label: "LEC" },
+  { day: 3, band: 0, span: 3, code: "PE001", room: "Gym",     color: "#EC4899", label: "LEC" },
+  { day: 4, band: 0, span: 3, code: "PHYS1", room: "Lab 302", color: "#8B5CF6", label: "LAB" },
+  { day: 0, band: 3, span: 3, code: "MATH2", room: "Rm 204",  color: "#3B82F6", label: "LEC" },
+  { day: 1, band: 3, span: 3, code: "CS101", room: "Rm 306",  color: "#22C55E", label: "LEC" },
+  { day: 2, band: 3, span: 3, code: "PHYS1", room: "Lab 302", color: "#8B5CF6", label: "LAB" },
+  { day: 3, band: 3, span: 3, code: "ENG01", room: "Rm 102",  color: "#F59E0B", label: "LEC" },
+  { day: 0, band: 6, span: 3, code: "PE001", room: "Gym",     color: "#EC4899", label: "LEC" },
+  { day: 2, band: 6, span: 3, code: "CS101", room: "Lab 301", color: "#22C55E", label: "LAB" },
+  { day: 4, band: 6, span: 3, code: "MATH2", room: "Rm 204",  color: "#3B82F6", label: "LEC" },
 ];
 
-const DAYS  = ["Mon","Tue","Wed","Thu","Fri"];
-const TIMES = ["7:30","10:00","13:00"];
+const DAY_NAMES  = ["MON", "TUE", "WED", "THU", "FRI"];
+const TIME_BANDS = ["7:30", "8:00", "8:30", "9:00", "9:30", "10:00", "10:30", "11:00", "11:30"];
+const TOTAL_BANDS = 9;
 
-// ── Mini Timetable visual ─────────────────────────────────────────────────────
+function AnimatedTimetable() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { setTimeout(() => setVisible(true), 300); }, []);
 
-function MiniTimetable() {
   return (
     <div style={{
-      borderRadius : 20,
-      overflow     : "hidden",
-      boxShadow    : "0 32px 80px rgba(15,17,33,0.45)",
-      border       : "1px solid rgba(255,255,255,0.08)",
-      background   : "rgba(15,17,40,0.8)",
-      backdropFilter: "blur(16px)",
-      padding      : 24,
-      width        : "100%",
-      maxWidth     : 480,
+      background: "rgba(15,23,42,0.85)",
+      backdropFilter: "blur(20px)",
+      borderRadius: 20,
+      border: "1px solid rgba(34,197,94,0.2)",
+      boxShadow: "0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset",
+      overflow: "hidden",
+      width: "100%",
+      maxWidth: 520,
     }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-        <div>
-          <div style={{ color: "#fff", fontFamily: "'Instrument Serif', serif", fontSize: 17, fontStyle: "italic" }}>
-            Weekly Schedule
-          </div>
-          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginTop: 2, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            1st Semester · 2024–2025
-          </div>
+      {/* Window chrome */}
+      <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          {["#FF5F57","#FFBD2E","#28C840"].map((c, i) => (
+            <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />
+          ))}
         </div>
-        <div style={{
-          background: "rgba(29,158,117,0.2)",
-          border    : "1px solid rgba(29,158,117,0.4)",
-          color     : "#1D9E75",
-          borderRadius: 8,
-          padding   : "4px 10px",
-          fontSize  : 11,
-          fontWeight: 700,
-          letterSpacing: "0.05em",
-        }}>
-          PUBLISHED
+        <div style={{ flex: 1, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.3)", fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em" }}>
+          TIMECRAFT — S.Y. 2025–2026 · 1ST SEMESTER
+        </div>
+        <div style={{ fontSize: 10, color: "#22C55E", fontWeight: 700, background: "rgba(34,197,94,0.12)", padding: "2px 8px", borderRadius: 4, border: "1px solid rgba(34,197,94,0.3)" }}>
+          ● LIVE
         </div>
       </div>
 
       {/* Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "50px repeat(5, 1fr)", gap: 4 }}>
-        {/* Corner */}
-        <div />
+      <div style={{ padding: "12px 14px 14px" }}>
         {/* Day headers */}
-        {DAYS.map(d => (
-          <div key={d} style={{
-            textAlign  : "center",
-            fontSize   : 10,
-            fontWeight : 700,
-            color      : "rgba(255,255,255,0.4)",
-            letterSpacing: "0.06em",
-            paddingBottom: 6,
-            textTransform: "uppercase",
-          }}>{d}</div>
-        ))}
+        <div style={{ display: "grid", gridTemplateColumns: "44px repeat(5, 1fr)", gap: 3, marginBottom: 3 }}>
+          <div />
+          {DAY_NAMES.map(d => (
+            <div key={d} style={{ textAlign: "center", fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: "0.12em", padding: "4px 0", fontFamily: "'DM Mono', monospace" }}>{d}</div>
+          ))}
+        </div>
 
         {/* Time rows */}
-        {TIMES.map((time, ti) => (
-          <>
-            {/* Time label */}
-            <div key={`t-${time}`} style={{
-              fontSize  : 10,
-              color     : "rgba(255,255,255,0.3)",
-              paddingTop: 8,
-              textAlign : "right",
-              paddingRight: 8,
-              fontWeight: 600,
-            }}>
-              {time}
+        <div style={{ display: "grid", gridTemplateColumns: "44px repeat(5, 1fr)", gridTemplateRows: `repeat(${TOTAL_BANDS}, 26px)`, gap: 3 }}>
+          {/* Time labels */}
+          {TIME_BANDS.map((t, i) => (
+            <div key={t} style={{ gridColumn: 1, gridRow: i + 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 6 }}>
+              {(i % 2 === 0) && <span style={{ fontSize: 8, color: "rgba(255,255,255,0.25)", fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>{t}</span>}
             </div>
+          ))}
 
-            {/* Day cells */}
-            {DAYS.map((day, di) => {
-              const slot = DEMO_SLOTS.find(s => s.day === day && s.time === time);
-              return (
-                <div key={`${day}-${time}`} style={{
-                  borderRadius : 6,
-                  height       : 46,
-                  background   : slot ? slot.color + "28" : "rgba(255,255,255,0.03)",
-                  border       : slot ? `1px solid ${slot.color}55` : "1px solid rgba(255,255,255,0.04)",
-                  display      : "flex",
-                  flexDirection: "column",
-                  alignItems   : "center",
-                  justifyContent: "center",
-                  gap          : 2,
-                  overflow     : "hidden",
-                  transition   : "transform 0.2s ease",
-                  animation    : slot ? `fadeIn 0.4s ease ${(ti * 5 + di) * 0.04}s both` : "none",
-                }}>
-                  {slot && (
-                    <>
-                      <div style={{
-                        fontSize  : 9,
-                        fontWeight: 800,
-                        color     : slot.color,
-                        letterSpacing: "0.04em",
-                      }}>{slot.code}</div>
-                      <div style={{
-                        fontSize  : 8,
-                        color     : "rgba(255,255,255,0.35)",
-                        fontWeight: 600,
-                        letterSpacing: "0.06em",
-                      }}>{slot.type}</div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </>
-        ))}
+          {/* Background cells */}
+          {Array.from({ length: TOTAL_BANDS }).map((_, bi) =>
+            Array.from({ length: 5 }).map((_, di) => (
+              <div key={`bg-${bi}-${di}`} style={{
+                gridColumn: di + 2, gridRow: bi + 1,
+                background: bi % 2 === 0 ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.01)",
+                borderRadius: 4,
+                border: "1px solid rgba(255,255,255,0.03)",
+              }} />
+            ))
+          )}
+
+          {/* Schedule blocks */}
+          {DEMO_SLOTS.map((slot, i) => (
+            <div
+              key={i}
+              style={{
+                gridColumn: slot.day + 2,
+                gridRow: `${slot.band + 1} / ${slot.band + slot.span + 1}`,
+                background: `${slot.color}18`,
+                border: `1px solid ${slot.color}50`,
+                borderLeft: `3px solid ${slot.color}`,
+                borderRadius: 5,
+                padding: "3px 5px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                overflow: "hidden",
+                opacity: visible ? 1 : 0,
+                transform: visible ? "translateY(0) scale(1)" : "translateY(6px) scale(0.95)",
+                transition: `opacity 0.4s ease ${0.1 + i * 0.06}s, transform 0.4s ease ${0.1 + i * 0.06}s`,
+                zIndex: 1,
+              }}
+            >
+              <div style={{ fontSize: 8, fontWeight: 800, color: slot.color, letterSpacing: "0.05em", fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{slot.code}</div>
+              <div style={{ fontSize: 7, color: "rgba(255,255,255,0.35)", marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{slot.room}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Role Card ─────────────────────────────────────────────────────────────────
+// ── Counter animation ─────────────────────────────────────────────────────────
+function CountUp({ target, suffix = "", duration = 1800 }) {
+  const [val, setVal] = useState(0);
+  const ref = useRef();
+  useEffect(() => {
+    const observer = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      observer.disconnect();
+      const start = performance.now();
+      const tick = (now) => {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        setVal(Math.round(eased * target));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, { threshold: 0.5 });
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [target, duration]);
+  return <span ref={ref}>{val}{suffix}</span>;
+}
 
-function RoleCard({ role, index }) {
+// ── Feature card ─────────────────────────────────────────────────────────────
+function FeatureCard({ icon, title, desc, color, delay }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <div style={{
-      background   : "#ffffff",
-      border       : "1.5px solid #E4E7F0",
-      borderRadius : 20,
-      padding      : "28px 28px",
-      display      : "flex",
-      flexDirection: "column",
-      gap          : 16,
-      boxShadow    : "0 4px 24px rgba(15,17,33,0.06)",
-      transition   : "transform 0.25s ease, box-shadow 0.25s ease",
-      animation    : `fadeIn 0.5s ease ${0.1 + index * 0.12}s both`,
-      cursor       : "default",
-    }}
-    onMouseEnter={e => {
-      e.currentTarget.style.transform = "translateY(-4px)";
-      e.currentTarget.style.boxShadow = "0 12px 40px rgba(15,17,33,0.12)";
-    }}
-    onMouseLeave={e => {
-      e.currentTarget.style.transform = "translateY(0)";
-      e.currentTarget.style.boxShadow = "0 4px 24px rgba(15,17,33,0.06)";
-    }}
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.025)",
+        border: `1px solid ${hovered ? color + "60" : "rgba(255,255,255,0.07)"}`,
+        borderRadius: 18,
+        padding: "32px 28px",
+        transition: "all 0.3s ease",
+        transform: hovered ? "translateY(-4px)" : "translateY(0)",
+        boxShadow: hovered ? `0 20px 60px ${color}20` : "none",
+        animation: `slideUp 0.6s ease ${delay}s both`,
+        cursor: "default",
+      }}
     >
-      {/* Icon + label row */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{
-          width      : 46,
-          height     : 46,
-          borderRadius: 12,
-          background : role.color + "14",
-          display    : "flex",
-          alignItems : "center",
-          justifyContent: "center",
-          fontSize   : 22,
-          color      : role.color,
-        }}>
-          {role.icon}
-        </div>
-        <div>
-          <div style={{
-            fontFamily : "'Instrument Serif', serif",
-            fontStyle  : "italic",
-            fontSize   : 20,
-            color      : "#0F1121",
-            lineHeight : 1,
-          }}>
-            {role.label}
-          </div>
-          <div style={{
-            fontSize   : 11,
-            fontWeight : 700,
-            color      : role.color,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            marginTop  : 3,
-          }}>
-            Portal Access
-          </div>
-        </div>
-      </div>
-
-      {/* Description */}
-      <p style={{
-        fontSize  : 13.5,
-        color     : "#6B7494",
-        lineHeight: 1.7,
-        fontFamily: "'Figtree', sans-serif",
-      }}>
-        {role.desc}
-      </p>
-
-      {/* Perks */}
-      <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-        {role.perks.map(perk => (
-          <li key={perk} style={{
-            display   : "flex",
-            alignItems: "center",
-            gap       : 8,
-            fontSize  : 13,
-            color     : "#2E3350",
-            fontFamily: "'Figtree', sans-serif",
-            fontWeight: 500,
-          }}>
-            <span style={{
-              width      : 18,
-              height     : 18,
-              borderRadius: "50%",
-              background : role.color + "14",
-              display    : "flex",
-              alignItems : "center",
-              justifyContent: "center",
-              fontSize   : 9,
-              color      : role.color,
-              flexShrink : 0,
-              fontWeight : 900,
-            }}>✓</span>
-            {perk}
-          </li>
-        ))}
-      </ul>
+      <div style={{
+        width: 52, height: 52, borderRadius: 14,
+        background: color + "20",
+        border: `1px solid ${color}40`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 24, marginBottom: 20,
+        transition: "transform 0.3s ease",
+        transform: hovered ? "scale(1.1) rotate(-3deg)" : "scale(1)",
+      }}>{icon}</div>
+      <div style={{ fontSize: 17, fontWeight: 700, color: "#F1F5F9", marginBottom: 10, fontFamily: "'Sora', sans-serif", letterSpacing: "-0.01em" }}>{title}</div>
+      <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.7, fontFamily: "'DM Sans', sans-serif" }}>{desc}</div>
     </div>
+  );
+}
+
+// ── Role badge ────────────────────────────────────────────────────────────────
+function RoleBadge({ icon, label, path, color, navigate }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={() => navigate(path)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? color + "25" : color + "12",
+        border: `1.5px solid ${hovered ? color + "80" : color + "30"}`,
+        borderRadius: 14,
+        padding: "20px 24px",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+        cursor: "pointer",
+        transition: "all 0.25s ease",
+        transform: hovered ? "translateY(-3px)" : "translateY(0)",
+        boxShadow: hovered ? `0 12px 32px ${color}30` : "none",
+        fontFamily: "'DM Sans', sans-serif",
+        minWidth: 130,
+      }}
+    >
+      <div style={{ fontSize: 28 }}>{icon}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color, letterSpacing: "0.05em", textTransform: "uppercase" }}>{label}</div>
+      <div style={{ fontSize: 11, color: hovered ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)", transition: "color 0.2s" }}>→ Sign in</div>
+    </button>
   );
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
-
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <div style={{
-      minHeight  : "100vh",
-      fontFamily : "'Figtree', system-ui, sans-serif",
-      background : "#0B0D1A",
-      color      : "#fff",
-      overflowX  : "hidden",
+      minHeight: "100vh",
+      background: "#060D1A",
+      color: "#fff",
+      fontFamily: "'DM Sans', sans-serif",
+      overflowX: "hidden",
     }}>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Figtree:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        @keyframes fadeIn    { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes float     { 0%,100% { transform: translateY(0px);  } 50% { transform: translateY(-10px); } }
-        @keyframes shimmer   { 0%,100% { opacity: 0.4; } 50% { opacity: 0.9; } }
-        @keyframes spin      { to { transform: rotate(360deg); } }
-        .cta-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 13px 28px;
-          background: #fff;
-          color: #085041;
-          border: none;
-          border-radius: 10px;
-          font-size: 14px;
-          font-weight: 800;
-          cursor: pointer;
-          font-family: 'Figtree', sans-serif;
-          transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
-          text-decoration: none;
-          letter-spacing: 0.01em;
+
+        @keyframes slideUp   { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes float     { 0%,100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-14px) rotate(0.5deg); } }
+        @keyframes pulse-glow { 0%,100% { opacity: 0.6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
+        @keyframes scanline  { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+        @keyframes blink     { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes gradShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes particleFloat {
+          0%   { transform: translateY(0px) translateX(0px); opacity: 0; }
+          10%  { opacity: 0.6; }
+          90%  { opacity: 0.4; }
+          100% { transform: translateY(-80px) translateX(20px); opacity: 0; }
         }
-        .cta-primary:hover {
-          background: #EEF0FF;
-          transform: translateY(-1px);
-          box-shadow: 0 8px 24px rgba(29,158,117,0.35);
+
+        .btn-primary {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 13px 28px; border: none; border-radius: 10px;
+          background: linear-gradient(135deg, #22C55E, #16A34A);
+          color: #fff; font-size: 14px; font-weight: 700;
+          cursor: pointer; font-family: 'DM Sans', sans-serif;
+          transition: all 0.2s ease; letter-spacing: 0.01em;
+          box-shadow: 0 4px 20px rgba(34,197,94,0.35);
         }
-        .cta-secondary {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 13px 28px;
-          background: transparent;
-          color: rgba(255,255,255,0.8);
-          border: 1.5px solid rgba(255,255,255,0.2);
-          border-radius: 10px;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          font-family: 'Figtree', sans-serif;
-          transition: background 0.15s, border-color 0.15s, color 0.15s;
-          text-decoration: none;
+        .btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 32px rgba(34,197,94,0.5);
+          background: linear-gradient(135deg, #4ADE80, #22C55E);
         }
-        .cta-secondary:hover {
-          background: rgba(255,255,255,0.08);
-          border-color: rgba(255,255,255,0.4);
+        .btn-outline {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 12px 26px; border-radius: 10px;
+          background: transparent; color: rgba(255,255,255,0.75);
+          border: 1.5px solid rgba(255,255,255,0.15); font-size: 14px; font-weight: 600;
+          cursor: pointer; font-family: 'DM Sans', sans-serif;
+          transition: all 0.2s ease;
+        }
+        .btn-outline:hover {
+          background: rgba(255,255,255,0.07);
+          border-color: rgba(255,255,255,0.35);
           color: #fff;
         }
-        .stat-pill {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 3px;
+
+        .grid-particle {
+          position: absolute;
+          width: 3px; height: 3px;
+          border-radius: 50%;
+          background: #22C55E;
+          animation: particleFloat linear infinite;
         }
-        .stat-pill-value {
-          font-family: 'Instrument Serif', serif;
-          font-size: 36px;
-          font-style: italic;
-          color: #fff;
-          line-height: 1;
-          letter-spacing: -0.02em;
-        }
-        .stat-pill-label {
-          font-size: 11px;
-          color: rgba(255,255,255,0.4);
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          font-weight: 600;
-        }
+
         @media (max-width: 900px) {
-          .hero-inner { flex-direction: column !important; }
-          .hero-timetable { display: none !important; }
-          .roles-grid { grid-template-columns: 1fr !important; }
+          .hero-grid { flex-direction: column !important; }
+          .hero-visual { display: none !important; }
+          .features-grid { grid-template-columns: 1fr !important; }
+          .roles-row { flex-direction: column !important; align-items: stretch !important; }
+          .stats-row { flex-direction: column !important; gap: 24px !important; }
         }
       `}</style>
 
-      {/* ── Navigation ─────────────────────────────────────────────────────── */}
+      {/* ── Ambient background blobs ─────────────────────────────────────── */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "-10%", left: "20%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%)", filter: "blur(60px)", animation: "pulse-glow 8s ease infinite" }} />
+        <div style={{ position: "absolute", top: "40%", right: "-10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)", filter: "blur(60px)", animation: "pulse-glow 10s ease infinite 2s" }} />
+        <div style={{ position: "absolute", bottom: "10%", left: "-5%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)", filter: "blur(60px)", animation: "pulse-glow 12s ease infinite 4s" }} />
+
+        {/* Grid pattern */}
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+          maskImage: "radial-gradient(ellipse at 50% 30%, black 30%, transparent 80%)",
+          WebkitMaskImage: "radial-gradient(ellipse at 50% 30%, black 30%, transparent 80%)",
+        }} />
+      </div>
+
+      {/* ── Navbar ───────────────────────────────────────────────────────── */}
       <nav style={{
-        display       : "flex",
-        alignItems    : "center",
-        justifyContent: "space-between",
-        padding       : "20px 48px",
-        borderBottom  : "1px solid rgba(255,255,255,0.06)",
-        position      : "sticky",
-        top           : 0,
-        zIndex        : 50,
-        backdropFilter: "blur(20px)",
-        background    : "rgba(11,13,26,0.85)",
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 48px", height: 64,
+        background: scrolled ? "rgba(6,13,26,0.92)" : "transparent",
+        backdropFilter: scrolled ? "blur(20px)" : "none",
+        borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "none",
+        transition: "all 0.3s ease",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="/favicon.png" alt="TimeCraft" style={{ width: 34, height: 34, borderRadius: 9, objectFit: "contain" }} />
-          <span style={{
-            fontFamily : "'Instrument Serif', serif",
-            fontStyle  : "italic",
-            fontSize   : 22,
-            color      : "#fff",
-            letterSpacing: "-0.01em",
-          }}>TimeCraft</span>
+        {/* Brand */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: "linear-gradient(135deg, #22C55E, #16A34A)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 4px 16px rgba(34,197,94,0.4)",
+            fontSize: 17, fontWeight: 900,
+          }}>⬡</div>
+          <div>
+            <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 17, letterSpacing: "-0.02em", color: "#fff" }}>TimeCraft</div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", letterSpacing: "0.12em", textTransform: "uppercase" }}>Lorma College</div>
+          </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button
-            className="cta-secondary"
-            style={{ padding: "9px 20px", fontSize: 13 }}
-            onClick={() => navigate("/login")}
-          >
-            Sign In
-          </button>
-          <button
-            className="cta-primary"
-            style={{ padding: "9px 20px", fontSize: 13 }}
-            onClick={() => navigate("/register")}
-          >
-            Register
-          </button>
+        {/* Actions */}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="btn-outline" style={{ padding: "8px 20px", fontSize: 13 }} onClick={() => navigate("/login")}>Sign In</button>
+          <button className="btn-primary" style={{ padding: "8px 20px", fontSize: 13 }} onClick={() => navigate("/register")}>Get Started</button>
         </div>
       </nav>
 
-      {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section style={{
-        padding         : "80px 48px 72px",
-        position        : "relative",
-        overflow        : "hidden",
-        minHeight       : "80vh",
-        display         : "flex",
-        alignItems      : "center",
-      }}>
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", padding: "100px 48px 80px", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}>
+          <div className="hero-grid" style={{ display: "flex", alignItems: "center", gap: 72 }}>
 
-        {/* Background mesh glow */}
-        <div style={{
-          position   : "absolute",
-          top        : "10%",
-          left       : "30%",
-          width      : 600,
-          height     : 600,
-          borderRadius: "50%",
-          background : "radial-gradient(circle, rgba(29,158,117,0.22) 0%, transparent 70%)",
-          filter     : "blur(40px)",
-          pointerEvents: "none",
-        }} />
-        <div style={{
-          position   : "absolute",
-          bottom     : "5%",
-          left       : "5%",
-          width      : 400,
-          height     : 400,
-          borderRadius: "50%",
-          background : "radial-gradient(circle, rgba(30,106,69,0.14) 0%, transparent 70%)",
-          filter     : "blur(40px)",
-          pointerEvents: "none",
-        }} />
+            {/* Left copy */}
+            <div style={{ flex: 1, minWidth: 0 }}>
 
-        <div className="hero-inner" style={{
-          maxWidth: 1200,
-          margin  : "0 auto",
-          width   : "100%",
-          display : "flex",
-          alignItems: "center",
-          gap     : 64,
-          position: "relative",
-        }}>
-
-          {/* Left — copy */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-
-            {/* Eyebrow */}
-            <div style={{
-              display     : "inline-flex",
-              alignItems  : "center",
-              gap         : 8,
-              background  : "rgba(29,158,117,0.12)",
-              border      : "1px solid rgba(29,158,117,0.3)",
-              borderRadius: 100,
-              padding     : "5px 14px",
-              marginBottom: 24,
-              fontSize    : 12,
-              fontWeight  : 700,
-              color       : "#1D9E75",
-              letterSpacing: "0.07em",
-              textTransform: "uppercase",
-              animation   : "fadeIn 0.5s ease 0.1s both",
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#1D9E75", animation: "shimmer 2s ease infinite" }} />
-              Academic Scheduling System
-            </div>
-
-            {/* Headline */}
-            <h1 style={{
-              fontFamily : "'Instrument Serif', serif",
-              fontSize   : "clamp(2.6rem, 5vw, 4rem)",
-              fontStyle  : "italic",
-              fontWeight : 400,
-              lineHeight : 1.1,
-              color      : "#ffffff",
-              letterSpacing: "-0.02em",
-              marginBottom: 24,
-              animation  : "fadeIn 0.5s ease 0.2s both",
-            }}>
-              Schedules that actually{" "}
-              <span style={{
-                background         : "linear-gradient(90deg, #1D9E75, #97C459)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip     : "text",
+              {/* Eyebrow pill */}
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)",
+                borderRadius: 100, padding: "6px 16px", marginBottom: 28,
+                animation: "slideUp 0.5s ease 0.1s both",
               }}>
-                work.
-              </span>
-            </h1>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E", display: "inline-block", animation: "blink 2s ease infinite" }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#4ADE80", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>
+                  Lorma College · San Fernando, La Union
+                </span>
+              </div>
 
-            {/* Sub */}
-            <p style={{
-              fontSize   : 16,
-              color      : "rgba(255,255,255,0.55)",
-              lineHeight : 1.75,
-              maxWidth   : 480,
-              marginBottom: 36,
-              animation  : "fadeIn 0.5s ease 0.3s both",
-            }}>
-              TimeCraft generates conflict-free academic timetables for institutions. Admins, teachers, and students — all on one platform.
-            </p>
+              {/* Headline */}
+              <h1 style={{
+                fontFamily: "'Sora', sans-serif",
+                fontSize: "clamp(2.8rem, 5.5vw, 4.2rem)",
+                fontWeight: 800,
+                lineHeight: 1.08,
+                letterSpacing: "-0.03em",
+                color: "#fff",
+                marginBottom: 24,
+                animation: "slideUp 0.5s ease 0.2s both",
+              }}>
+                Smarter schedules,<br />
+                <span style={{
+                  background: "linear-gradient(90deg, #22C55E 0%, #4ADE80 40%, #86EFAC 100%)",
+                  backgroundSize: "200% auto",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  animation: "gradShift 4s ease infinite",
+                }}>zero conflicts.</span>
+              </h1>
 
-            {/* CTAs */}
-            <div style={{
-              display : "flex",
-              gap     : 12,
-              flexWrap: "wrap",
-              animation: "fadeIn 0.5s ease 0.4s both",
-            }}>
-              <button className="cta-primary" onClick={() => navigate("/register")}>
-                Get Started →
-              </button>
-              <button className="cta-secondary" onClick={() => navigate("/login")}>
-                Sign In
-              </button>
+              {/* Sub */}
+              <p style={{
+                fontSize: 17, color: "rgba(255,255,255,0.5)", lineHeight: 1.75,
+                maxWidth: 460, marginBottom: 38,
+                animation: "slideUp 0.5s ease 0.3s both",
+                fontWeight: 400,
+              }}>
+                TimeCraft is Lorma College's automatic timetabling system — generating conflict-free class schedules for all departments, rooms, and faculty in seconds.
+              </p>
+
+              {/* CTAs */}
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", animation: "slideUp 0.5s ease 0.4s both" }}>
+                <button className="btn-primary" onClick={() => navigate("/register")}>
+                  Get Started →
+                </button>
+                <button className="btn-outline" onClick={() => navigate("/login")}>
+                  Sign In
+                </button>
+              </div>
+
+              {/* Stats */}
+              <div className="stats-row" style={{ display: "flex", gap: 48, marginTop: 56, paddingTop: 36, borderTop: "1px solid rgba(255,255,255,0.06)", animation: "slideUp 0.5s ease 0.5s both" }}>
+                {[
+                  { value: 0,   target: 5,    suffix: "+",  label: "Departments" },
+                  { value: 0,   target: 100,  suffix: "%",  label: "Conflict-Free" },
+                  { value: 0,   target: 3,    suffix: "s",  label: "Generate Time" },
+                ].map((s, i) => (
+                  <div key={i}>
+                    <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 36, fontWeight: 800, color: "#fff", lineHeight: 1, letterSpacing: "-0.03em" }}>
+                      <CountUp target={s.target} suffix={s.suffix} />
+                    </div>
+                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 6, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Stats row */}
-            <div style={{
-              display     : "flex",
-              gap         : 40,
-              marginTop   : 52,
-              paddingTop  : 36,
-              borderTop   : "1px solid rgba(255,255,255,0.07)",
-              animation   : "fadeIn 0.5s ease 0.5s both",
-            }}>
-              {[
-                { value: "3",    label: "User Roles"         },
-                { value: "Zero", label: "Schedule Conflicts"  },
-                { value: "∞",    label: "Sections Supported" },
-              ].map(s => (
-                <div key={s.label} className="stat-pill">
-                  <span className="stat-pill-value">{s.value}</span>
-                  <span className="stat-pill-label">{s.label}</span>
-                </div>
-              ))}
+            {/* Right — timetable visual */}
+            <div className="hero-visual" style={{ flexShrink: 0, width: 520, animation: "slideUp 0.6s ease 0.4s both, float 7s ease-in-out 1.5s infinite" }}>
+              <AnimatedTimetable />
             </div>
-          </div>
-
-          {/* Right — timetable demo */}
-          <div className="hero-timetable" style={{
-            flexShrink: 0,
-            width     : 480,
-            animation : "fadeIn 0.6s ease 0.4s both, float 6s ease-in-out 1s infinite",
-          }}>
-            <MiniTimetable />
           </div>
         </div>
       </section>
 
-      {/* ── Divider ─────────────────────────────────────────────────────────── */}
-      <div style={{
-        height    : 1,
-        background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)",
-        margin    : "0 48px",
-      }} />
-
-      {/* ── Role cards ─────────────────────────────────────────────────────── */}
-      <section style={{ padding: "80px 48px", background: "#F5F7FC" }}>
+      {/* ── Features ─────────────────────────────────────────────────────── */}
+      <section style={{ padding: "100px 48px", position: "relative", zIndex: 1 }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
 
-          {/* Section header */}
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <p style={{
-              fontSize     : 11,
-              fontWeight   : 800,
-              color        : "#3B4FD8",
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              marginBottom : 10,
-            }}>
-              Built for everyone
-            </p>
-            <h2 style={{
-              fontFamily : "'Instrument Serif', serif",
-              fontStyle  : "italic",
-              fontSize   : "clamp(1.8rem, 3vw, 2.6rem)",
-              color      : "#0F1121",
-              letterSpacing: "-0.02em",
-              lineHeight : 1.2,
-            }}>
-              One system, three portals.
+          {/* Section label */}
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#22C55E", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 14, fontFamily: "'DM Mono', monospace" }}>
+              — What TimeCraft Does —
+            </div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: "clamp(1.8rem, 3vw, 2.6rem)", color: "#fff", letterSpacing: "-0.03em", lineHeight: 1.15 }}>
+              Everything scheduling,<br />handled automatically.
             </h2>
           </div>
 
-          {/* Cards grid */}
-          <div
-            className="roles-grid"
-            style={{
-              display             : "grid",
-              gridTemplateColumns : "repeat(3, 1fr)",
-              gap                 : 20,
-            }}
-          >
-            {ROLES.map((role, i) => (
-              <RoleCard key={role.key} role={role} index={i} />
+          <div className="features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+            {[
+              { icon: "⚡", color: "#F59E0B", title: "Auto-Generation", delay: 0.1, desc: "Generate a complete conflict-free timetable for all sections and subjects in seconds — no manual work needed." },
+              { icon: "🔒", color: "#22C55E", title: "Zero Conflicts", delay: 0.2, desc: "Smart constraint solver ensures no teacher, room, or section is double-booked. Guaranteed clean schedules every time." },
+              { icon: "🏫", color: "#3B82F6", title: "Room Management", delay: 0.3, desc: "Tracks lecture halls, computer labs, and specialized rooms. Assigns the right room type to every subject automatically." },
+              { icon: "👨‍🏫", color: "#EC4899", title: "Faculty Availability", delay: 0.4, desc: "Teachers set their own availability. The engine respects preferences while ensuring all subjects are covered." },
+              { icon: "📋", color: "#8B5CF6", title: "Multi-Role Access", delay: 0.5, desc: "Separate portals for Admin, Dean, Program Head, GE Coordinator, Teachers, and Students — each with the right tools." },
+              { icon: "📱", color: "#06B6D4", title: "Live Publishing", delay: 0.6, desc: "Publish schedules instantly. Students and teachers see their timetable the moment it goes live — no delays." },
+            ].map((f, i) => (
+              <FeatureCard key={i} {...f} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── CTA Banner ─────────────────────────────────────────────────────── */}
-      <section style={{
-        background: "linear-gradient(135deg, #04342C 0%, #0F6E56 55%, #1D9E75 100%)",
-        padding   : "72px 48px",
-        textAlign : "center",
-        position  : "relative",
-        overflow  : "hidden",
-      }}>
-        {/* Decorative rings */}
-        <div style={{
-          position: "absolute", top: -80, right: -80,
-          width: 300, height: 300, borderRadius: "50%",
-          border: "1px solid rgba(255,255,255,0.08)",
-          pointerEvents: "none",
-        }} />
-        <div style={{
-          position: "absolute", bottom: -100, left: -60,
-          width: 260, height: 260, borderRadius: "50%",
-          border: "1px solid rgba(255,255,255,0.06)",
-          pointerEvents: "none",
-        }} />
+      {/* ── How it works ─────────────────────────────────────────────────── */}
+      <section style={{ padding: "80px 48px", position: "relative", zIndex: 1, borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#22C55E", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 14, fontFamily: "'DM Mono', monospace" }}>
+              — How It Works —
+            </div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "#fff", letterSpacing: "-0.03em" }}>
+              From setup to published in minutes.
+            </h2>
+          </div>
 
-        <div style={{ position: "relative", maxWidth: 560, margin: "0 auto" }}>
-          <h2 style={{
-            fontFamily : "'Instrument Serif', serif",
-            fontStyle  : "italic",
-            fontSize   : "clamp(1.8rem, 3vw, 2.4rem)",
-            color      : "#fff",
-            letterSpacing: "-0.02em",
-            marginBottom: 14,
-            lineHeight : 1.2,
-          }}>
-            Ready to simplify your scheduling?
-          </h2>
-          <p style={{
-            fontSize   : 15,
-            color      : "rgba(255,255,255,0.65)",
-            marginBottom: 32,
-            lineHeight : 1.7,
-          }}>
-            Join your institution on TimeCraft and get your timetable sorted — no spreadsheets required.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="cta-primary" onClick={() => navigate("/register")}>
-              Create Student Account →
-            </button>
-            <button className="cta-secondary" onClick={() => navigate("/login")}>
-              I already have an account
-            </button>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {[
+              { step: "01", icon: "⚙️", title: "Configure Subjects & Sections", desc: "Import your curriculum, set up sections, and define rooms. The Dean and Program Head manage assignments from their own portal." },
+              { step: "02", icon: "📅", title: "Faculty Set Availability", desc: "Teachers log in and mark their available timeslots. The engine uses these preferences as soft constraints during generation." },
+              { step: "03", icon: "⚡", title: "Generate in One Click", desc: "The scheduling engine runs a constraint satisfaction algorithm, producing a full conflict-free timetable for every section." },
+              { step: "04", icon: "✅", title: "Review & Publish", desc: "The Dean reviews the draft schedule, resolves any flagged conflicts, and publishes it — instantly visible to all users." },
+            ].map((s, i) => (
+              <div key={i} style={{
+                display: "flex", gap: 24, alignItems: "flex-start",
+                padding: "28px 32px",
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 16,
+                position: "relative",
+                overflow: "hidden",
+                animation: `slideUp 0.5s ease ${0.1 + i * 0.12}s both`,
+              }}>
+                {/* Step number */}
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: "rgba(34,197,94,0.5)", letterSpacing: "0.1em", minWidth: 26, paddingTop: 3 }}>{s.step}</div>
+                {/* Icon */}
+                <div style={{ fontSize: 24, flexShrink: 0 }}>{s.icon}</div>
+                {/* Content */}
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "#F1F5F9", marginBottom: 8, fontFamily: "'Sora', sans-serif", letterSpacing: "-0.01em" }}>{s.title}</div>
+                  <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.7 }}>{s.desc}</div>
+                </div>
+                {/* Connector line */}
+                {i < 3 && <div style={{ position: "absolute", left: 54, bottom: -2, width: 1, height: 6, background: "rgba(34,197,94,0.3)" }} />}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer style={{
-        padding      : "28px 48px",
-        borderTop    : "1px solid rgba(255,255,255,0.06)",
-        background   : "#080A16",
-        display      : "flex",
-        justifyContent: "space-between",
-        alignItems   : "center",
-        flexWrap     : "wrap",
-        gap          : 12,
-      }}>
-        <div style={{
-          fontFamily: "'Instrument Serif', serif",
-          fontStyle : "italic",
-          color     : "rgba(255,255,255,0.35)",
-          fontSize  : 15,
-        }}>
-          TimeCraft
+      {/* ── Portals / Role access ─────────────────────────────────────────── */}
+      <section style={{ padding: "80px 48px 100px", position: "relative", zIndex: 1, borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto", textAlign: "center" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#22C55E", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 14, fontFamily: "'DM Mono', monospace" }}>
+            — Portal Access —
+          </div>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", color: "#fff", letterSpacing: "-0.03em", marginBottom: 16 }}>
+            Your role, your dashboard.
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 15, marginBottom: 52, lineHeight: 1.7 }}>
+            Sign in with your Lorma College account to access your personalized portal.
+          </p>
+
+          <div className="roles-row" style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 40 }}>
+            {[
+              { icon: "🛡️", label: "Admin",        path: "/login", color: "#F59E0B" },
+              { icon: "🎓", label: "Dean",          path: "/login", color: "#22C55E" },
+              { icon: "📋", label: "Program Head",  path: "/login", color: "#3B82F6" },
+              { icon: "🌐", label: "GE Coordinator",path: "/login", color: "#8B5CF6" },
+              { icon: "👨‍🏫", label: "Teacher",       path: "/login", color: "#EC4899" },
+              { icon: "📚", label: "Student",        path: "/login", color: "#06B6D4" },
+            ].map((r, i) => (
+              <RoleBadge key={i} {...r} navigate={navigate} />
+            ))}
+          </div>
+
+          <button className="btn-primary" onClick={() => navigate("/register")} style={{ padding: "14px 36px", fontSize: 15 }}>
+            Create Your Account →
+          </button>
         </div>
-        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.2)" }}>
-          Academic Scheduling System · {new Date().getFullYear()}
+      </section>
+
+      {/* ── Footer ───────────────────────────────────────────────────────── */}
+      <footer style={{
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        padding: "28px 48px",
+        display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12,
+        position: "relative", zIndex: 1,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg, #22C55E, #16A34A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>⬡</div>
+          <div>
+            <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14, color: "#fff", letterSpacing: "-0.01em" }}>TimeCraft</div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Lorma College</div>
+          </div>
+        </div>
+        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono', monospace" }}>
+          © {new Date().getFullYear()} · Automatic Timetabling System
         </div>
         <div style={{ display: "flex", gap: 20 }}>
-          <button onClick={() => navigate("/login")}
-            style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: 12, cursor: "pointer", fontFamily: "'Figtree', sans-serif" }}>
-            Sign In
-          </button>
-          <button onClick={() => navigate("/register")}
-            style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: 12, cursor: "pointer", fontFamily: "'Figtree', sans-serif" }}>
-            Register
-          </button>
+          {[["Sign In", "/login"], ["Register", "/register"]].map(([label, path]) => (
+            <button key={label} onClick={() => navigate(path)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "color 0.2s" }}
+              onMouseEnter={e => e.target.style.color = "rgba(255,255,255,0.7)"}
+              onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.3)"}
+            >{label}</button>
+          ))}
         </div>
       </footer>
     </div>

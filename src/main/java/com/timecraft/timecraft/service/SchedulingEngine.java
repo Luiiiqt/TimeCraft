@@ -309,7 +309,16 @@ public class SchedulingEngine {
                 .findByCourseIdAndYearLevelAndSemester(
                         section.getCourse().getId(),
                         section.getYearLevel(),
-                        semester);
+                        semester)
+                .stream()
+                .sorted(Comparator
+                        // 1. has-lab subjects first (most constrained — need LAB room + LECTURE + same teacher)
+                        .comparingInt((CourseSubject cs) -> cs.getSubject().isHasLab() ? 0 : 1)
+                        // 2. shared subjects next (block timeslots for both BSCS and BSIT)
+                        .thenComparingInt(cs -> cs.isShared() ? 0 : 1)
+                        // 3. MAJOR before MINOR
+                        .thenComparingInt(cs -> cs.getSubject().getSubjectType() == SubjectType.MAJOR ? 0 : 1))
+                .collect(Collectors.toList());
 
         log.debug("Section {} | {} subjects", section.getDisplayLabel(), curriculum.size());
 
@@ -358,7 +367,6 @@ public class SchedulingEngine {
                             .filter(s -> !s.getSection().getId().equals(section.getId()))
                             .toList();
                     if (!existing.isEmpty()) {
-                        result.addAll(existing);
                         continue;
                     }
                     // Fall through: BSCS schedules this for the first time
@@ -369,7 +377,7 @@ public class SchedulingEngine {
             // ── Normal scheduling ─────────────────────────────────────────────
             boolean isMajor = subject.getSubjectType() == SubjectType.MAJOR;
 
-  if (isMajor && subject.isHasLab()) {
+            if (isMajor && subject.isHasLab()) {
                 // ── Step 1: Schedule LAB first (90min, scarce lab rooms — most constrained)
                 Schedule lab = assign(subject, section, campus, semester, schoolYear,
                         SessionType.LABORATORY, subjectTeacherCache, Set.of());
@@ -378,9 +386,15 @@ public class SchedulingEngine {
                 // ── Step 2: Build excluded days from LAB
                 Set<DayOfWeek> labDays = new HashSet<>();
                 if (!labFailed) {
-                    if (lab.getTimeslot() != null) labDays.add(lab.getTimeslot().getDayOfWeek());
-                    if (lab.getTimeslot2() != null) labDays.add(lab.getTimeslot2().getDayOfWeek());
-                    if (lab.getTeacher() != null) subjectTeacherCache.put(subject.getId(), lab.getTeacher());
+                    if (lab.getTimeslot() != null) {
+                        labDays.add(lab.getTimeslot().getDayOfWeek());
+                    }
+                    if (lab.getTimeslot2() != null) {
+                        labDays.add(lab.getTimeslot2().getDayOfWeek());
+                    }
+                    if (lab.getTeacher() != null) {
+                        subjectTeacherCache.put(subject.getId(), lab.getTeacher());
+                    }
                     log.debug("LAB days for {} exclusion: {}", subject.getCode(), labDays);
                 }
 
@@ -397,9 +411,15 @@ public class SchedulingEngine {
                     scheduleRepository.deleteById(lab.getId());
                     scheduleRepository.flush();
                     Set<DayOfWeek> lecDays = new HashSet<>();
-                    if (lec.getTimeslot() != null) lecDays.add(lec.getTimeslot().getDayOfWeek());
-                    if (lec.getTimeslot2() != null) lecDays.add(lec.getTimeslot2().getDayOfWeek());
-                    if (lec.getTeacher() != null) subjectTeacherCache.put(subject.getId(), lec.getTeacher());
+                    if (lec.getTimeslot() != null) {
+                        lecDays.add(lec.getTimeslot().getDayOfWeek());
+                    }
+                    if (lec.getTimeslot2() != null) {
+                        lecDays.add(lec.getTimeslot2().getDayOfWeek());
+                    }
+                    if (lec.getTeacher() != null) {
+                        subjectTeacherCache.put(subject.getId(), lec.getTeacher());
+                    }
                     lab = assign(subject, section, campus, semester, schoolYear,
                             SessionType.LABORATORY, subjectTeacherCache, lecDays);
                     labFailed = lab.getStatus() == ScheduleStatus.CONFLICTED;
@@ -503,15 +523,27 @@ public class SchedulingEngine {
         // ── Build ordered candidate timeslot pairs ────────────────────────────
         //    Weekday pairs first; Saturday-online pairs appended last (rules 9/10)
         // Saturday-online (R9) only applies to lecture-only majors, not has-lab lecture sessions
-        boolean requireConsecutive = true; // ALL subjects must use consecutive days
-        boolean requireSameTime = true;    // ALL subjects must use same start time
-               List<TimeslotPair> pairs = buildTimeslotPairs(
-                reqDuration, isLab, excludeDays,
-                requireConsecutive, requireSameTime, section.getId());
+        Set<DayOfWeek> effectiveExclude = excludeDays;
+        if (subject.isHasLab() && !isLab) {
+            effectiveExclude = new HashSet<>(excludeDays);
+            effectiveExclude.add(DayOfWeek.SATURDAY);
+        }
+        // Build pairs: consecutive first, then non-consecutive as fallback
+        List<TimeslotPair> pairs = new ArrayList<>();
+        pairs.addAll(buildTimeslotPairs(reqDuration, isLab, effectiveExclude,
+                true, true, section.getId()));
+        // Append non-consecutive pairs so the CSP loop has more options
+        // without immediately giving up to online
+        List<TimeslotPair> nonConsec = buildTimeslotPairs(reqDuration, isLab, effectiveExclude,
+                false, true, section.getId());
+        nonConsec.removeIf(p -> pairs.stream().anyMatch(
+                q -> q.ts1().getId().equals(p.ts1().getId())
+                  && q.ts2().getId().equals(p.ts2().getId())));
+        pairs.addAll(nonConsec);
 
         // ── CSP search: teacher × pair × room ────────────────────────────────
-        for (boolean relaxBreak : new boolean[]{false, true}) {
-            for (boolean relaxConsec : new boolean[]{false, true}) {
+        for (boolean relaxBreak : new boolean[]{false, false, true}) {
+            for (boolean relaxConsec : new boolean[]{false, true, true}) {
                 for (User teacher : teachers) {
                     TeacherProfile profile = profileOf(teacher);
 
@@ -576,13 +608,17 @@ public class SchedulingEngine {
                             onlineTs1 = true;
                             room = findRoomForSingleSlot(profile, campus, reqRoomType,
                                     section.getMaxStudents(), ts2.getId(), isMinor, subject);
-                            if (room == null) continue;
+                            if (room == null) {
+                                continue;
+                            }
                         } else if (isLab) {
                             // LAB: must have a room for BOTH sessions — never online
                             room = findRoom(profile, campus, reqRoomType,
                                     section.getMaxStudents(), ts1.getId(), ts2.getId(),
                                     isMinor, subject);
-                            if (room == null) continue;
+                            if (room == null) {
+                                continue;
+                            }
                         } else {
                             // LECTURE (both lecture-only and has-lab) and MINOR
                             room = findRoom(profile, campus, reqRoomType,
@@ -622,7 +658,7 @@ public class SchedulingEngine {
                         lockTeacher(teacher.getId(), ts1, ts2);
                         boolean sat1 = ts1.getDayOfWeek() == DayOfWeek.SATURDAY;
                         boolean satOnline = (isMajorLec || isMinor) && sat1;
-                        lockSection(section.getId(), satOnline ? null : ts1, ts2);
+                        lockSection(section.getId(), ts1, ts2);
                         addToTeacherDayLoad(teacher.getId(), ts1, ts2);
                         if (room != null) {
                             lockRoom(room.getId(), onlineTs1 ? null : ts1, onlineTs2 ? null : ts2);
@@ -697,7 +733,9 @@ public class SchedulingEngine {
                     onlineTs1 = true;
                     room = findRoomForSingleSlot(profile, campus, reqRoomType,
                             section.getMaxStudents(), ts2.getId(), isMinor, subject);
-                    if (room == null) continue;
+                    if (room == null) {
+                        continue;
+                    }
                 } else if (isLab) {
                     room = findRoom(profile, campus, reqRoomType,
                             section.getMaxStudents(), ts1.getId(), ts2.getId(),
@@ -739,8 +777,8 @@ public class SchedulingEngine {
                 lockTeacher(teacher.getId(), ts1, ts2);
                 boolean sat1fb2 = ts1.getDayOfWeek() == DayOfWeek.SATURDAY;
                 boolean satOnlineFb2 = (isMajorLec || isMinor) && sat1fb2;
-                    lockSection(section.getId(), satOnlineFb2 ? null : ts1, ts2);
-                addToTeacherDayLoad(teacher.getId(), ts1, ts2);             addToTeacherDayLoad(teacher.getId(), ts1, ts2);
+                lockSection(section.getId(), ts1, ts2);
+                addToTeacherDayLoad(teacher.getId(), ts1, ts2);
                 if (room != null) {
                     lockRoom(room.getId(), onlineTs1 ? null : ts1, onlineTs2 ? null : ts2);
                 }
@@ -985,7 +1023,7 @@ public class SchedulingEngine {
     }
 
     // R4: returns true if placing ts would be adjacent to an existing class after 2 already placed
-  private boolean isAdjacentAfter2(Long sectionId, Timeslot ts,
+    private boolean isAdjacentAfter2(Long sectionId, Timeslot ts,
             Semester semester, String schoolYear) {
         Map<DayOfWeek, List<int[]>> dayMap = sectionDaySlots.getOrDefault(sectionId, Map.of());
         List<int[]> slots = dayMap.getOrDefault(ts.getDayOfWeek(), List.of());
@@ -1000,12 +1038,14 @@ public class SchedulingEngine {
         // Check if there's already a chain of 2 consecutive slots on this day
         for (int[] a : slots) {
             for (int[] b : slots) {
-                if (a == b) continue;
+                if (a == b) {
+                    continue;
+                }
                 // a and b are consecutive (b starts when a ends)
                 if (a[1] == b[0] || b[1] == a[0]) {
                     // There's already a consecutive pair — block any new adjacent slot
                     if (newStart == a[0] || newStart == b[0] || newStart == a[1] || newStart == b[1]
-                        || newEnd == a[0] || newEnd == b[0] || newEnd == a[1] || newEnd == b[1]) {
+                            || newEnd == a[0] || newEnd == b[0] || newEnd == a[1] || newEnd == b[1]) {
                         return true; // would extend the chain — require break
                     }
                 }
@@ -1063,7 +1103,7 @@ public class SchedulingEngine {
             boolean requireConsecutive, boolean requireSameTime,
             Long sectionId) {
 
-     List<Timeslot> candidates = allTimeslots.stream()
+        List<Timeslot> candidates = allTimeslots.stream()
                 .filter(ts -> ts.getDurationMinutes() == reqDuration)
                 .filter(ts -> !excludeDays.contains(ts.getDayOfWeek()))
                 .filter(ts -> ts.getDayOfWeek() != DayOfWeek.SUNDAY)
@@ -1104,9 +1144,11 @@ public class SchedulingEngine {
                     adjacentPairs.add(new DayOfWeek[]{d1, d2});
                 }
             }
-           for (DayOfWeek[] pair : adjacentPairs) {
+            for (DayOfWeek[] pair : adjacentPairs) {
                 // R8: LAB sessions never on Saturday
-                if (isLab && (pair[0] == DayOfWeek.SATURDAY || pair[1] == DayOfWeek.SATURDAY)) continue;
+                if (isLab && (pair[0] == DayOfWeek.SATURDAY || pair[1] == DayOfWeek.SATURDAY)) {
+                    continue;
+                }
                 List<Timeslot> slotsA = byDay.get(pair[0]);
                 List<Timeslot> slotsB = byDay.get(pair[1]);
                 Map<Integer, Timeslot> bByStart = new java.util.LinkedHashMap<>();
@@ -1154,9 +1196,9 @@ public class SchedulingEngine {
             }
         }
 
-       // For 60-min slots: prefer start times NOT already used by 90-min slots
+        // For 60-min slots: prefer start times NOT already used by 90-min slots
         // in this section, to avoid same-row display collisions
-  if (reqDuration == 60 && sectionId != null) {
+        if (reqDuration == 60 && sectionId != null) {
             Set<Integer> usedStarts = new HashSet<>();
             Map<DayOfWeek, List<int[]>> secMap = sectionDaySlots.getOrDefault(sectionId, Map.of());
             for (List<int[]> slots : secMap.values()) {
@@ -1185,6 +1227,7 @@ public class SchedulingEngine {
 
         return result;
     }
+
     private List<User> buildTeacherCandidates(Subject subject, Section section,
             Semester semester, String schoolYear) {
 
@@ -1308,9 +1351,11 @@ public class SchedulingEngine {
                         .thenComparingInt(r -> r.getCampus() != null && r.getCampus().getId().equals(targetCampusId) ? 0 : 1))
                 .toList();
 
+        Timeslot fakeTs1 = allTimeslots.stream().filter(t -> t.getId().equals(ts1Id)).findFirst().orElse(null);
+        Timeslot fakeTs2 = allTimeslots.stream().filter(t -> t.getId().equals(ts2Id)).findFirst().orElse(null);
         for (Room r : pool) {
             // R7: room must be free at both timeslots (ID + time-overlap check)
-            if (!isRoomFreeById(r.getId(), ts1Id, ts2Id)) {
+            if (!isRoomFree(r.getId(), fakeTs1, fakeTs2)) {
                 continue;
             }
 
@@ -1372,8 +1417,9 @@ public class SchedulingEngine {
                         && r.getCampus().getId().equals(targetCampusId) ? 0 : 1))
                 .toList();
 
+        Timeslot fTs = allTimeslots.stream().filter(t -> t.getId().equals(tsId)).findFirst().orElse(null);
         for (Room r : pool) {
-            if (!isRoomFreeById(r.getId(), tsId, tsId)) {
+            if (!isRoomFree(r.getId(), fTs, null)) {
                 continue;
             }
             String num = r.getRoomNumber();

@@ -65,14 +65,22 @@ export default function ScheduleView() {
     setLoading(true);
     api.get(`/schedules/section/${sectionId}`, { params: { semester: activeSemester, schoolYear: activeSchoolYear } })
       .then(r => {
-        setSchedules(r.data?.data ?? []);
+        const all = r.data?.data ?? []
+        const currentSection = sections.find(s => s.id === sectionId)
+        const currentCourseCode = currentSection?.courseCode ?? currentSection?.course?.code ?? ''
+        // Only show entries for this section, plus shared BSCS rows if viewing BSIT
+        const filtered = all.filter(s =>
+          s.sectionId === sectionId ||
+          (currentCourseCode === 'BSIT' && s.courseCode === 'BSCS')
+        )
+        setSchedules(filtered)
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [sectionId, activeSemester, activeSchoolYear]);
+  }, [sectionId, activeSemester, activeSchoolYear, sections]);
 
   return (
-    <div style={{ padding: "2rem 2.5rem", fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ padding: "1.5rem 1.5rem", fontFamily: "'DM Sans', sans-serif", maxWidth: "100%", boxSizing: "border-box" }}>
       <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#111827", marginBottom: 4 }}>
         Generated Schedule
       </h1>

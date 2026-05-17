@@ -1,47 +1,32 @@
--- V26__add_duration_to_timeslots.sql
--- Adds duration_minutes column and inserts 60-min lecture slots
--- with OFFSET start times that do NOT collide with 90-min slots.
+-- V31__fix_60min_timeslots.sql
+-- Deletes the old 60-min slots (slots 8–14) that had colliding start times
+-- with 90-min slots, and re-inserts them with offset start times.
 --
--- 90-min slot grid (slots 1–7):
---   Slot 1 : 07:30 – 09:00
---   Slot 2 : 09:00 – 10:30
---   Slot 3 : 10:30 – 12:00
---   Slot 4 : 12:00 – 13:30
---   Slot 5 : 13:30 – 15:00
---   Slot 6 : 15:00 – 16:30
---   Slot 7 : 16:30 – 18:00
+-- 90-min slot start times (NEVER use these for 60-min slots):
+--   07:30, 09:00, 10:30, 12:00, 13:30, 15:00, 16:30
 --
--- 60-min slot grid (slots 8–14) — offset to avoid overlap:
---   Slot  8 : 08:00 – 09:00   (fits inside 07:30–09:00 gap, ends with slot 1)
---   Slot  9 : 10:00 – 11:00   (gap between slot 2 end 10:30... wait, offset into slot 2)
---   Slot 10 : 11:30 – 12:30   (straddles slot 3 end / slot 4 start — unique band)
---   Slot 11 : 13:00 – 14:00   (inside slot 4+5 boundary)
---   Slot 12 : 14:30 – 15:30   (inside slot 5+6 boundary)
---   Slot 13 : 15:30 – 16:30   (ends at slot 6 end — unique band)
---   Slot 14 : 17:00 – 18:00   (inside slot 7, offset by 30 min)
+-- New 60-min slot start times (all offset, no collisions):
+--   Slot  8 : 08:00 – 09:00
+--   Slot  9 : 10:00 – 11:00
+--   Slot 10 : 11:30 – 12:30
+--   Slot 11 : 13:00 – 14:00
+--   Slot 12 : 14:30 – 15:30
+--   Slot 13 : 15:30 – 16:30
+--   Slot 14 : 17:00 – 18:00
 -- ============================================================
 
--- ── 1. Add duration_minutes column ───────────────────────────────────────────
-ALTER TABLE timeslots ADD COLUMN IF NOT EXISTS duration_minutes SMALLINT NOT NULL DEFAULT 90;
+-- ── 1. Remove any existing schedules referencing old 60-min timeslots ────────
+--    (avoids FK constraint violations on delete)
+UPDATE schedules SET timeslot_id  = NULL WHERE timeslot_id  IN (SELECT id FROM timeslots WHERE slot_number BETWEEN 8 AND 14);
+UPDATE schedules SET timeslot2_id = NULL WHERE timeslot2_id IN (SELECT id FROM timeslots WHERE slot_number BETWEEN 8 AND 14);
 
--- ── 2. Ensure all existing 90-min rows are correctly marked ──────────────────
-UPDATE timeslots SET duration_minutes = 90 WHERE slot_number BETWEEN 1 AND 7;
+-- ── 2. Remove teacher_availability rows referencing old 60-min timeslots ─────
+DELETE FROM teacher_availability WHERE timeslot_id IN (SELECT id FROM timeslots WHERE slot_number BETWEEN 8 AND 14);
 
--- ── 3. Widen slot_number constraint to allow slots 8–14 ─────────────────────
-ALTER TABLE timeslots DROP CONSTRAINT IF EXISTS timeslots_slot_number_check;
-ALTER TABLE timeslots ADD CONSTRAINT timeslots_slot_number_check
-    CHECK (slot_number BETWEEN 1 AND 14);
+-- ── 3. Delete old 60-min timeslot rows ───────────────────────────────────────
+DELETE FROM timeslots WHERE slot_number BETWEEN 8 AND 14;
 
-UPDATE timeslots SET duration_minutes = 90 WHERE duration_minutes IS NULL OR slot_number BETWEEN 1 AND 7;
-
--- ── 4. Drop old unique constraint so we can re-add with duration awareness ───
--- (day_of_week + slot_number is still unique — different durations use different slot numbers)
--- No change needed to uq_timeslot_day_slot since slot numbers 8–14 are new.
-
--- ── 5. Insert 60-min slots for all 6 days ────────────────────────────────────
--- Each day gets 7 × 60-min slots at offset start times.
--- These start times are deliberately chosen to NOT share a start time
--- with any 90-min slot, preventing isSectionFree overlap false-passes.
+-- ── 4. Insert corrected 60-min slots with offset start times ─────────────────
 
 INSERT INTO timeslots (day_of_week, slot_number, start_time, end_time, duration_minutes, label) VALUES
 
