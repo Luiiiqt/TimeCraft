@@ -61,7 +61,6 @@ const NAV_LINKS = {
   GE_COORDINATOR: [
     { path: "/ge",             label: "Dashboard", icon: "⬡" },
     { path: "/ge/preferences", label: "Assign",    icon: "✏️" },
-    { path: "/ge/schedule",    label: "Schedule",  icon: "📋" },
   ],
 };
 

@@ -181,7 +181,6 @@ export default function AppRouter() {
             {/* GE Coordinator */}
             <Route path="/ge" element={<Page roles={["GE_COORDINATOR","ADMIN"]}><GEDashboard /></Page>} />
             <Route path="/ge/preferences" element={<Page roles={["GE_COORDINATOR","ADMIN"]}><GEPreferenceReview /></Page>} />
-            <Route path="/ge/schedule" element={<Page roles={["GE_COORDINATOR","ADMIN"]}><PHScheduleView /></Page>} />
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />

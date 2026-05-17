@@ -6,25 +6,82 @@ function getCurrentTerm() {
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
-  return {
-    semester: month >= 1 && month <= 10 ? "FIRST" : "SECOND",
-    schoolYear: `${year}-${year + 1}`,
-  };
+  return { semester: month >= 1 && month <= 10 ? "FIRST" : "SECOND", schoolYear: `${year}-${year + 1}` };
 }
+
 const SEMESTER_OPTIONS = [
-  { value: "FIRST", label: "1st Semester" },
+  { value: "FIRST",  label: "1st Semester" },
   { value: "SECOND", label: "2nd Semester" },
   { value: "SUMMER", label: "Summer" },
 ];
 const SCHOOL_YEARS = ["2024-2025", "2025-2026", "2026-2027"];
 
+const STATUS_STYLE = {
+  PENDING:  { bg: "rgba(245,158,11,0.12)",  color: "#FCD34D", border: "rgba(245,158,11,0.28)" },
+  APPROVED: { bg: "rgba(34,197,94,0.12)",   color: "#4ADE80", border: "rgba(34,197,94,0.28)" },
+  REJECTED: { bg: "rgba(239,68,68,0.1)",    color: "#FCA5A5", border: "rgba(239,68,68,0.25)" },
+};
+
+const GLOBAL_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500;600&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  @keyframes pulse-glow  { 0%,100%{opacity:0.5;} 50%{opacity:1;} }
+  @keyframes blink       { 0%,100%{opacity:1;} 50%{opacity:0;} }
+  @keyframes fadeSlideUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+
+  .tc-select {
+    padding: 8px 13px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.75);
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,0.3)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  .tc-select:focus { border-color: rgba(34,197,94,0.4); background: rgba(255,255,255,0.08); }
+  .tc-select option { background: #0F1A2E; color: #fff; }
+
+  .tc-table-row {
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .tc-table-row:hover { background: rgba(255,255,255,0.04); }
+  .tc-table-row.selected { background: rgba(59,130,246,0.07); }
+  .tc-table-row:last-child { border-bottom: none; }
+
+  .tc-save-btn {
+    padding: 10px 26px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    background: linear-gradient(135deg, #22C55E, #16A34A);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 16px rgba(34,197,94,0.3);
+    transition: all 0.2s;
+  }
+  .tc-save-btn:hover:not(:disabled) { box-shadow: 0 6px 24px rgba(34,197,94,0.45); transform: translateY(-1px); }
+  .tc-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+`;
+
 export default function SubjectPreferences() {
   const { user } = useAuth();
   const [term, setTerm] = useState(getCurrentTerm());
   const [allSubjects, setAllSubjects] = useState([]);
-  const [subjects, setSubjects] = useState([]);
   const [saved, setSaved] = useState([]);
-  const [selectedMap, setSelectedMap] = useState({}); // { "FIRST|2026-2027": Set([id1, id2]) }
+  const [selectedMap, setSelectedMap] = useState({});
   const termKey = `${term.semester}|${term.schoolYear}`;
   const selected = selectedMap[termKey] ?? new Set();
   const [assignments, setAssignments] = useState([]);
@@ -39,18 +96,11 @@ export default function SubjectPreferences() {
     try {
       const uid = user?.userId ?? user?.id;
       const allTerms = [];
-      SCHOOL_YEARS.forEach(sy => {
-        SEMESTER_OPTIONS.forEach(sem => {
-          allTerms.push({ semester: sem.value, schoolYear: sy });
-        });
-      });
-      const results = await Promise.all(
-        allTerms.map(t =>
-          api.get(`/teachers/${uid}/subject-preferences?semester=${t.semester}&schoolYear=${t.schoolYear}`)
-            .then(r => ({ ...t, prefs: r.data?.data ?? [] }))
-            .catch(() => ({ ...t, prefs: [] }))
-        )
-      );
+      SCHOOL_YEARS.forEach(sy => SEMESTER_OPTIONS.forEach(sem => allTerms.push({ semester: sem.value, schoolYear: sy })));
+      const results = await Promise.all(allTerms.map(t =>
+        api.get(`/teachers/${uid}/subject-preferences?semester=${t.semester}&schoolYear=${t.schoolYear}`)
+          .then(r => ({ ...t, prefs: r.data?.data ?? [] })).catch(() => ({ ...t, prefs: [] }))
+      ));
       setSelectedMap(prev => {
         const next = { ...prev };
         results.forEach(({ semester, schoolYear, prefs }) => {
@@ -85,21 +135,14 @@ export default function SubjectPreferences() {
         prefs.forEach(p => { if (p.subject?.id) next.add(p.subject.id); });
         return { ...prev, [termKey]: next };
       });
-      // Derive unique courses from subjects
-      const uniqueCourses = [];
       const seen = new Set();
+      const uniqueCourses = [];
       all.forEach(s => {
-        if (s.courseId && !seen.has(s.courseId)) {
-          seen.add(s.courseId);
-          uniqueCourses.push({ id: s.courseId, code: s.courseCode, name: s.courseName });
-        }
+        if (s.courseId && !seen.has(s.courseId)) { seen.add(s.courseId); uniqueCourses.push({ id: s.courseId, code: s.courseCode, name: s.courseName }); }
       });
       setCourses(uniqueCourses);
-    } catch {
-      setMsg({ type: "error", text: "Failed to load subjects." });
-    } finally {
-      setLoading(false);
-    }
+    } catch { setMsg({ type: "error", text: "Failed to load subjects." }); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { if (user?.id ?? user?.userId) { loadAllSaved(); load(); } }, [user]);
@@ -112,150 +155,151 @@ export default function SubjectPreferences() {
       return { ...prev, [termKey]: next };
     });
   };
+
   const handleSave = async () => {
     setSaving(true); setMsg(null);
     try {
       const uid = user?.userId ?? user?.id;
       const entries = Object.entries(selectedMap).filter(([, ids]) => ids.size > 0);
-      if (entries.length === 0) {
-        setMsg({ type: "error", text: "No subjects selected." });
-        return;
-      }
+      if (!entries.length) { setMsg({ type: "error", text: "No subjects selected." }); return; }
       await Promise.all(entries.map(([key, ids]) => {
         const [semester, schoolYear] = key.split("|");
-        return api.post(`/teachers/${uid}/subject-preferences`, {
-          subjectIds: Array.from(ids),
-          semester,
-          schoolYear,
-          partialUpdate: true,
-        });
+        return api.post(`/teachers/${uid}/subject-preferences`, { subjectIds: Array.from(ids), semester, schoolYear, partialUpdate: true });
       }));
-      setMsg({ type: "success", text: "✅ Preferences saved!" });
+      setMsg({ type: "success", text: "Preferences saved successfully." });
       load();
     } catch (e) {
-      setMsg({ type: "error", text: "❌ " + (e.response?.data?.message ?? "Failed to save.") });
-    } finally {
-      setSaving(false);
-    }
+      setMsg({ type: "error", text: e.response?.data?.message ?? "Failed to save." });
+    } finally { setSaving(false); }
   };
 
-  const getStatus = (subjectId) => {
-    const pref = saved.find(p => p.subject?.id === subjectId);
-    return pref?.status ?? null;
-  };
+  const getStatus = (id) => saved.find(p => p.subject?.id === id)?.status ?? null;
 
-  const STATUS_COLOR = {
-    PENDING: { bg: "#fef3c7", color: "#92400e" },
-    APPROVED: { bg: "#d1fae5", color: "#065f46" },
-    REJECTED: { bg: "#fee2e2", color: "#991b1b" },
-  };
+  const filteredSubjects = allSubjects
+    .filter(s => !yearLevel || String(s.yearLevel) === yearLevel)
+    .filter(s => !selectedCourseId || s.courseId === selectedCourseId)
+    .filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i);
+
+  const selectedCount = selected.size;
 
   return (
-    <div style={{ padding: "2rem 2.5rem", maxWidth: 900, margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
-      <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#111827", marginBottom: 4 }}>Subject Preferences</h1>
-      <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 16 }}>
-        Select the subjects you want to teach this semester.
-      </p>
+    <div style={{ minHeight: "100vh", background: "#060D1A", color: "#fff", fontFamily: "'DM Sans',sans-serif" }}>
+      <style>{GLOBAL_CSS}</style>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-        <select value={term.semester} onChange={e => { setTerm(t => ({ ...t, semester: e.target.value })); }} style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
-          {SEMESTER_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
-        <select value={term.schoolYear} onChange={e => { setTerm(t => ({ ...t, schoolYear: e.target.value })); }} style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
-          {SCHOOL_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
-        <select value={selectedCourseId ?? ""} onChange={e => setSelectedCourseId(e.target.value ? Number(e.target.value) : null)}
-          style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
-          <option value="">All Courses</option>
-          {courses.map(c => <option key={c.id} value={c.id}>{c.code}</option>)}
-        </select>
-        <select value={yearLevel} onChange={e => setYearLevel(e.target.value)}
-          style={{ padding: "7px 10px", border: "1.5px solid #d1d5db", borderRadius: 8, fontSize: 13 }}>
-          <option value="">All Year Levels</option>
-          <option value="1">Year 1</option>
-          <option value="2">Year 2</option>
-          <option value="3">Year 3</option>
-          <option value="4">Year 4</option>
-        </select>
+      {/* Ambient blobs */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "10%", right: "10%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle,rgba(59,130,246,0.06) 0%,transparent 70%)", filter: "blur(60px)", animation: "pulse-glow 10s ease infinite" }} />
+        <div style={{ position: "absolute", bottom: "20%", left: "5%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(34,197,94,0.05) 0%,transparent 70%)", filter: "blur(60px)", animation: "pulse-glow 8s ease infinite 2s" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px)", backgroundSize: "60px 60px", maskImage: "radial-gradient(ellipse at 50% 20%,black 25%,transparent 75%)", WebkitMaskImage: "radial-gradient(ellipse at 50% 20%,black 25%,transparent 75%)" }} />
       </div>
 
-      {msg && (
-        <div style={{ background: msg.type === "success" ? "#f0fdf4" : "#fef2f2", border: `1px solid ${msg.type === "success" ? "#bbf7d0" : "#fecaca"}`, borderRadius: 8, padding: "10px 14px", marginBottom: 16, color: msg.type === "success" ? "#15803d" : "#dc2626", fontSize: 13 }}>
-          {msg.text}
+      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 32px 60px", position: "relative", zIndex: 1 }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: 30, animation: "fadeSlideUp 0.5s ease both" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.25)", borderRadius: 100, padding: "4px 14px", marginBottom: 16 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B82F6", display: "inline-block", animation: "blink 2s ease infinite" }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: "#93C5FD", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono',monospace" }}>Subject Preferences</span>
+          </div>
+          <h1 style={{ fontFamily: "'Sora',sans-serif", fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#fff", marginBottom: 6 }}>Choose Your Subjects</h1>
+          <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 14, lineHeight: 1.6 }}>Select the subjects you want to teach this semester. Your selections are submitted for review.</p>
         </div>
-      )}
 
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", marginBottom: 20 }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-          <thead>
-            <tr style={{ background: "#f9fafb", borderBottom: "1.5px solid #e5e7eb" }}>
-              <th style={{ padding: "10px 14px", width: 40 }}></th>
-              {["Subject", "Code", "Units", "Session Type", "Status", "Assignment"].map(h => (
-                <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, color: "#374151", fontSize: 12 }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={6} style={{ padding: 32, textAlign: "center", color: "#9ca3af" }}>Loading…</td></tr>
-            ) : allSubjects.filter(s => !yearLevel || String(s.yearLevel) === yearLevel).filter(s => !selectedCourseId || s.courseId === selectedCourseId).filter((s, idx, arr) => arr.findIndex(x => x.id === s.id && (selectedCourseId ? x.courseId === s.courseId : true) && (yearLevel ? x.yearLevel === s.yearLevel : true)) === idx).map(s => {
-              const checked = selected.has(s.id);
-              const status = getStatus(s.id);
-              const sc = status ? STATUS_COLOR[status] : null;
-              return (
-                <tr key={s.id} onClick={() => toggle(s.id)}
-                  style={{ borderBottom: "1px solid #f3f4f6", cursor: "pointer", background: checked ? "#eff6ff" : "transparent" }}>
-                  <td style={{ padding: "10px 14px", textAlign: "center" }}>
-                    <input type="checkbox" checked={checked} onChange={() => toggle(s.id)}
-                      onClick={e => e.stopPropagation()}
-                      style={{ width: 15, height: 15, accentColor: "#1a56db" }} />
-                  </td>
-                  <td style={{ padding: "10px 14px", fontWeight: checked ? 600 : 400 }}>{s.name}</td>
-                  <td style={{ padding: "10px 14px", color: "#1a56db", fontWeight: 600 }}>{s.code}</td>
-                  <td style={{ padding: "10px 14px", textAlign: "center" }}>{s.units ?? "—"}</td>
-                  <td style={{ padding: "10px 14px" }}>
-                    <span style={{
-                      fontSize: 11, padding: "2px 8px", borderRadius: 6, fontWeight: 600,
-                      background: s.hasLab ? "#f0fdf4" : "#fef9ee",
-                      color: s.hasLab ? "#15803d" : "#92400e"
-                    }}>
-                      {s.hasLab ? "LECTURE + LAB" : "LECTURE"}
-                    </span>
-                  </td>
-                  <td style={{ padding: "10px 14px" }}>
-                    {sc ? (
-                      <span style={{ fontSize: 11, background: sc.bg, color: sc.color, borderRadius: 6, padding: "2px 8px", fontWeight: 600 }}>
-                        {status}
+        {/* Filters row */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", alignItems: "center", animation: "fadeSlideUp 0.5s ease 0.08s both" }}>
+          <select className="tc-select" value={term.semester} onChange={e => setTerm(t => ({ ...t, semester: e.target.value }))}>
+            {SEMESTER_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+          <select className="tc-select" value={term.schoolYear} onChange={e => setTerm(t => ({ ...t, schoolYear: e.target.value }))}>
+            {SCHOOL_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select className="tc-select" value={selectedCourseId ?? ""} onChange={e => setSelectedCourseId(e.target.value ? Number(e.target.value) : null)}>
+            <option value="">All Courses</option>
+            {courses.map(c => <option key={c.id} value={c.id}>{c.code}</option>)}
+          </select>
+          <select className="tc-select" value={yearLevel} onChange={e => setYearLevel(e.target.value)}>
+            <option value="">All Year Levels</option>
+            {[1, 2, 3, 4].map(y => <option key={y} value={y}>Year {y}</option>)}
+          </select>
+
+          {/* Selection count badge */}
+          {selectedCount > 0 && (
+            <div style={{ marginLeft: "auto", background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.25)", borderRadius: 20, padding: "5px 13px", fontSize: 12, fontWeight: 700, color: "#93C5FD", fontFamily: "'DM Mono',monospace" }}>
+              {selectedCount} selected
+            </div>
+          )}
+        </div>
+
+        {/* Message */}
+        {msg && (
+          <div style={{ background: msg.type === "success" ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${msg.type === "success" ? "rgba(34,197,94,0.28)" : "rgba(239,68,68,0.25)"}`, borderRadius: 10, padding: "11px 16px", marginBottom: 18, color: msg.type === "success" ? "#4ADE80" : "#FCA5A5", fontSize: 13, display: "flex", alignItems: "center", gap: 8, animation: "fadeSlideUp 0.3s ease both" }}>
+            {msg.type === "success" ? "✅" : "❌"} {msg.text}
+          </div>
+        )}
+
+        {/* Table */}
+        <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 22, animation: "fadeSlideUp 0.5s ease 0.12s both" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                <th style={{ padding: "12px 16px", width: 40 }} />
+                {["Subject", "Code", "Units", "Session Type", "Status", "Assignment"].map(h => (
+                  <th key={h} style={{ padding: "12px 14px", textAlign: "left", fontWeight: 700, color: "rgba(255,255,255,0.3)", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "'DM Mono',monospace" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={7} style={{ padding: "40px 0", textAlign: "center", color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono',monospace", fontSize: 13 }}>Loading subjects…</td></tr>
+              ) : filteredSubjects.length === 0 ? (
+                <tr><td colSpan={7} style={{ padding: "40px 0", textAlign: "center", color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono',monospace", fontSize: 13 }}>No subjects found for the selected filters.</td></tr>
+              ) : filteredSubjects.map(s => {
+                const checked = selected.has(s.id);
+                const status = getStatus(s.id);
+                const sc = status ? STATUS_STYLE[status] : null;
+                const assignment = assignments.find(a => a.subject?.id === s.id);
+                return (
+                  <tr key={s.id} className={`tc-table-row${checked ? " selected" : ""}`} onClick={() => toggle(s.id)}>
+                    <td style={{ padding: "11px 16px", textAlign: "center" }}>
+                      <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${checked ? "#3B82F6" : "rgba(255,255,255,0.2)"}`, background: checked ? "#3B82F6" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: "#fff", margin: "0 auto", transition: "all 0.15s" }}>
+                        {checked ? "✓" : ""}
+                      </div>
+                    </td>
+                    <td style={{ padding: "11px 14px", fontWeight: checked ? 600 : 400, color: checked ? "#fff" : "rgba(255,255,255,0.7)" }}>{s.name}</td>
+                    <td style={{ padding: "11px 14px" }}>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 12, color: "#3B82F6" }}>{s.code}</span>
+                    </td>
+                    <td style={{ padding: "11px 14px", textAlign: "center", color: "rgba(255,255,255,0.5)", fontFamily: "'DM Mono',monospace" }}>{s.units ?? "—"}</td>
+                    <td style={{ padding: "11px 14px" }}>
+                      <span style={{ fontSize: 10, padding: "3px 9px", borderRadius: 6, fontWeight: 700, fontFamily: "'DM Mono',monospace", letterSpacing: "0.06em", background: s.hasLab ? "rgba(34,197,94,0.1)" : "rgba(59,130,246,0.1)", color: s.hasLab ? "#4ADE80" : "#93C5FD", border: `1px solid ${s.hasLab ? "rgba(34,197,94,0.25)" : "rgba(59,130,246,0.25)"}` }}>
+                        {s.hasLab ? "LEC + LAB" : "LEC"}
                       </span>
-                    ) : "—"}
-                  </td>
-                  <td style={{ padding: "10px 14px" }}>
-                    {(() => {
-                      const a = assignments.find(a => a.subject?.id === s.id);
-                      if (!a) return <span style={{ color: "#d1d5db", fontSize: 12 }}>—</span>;
-                      return (
-                        <span style={{
-                          fontSize: 11, padding: "2px 8px", borderRadius: 6, fontWeight: 600,
-                          background: a.finalized ? "#d1fae5" : "#fef3c7",
-                          color: a.finalized ? "#065f46" : "#92400e",
-                        }}>
-                          {a.finalized ? "✓ Assigned" : "Pending"}
+                    </td>
+                    <td style={{ padding: "11px 14px" }}>
+                      {sc ? (
+                        <span style={{ fontSize: 10, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, borderRadius: 6, padding: "3px 9px", fontWeight: 700, fontFamily: "'DM Mono',monospace" }}>{status}</span>
+                      ) : <span style={{ color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono',monospace" }}>—</span>}
+                    </td>
+                    <td style={{ padding: "11px 14px" }}>
+                      {assignment ? (
+                        <span style={{ fontSize: 10, padding: "3px 9px", borderRadius: 6, fontWeight: 700, fontFamily: "'DM Mono',monospace", background: assignment.finalized ? "rgba(34,197,94,0.1)" : "rgba(245,158,11,0.1)", color: assignment.finalized ? "#4ADE80" : "#FCD34D", border: `1px solid ${assignment.finalized ? "rgba(34,197,94,0.25)" : "rgba(245,158,11,0.25)"}` }}>
+                          {assignment.finalized ? "✓ Assigned" : "Pending"}
                         </span>
-                      );
-                    })()}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                      ) : <span style={{ color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono',monospace" }}>—</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <button onClick={handleSave} disabled={saving}
-          style={{ padding: "10px 24px", background: "#1a56db", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-          {saving ? "Saving…" : "💾 Save Preferences"}
-        </button>
+        {/* Save row */}
+        <div style={{ display: "flex", justifyContent: "flex-end", animation: "fadeSlideUp 0.5s ease 0.18s both" }}>
+          <button className="tc-save-btn" onClick={handleSave} disabled={saving}>
+            {saving ? "Saving…" : "💾 Save Preferences"}
+          </button>
+        </div>
       </div>
     </div>
   );
