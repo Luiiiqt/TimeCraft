@@ -23,6 +23,7 @@ import com.timecraft.timecraft.model.CourseSubject.Semester;
 import com.timecraft.timecraft.model.Schedule;
 import com.timecraft.timecraft.model.StudentSchedule;
 import com.timecraft.timecraft.repository.UserRepository;
+import com.timecraft.timecraft.service.GroqService;
 import com.timecraft.timecraft.service.ScheduleService;
 import com.timecraft.timecraft.service.SchedulingEngine;
 
@@ -34,13 +35,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ScheduleController {
 
-    private final ScheduleService            scheduleService;
-    private final SchedulingEngine           schedulingEngine;
-    
+    private final ScheduleService scheduleService;
+    private final SchedulingEngine schedulingEngine;
+    private final GroqService groqService;
+
     private final UserRepository userRepository;
 
     // ── GET /api/v1/schedules ─────────────────────────────────────────────────
-
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','STUDENT','TEACHER','DEAN','PROGRAM_HEAD','GE_COORDINATOR')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> findAll(
@@ -69,7 +70,6 @@ public class ScheduleController {
 
     // ── GET /api/v1/schedules/my ──────────────────────────────────────────────
     // Student views their own timetable
-
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER', 'ADMIN', 'DEAN')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSectionSchedule(
@@ -88,7 +88,6 @@ public class ScheduleController {
 
     // ── GET /api/v1/schedules/teacher/{teacherId} ─────────────────────────────
     // Full teacher load across all year levels
-
     @GetMapping("/teacher/{teacherId}")
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getTeacherSchedule(
@@ -104,7 +103,6 @@ public class ScheduleController {
     }
 
     // ── GET /api/v1/schedules/section/{sectionId} ─────────────────────────────
-
     @GetMapping("/section/{sectionId}")
     @PreAuthorize("hasAnyRole('STUDENT','TEACHER','ADMIN','DEAN','PROGRAM_HEAD','GE_COORDINATOR')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSectionScheduleById(
@@ -120,7 +118,6 @@ public class ScheduleController {
     }
 
     // ── GET /api/v1/schedules/room/{roomId} ───────────────────────────────────
-
     @GetMapping("/room/{roomId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getRoomSchedule(
@@ -137,7 +134,6 @@ public class ScheduleController {
 
     // ── GET /api/v1/schedules/published ───────────────────────────────────────
     // All roles can see published schedules for a section
-
     @GetMapping("/published/section/{sectionId}")
     @PreAuthorize("hasAnyRole('STUDENT','TEACHER','DEAN','PROGRAM_HEAD','GE_COORDINATOR','ADMIN')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getPublishedBySection(
@@ -173,7 +169,6 @@ public class ScheduleController {
     }
 
     // ── GET /api/v1/schedules/conflicted ──────────────────────────────────────
-
     @GetMapping("/conflicted")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getConflicted() {
@@ -183,7 +178,6 @@ public class ScheduleController {
     }
 
     // ── POST /api/v1/schedules/generate ───────────────────────────────────────
-
     @PostMapping("/generate")
     @PreAuthorize("hasAnyRole('ADMIN', 'DEAN')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> generate(
@@ -191,34 +185,33 @@ public class ScheduleController {
 
         List<Schedule> generated = schedulingEngine.generateForTerm(request);
 
-        long total      = generated.size();
+        long total = generated.size();
         long conflicted = generated.stream()
-                .filter(s -> s.getStatus() ==
-                        Schedule.ScheduleStatus.CONFLICTED)
+                .filter(s -> s.getStatus()
+                == Schedule.ScheduleStatus.CONFLICTED)
                 .count();
-        long success    = total - conflicted;
+        long success = total - conflicted;
 
         if (request.isAutoPublish() && conflicted == 0) {
             scheduleService.publishAll(
                     request.getSemester(), request.getSchoolYear());
         }
 
-        String ollamaExplanation = "";
+        String ollamaExplanation = groqService.analyzeSchedule(generated);
 
         Map<String, Object> summary = Map.of(
-                "total",           total,
-                "successful",      success,
-                "conflicted",      conflicted,
-                "semester",        request.getSemester().getLabel(),
-                "schoolYear",      request.getSchoolYear(),
-                "aiSummary",       ollamaExplanation);
+                "total", total,
+                "successful", success,
+                "conflicted", conflicted,
+                "semester", request.getSemester().getLabel(),
+                "schoolYear", request.getSchoolYear(),
+                "aiSummary", ollamaExplanation);
 
         return ResponseEntity.ok(
                 ApiResponse.success("Schedule generation complete", summary));
     }
 
     // ── POST /api/v1/schedules (manual override) ──────────────────────────────
-
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ScheduleResponse>> createManual(
@@ -241,24 +234,22 @@ public class ScheduleController {
     }
 
     // ── PUT /api/v1/schedules/{id}/resolve ────────────────────────────────────
-
     @PutMapping("/{id}/resolve")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ScheduleResponse>> resolveConflict(
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
 
-        Long teacherId  = body.get("teacherId")  != null ? Long.valueOf(body.get("teacherId").toString())  : null;
-        Long roomId     = body.get("roomId")      != null ? Long.valueOf(body.get("roomId").toString())     : null;
-        Long timeslotId = body.get("timeslotId")  != null ? Long.valueOf(body.get("timeslotId").toString()) : null;
-        Long timeslot2Id= body.get("timeslot2Id") != null ? Long.valueOf(body.get("timeslot2Id").toString()): null;
+        Long teacherId = body.get("teacherId") != null ? Long.valueOf(body.get("teacherId").toString()) : null;
+        Long roomId = body.get("roomId") != null ? Long.valueOf(body.get("roomId").toString()) : null;
+        Long timeslotId = body.get("timeslotId") != null ? Long.valueOf(body.get("timeslotId").toString()) : null;
+        Long timeslot2Id = body.get("timeslot2Id") != null ? Long.valueOf(body.get("timeslot2Id").toString()) : null;
 
         Schedule resolved = scheduleService.resolveConflict(id, teacherId, roomId, timeslotId, timeslot2Id);
         return ResponseEntity.ok(ApiResponse.success("Conflict resolved", ScheduleResponse.from(resolved)));
     }
 
     // ── PUT /api/v1/schedules/{id}/publish ────────────────────────────────────
-
     @PutMapping("/{id}/publish")
     @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<Void>> publish(@PathVariable Long id) {
@@ -267,7 +258,6 @@ public class ScheduleController {
     }
 
     // ── PUT /api/v1/schedules/publish-all ─────────────────────────────────────
-
     @PutMapping("/publish-all")
     @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<Void>> publishAll(
@@ -281,7 +271,6 @@ public class ScheduleController {
 
     // ── POST /api/v1/schedules/{id}/assign-student ────────────────────────────
     // Assign an irregular student to a specific class
-
     @PostMapping("/{id}/assign-student")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<StudentSchedule>> assignStudent(
@@ -295,7 +284,6 @@ public class ScheduleController {
     }
 
     // ── DELETE /api/v1/schedules/{id}/remove-student ──────────────────────────
-
     @DeleteMapping("/{id}/remove-student")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> removeStudent(
@@ -308,7 +296,6 @@ public class ScheduleController {
     }
 
     // ── GET /api/v1/schedules/is-locked ───────────────────────────────────────
-
     @GetMapping("/is-locked")
     @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
     public ResponseEntity<ApiResponse<Boolean>> isLocked(
@@ -321,7 +308,6 @@ public class ScheduleController {
     }
 
     // ── Teaching load report ──────────────────────────────────────────────────
-
     @GetMapping("/load-report")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<Object[]>>> loadReport(
@@ -333,7 +319,6 @@ public class ScheduleController {
     }
 
     // ── DELETE /api/v1/schedules/term (soft delete entire term) ───────────────
-
     @DeleteMapping("/term")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteTermSchedules(
@@ -346,7 +331,6 @@ public class ScheduleController {
     }
 
     // ── GET /api/v1/schedules/history ─────────────────────────────────────────
-
     @GetMapping("/history")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getHistory(
@@ -359,7 +343,6 @@ public class ScheduleController {
     }
 
     // ── GET /api/v1/schedules/back-subjects ───────────────────────────────────
-
     @GetMapping("/back-subjects")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getBackSubjects(
@@ -375,7 +358,6 @@ public class ScheduleController {
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────
-
     private Long resolveUserId(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow()

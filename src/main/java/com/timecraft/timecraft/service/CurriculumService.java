@@ -48,6 +48,10 @@ public class CurriculumService {
         return curriculumRepository.findByCourseId(courseId);
     }
 
+    public List<Curriculum> getAll() {
+        return curriculumRepository.findAll();
+    }
+
     public Curriculum importFile(Long courseId, String effectiveYear,
             String curriculumName, Long importedByUserId,
             MultipartFile file) throws Exception {
@@ -105,8 +109,8 @@ public class CurriculumService {
                 }
                 String subjectType = row.length > 9 ? row[9].trim() : "MINOR";
                 String rawSession = row.length > 11 ? row[11].trim().toUpperCase() : "LECTURE";
-                boolean hasLab = rawSession.contains("LABORATORY") || rawSession.contains("LAB") ||
-                                (row.length > 13 && "true".equalsIgnoreCase(row[13].trim()));
+                boolean hasLab = rawSession.contains("LABORATORY") || rawSession.contains("LAB")
+                        || (row.length > 13 && "true".equalsIgnoreCase(row[13].trim()));
                 String sessionType = "LECTURE";
                 processRow(row[0].trim(), row[1].trim(),
                         parseUnits(row[5]), row[6].trim(),
@@ -134,8 +138,8 @@ public class CurriculumService {
                     continue;
                 }
                 String code = cellStr(row, 0);
-               log.info("ROW {}: code='{}' units='{}' year='{}'",
-                    row.getRowNum(), code, cellStr(row, 5), cellStr(row, 7));
+                log.info("ROW {}: code='{}' units='{}' year='{}'",
+                        row.getRowNum(), code, cellStr(row, 5), cellStr(row, 7));
                 if (code.isBlank()) {
                     continue;
                 }
@@ -183,12 +187,13 @@ public class CurriculumService {
             });
         }
     }
+
     protected void processRow(String code, String name, int units,
             String prerequisite, short yearLevel,
             Semester semester, Course course,
             Curriculum curriculum,
             String subjectTypeStr, String sessionTypeStr, boolean hasLab) {
-       Subject subject = subjectRepository.findByCode(code).orElseGet(() -> {
+        Subject subject = subjectRepository.findByCode(code).orElseGet(() -> {
             Subject.SubjectType sType = Subject.SubjectType.MINOR;
             Subject.SessionType sessType = Subject.SessionType.LECTURE;
             try {
@@ -219,7 +224,7 @@ public class CurriculumService {
             return;
         }
 
-         boolean alreadyLinked = courseSubjectRepository
+        boolean alreadyLinked = courseSubjectRepository
                 .existsByCourseIdAndSubjectId(course.getId(), subject.getId());
         if (!alreadyLinked) {
             // Check if this subject is already used by another course — mark as shared
@@ -245,7 +250,8 @@ public class CurriculumService {
             log.info("Saved CourseSubject for subject {} yearLevel {} sem {} shared={}", code, yearLevel, semester, usedByOtherCourse);
         } else {
             log.warn("CourseSubject already exists for course {} subject {}", course.getId(), subject.getId());
-        }        log.info("Imported subject {} into curriculum {}", code, curriculum.getName());
+        }
+        log.info("Imported subject {} into curriculum {}", code, curriculum.getName());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -279,12 +285,11 @@ public class CurriculumService {
     }
 
     // ── Soft delete (archive) ─────────────────────────────────────────────────
-
     @Transactional
     public void softDelete(Long curriculumId, String deletedBy) {
         Curriculum c = curriculumRepository.findById(curriculumId)
                 .orElseThrow(() -> new com.timecraft.timecraft.exception.ResourceNotFoundException(
-                        "Curriculum not found: " + curriculumId));
+                "Curriculum not found: " + curriculumId));
         c.setActive(false);
         c.setDeletedAt(java.time.LocalDateTime.now());
         c.setDeletedBy(deletedBy);

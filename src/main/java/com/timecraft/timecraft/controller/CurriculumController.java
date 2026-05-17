@@ -53,6 +53,13 @@ public class CurriculumController {
                 curriculumService.getDeletedByCourse(courseId)));
     }
 
+    @GetMapping("/history-all")
+    @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
+    public ResponseEntity<ApiResponse<List<Curriculum>>> getAllCurricula() {
+        return ResponseEntity.ok(ApiResponse.of(
+                curriculumService.getAll()));
+    }
+
     @PostMapping(value = "/import",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('DEAN','ADMIN')")

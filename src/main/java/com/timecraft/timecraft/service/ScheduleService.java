@@ -58,12 +58,12 @@ public class ScheduleService {
         return scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear);
     }
 
-        public List<Schedule> findByCourse(Long courseId, Semester semester, String schoolYear) {
+    public List<Schedule> findByCourse(Long courseId, Semester semester, String schoolYear) {
         return scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear)
                 .stream()
                 .filter(s -> s.getSection() != null
-                        && s.getSection().getCourse() != null
-                        && s.getSection().getCourse().getId().equals(courseId))
+                && s.getSection().getCourse() != null
+                && s.getSection().getCourse().getId().equals(courseId))
                 .filter(s -> s.getStatus() == ScheduleStatus.PUBLISHED)
                 .toList();
     }
@@ -83,7 +83,7 @@ public class ScheduleService {
                 .findBySecondarySectionId(sectionId)
                 .stream()
                 .filter(ms -> ms.getSemester().equals(semester.name())
-                        && ms.getSchoolYear().equals(schoolYear))
+                && ms.getSchoolYear().equals(schoolYear))
                 .map(ms -> ms.getSubject().getId())
                 .toList();
 
@@ -93,13 +93,13 @@ public class ScheduleService {
                         .findBySecondarySectionId(sectionId)
                         .stream()
                         .filter(ms -> ms.getSemester().equals(semester.name())
-                                && ms.getSchoolYear().equals(schoolYear))
+                        && ms.getSchoolYear().equals(schoolYear))
                         .map(ms -> scheduleRepository.findBySubjectIdAndSemesterAndSchoolYear(
-                                ms.getSubject().getId(), semester, schoolYear))
+                        ms.getSubject().getId(), semester, schoolYear))
                         .flatMap(List::stream)
                         .filter(s -> s.getTimeslot() != null && s.getTimeslot2() != null)
                         .filter(s -> s.getSection() != null
-                                && s.getSection().getCourse().getCode().equals("BSCS"))
+                        && s.getSection().getCourse().getCode().equals("BSCS"))
                         .filter(s -> mergedSubjectIds.contains(s.getSubject().getId()))
                         .distinct()
                         .toList();
@@ -368,13 +368,16 @@ public class ScheduleService {
     public void deleteTermSchedules(Semester semester, String schoolYear, String deletedBy) {
         List<Schedule> all = scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear);
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
-        all.forEach(s -> { s.setDeletedAt(now); s.setDeletedBy(deletedBy); });
+        all.forEach(s -> {
+            s.setDeletedAt(now);
+            s.setDeletedBy(deletedBy);
+        });
         scheduleRepository.saveAll(all);
     }
 
     public List<Schedule> getDeletedSchedules(Semester semester, String schoolYear) {
         return semester != null && schoolYear != null
-                ? scheduleRepository.findDeletedByTerm(semester, schoolYear)
+                ? scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear)
                 : scheduleRepository.findAllDeleted();
     }
 

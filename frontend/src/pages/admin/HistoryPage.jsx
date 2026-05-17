@@ -7,8 +7,9 @@ const YEARS = ["2024-2025", "2025-2026", "2026-2027", "2027-2028"];
 export default function HistoryPage() {
   const [tab, setTab] = useState("schedule");
   const [semester, setSemester] = useState("FIRST");
-  const [schoolYear, setSchoolYear] = useState("2024-2025");
+  const [schoolYear, setSchoolYear] = useState("2026-2027");
   const [schedules, setSchedules] = useState([]);
+  const [curricula, setCurricula] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -19,6 +20,15 @@ export default function HistoryPage() {
       .catch(() => setSchedules([]))
       .finally(() => setLoading(false));
   }, [tab, semester, schoolYear]);
+
+  useEffect(() => {
+    if (tab !== "curriculum") return;
+    setLoading(true);
+    api.get("/curriculum/history-all")
+      .then(r => setCurricula(r.data?.data ?? []))
+      .catch(() => setCurricula([]))
+      .finally(() => setLoading(false));
+  }, [tab]);
 
   return (
     <div style={{ padding: "1.5rem", fontFamily: "'DM Sans', sans-serif" }}>
@@ -87,9 +97,11 @@ export default function HistoryPage() {
                       <td style={{ padding: "8px 12px" }}>{s.timeslotLabel1}</td>
                       <td style={{ padding: "8px 12px" }}>{s.timeslotLabel2}</td>
                       <td style={{ padding: "8px 12px" }}>
-                        <span style={{ padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 700,
+                        <span style={{
+                          padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 700,
                           background: s.status === "PUBLISHED" ? "#d1fae5" : "#fef3c7",
-                          color: s.status === "PUBLISHED" ? "#065f46" : "#92400e" }}>
+                          color: s.status === "PUBLISHED" ? "#065f46" : "#92400e"
+                        }}>
                           {s.status}
                         </span>
                       </td>
@@ -105,9 +117,41 @@ export default function HistoryPage() {
       )}
 
       {tab === "curriculum" && (
-        <p style={{ fontSize: 13, color: "#6b7280" }}>
-          Curriculum history is viewable per course from the Curriculum Import page.
-        </p>
+        loading ? <p style={{ color: "#6b7280", fontSize: 13 }}>Loading…</p>
+          : curricula.length === 0
+            ? <p style={{ color: "#6b7280", fontSize: 13 }}>No curricula found.</p>
+            : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: "#f3f4f6" }}>
+                      {["Course", "Name", "Effective Year", "Imported At", "Status"].map(h => (
+                        <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontWeight: 600, color: "#374151", borderBottom: "1.5px solid #e5e7eb" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {curricula.map(c => (
+                      <tr key={c.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                        <td style={{ padding: "8px 12px" }}>{c.course?.code} — {c.course?.name}</td>
+                        <td style={{ padding: "8px 12px", fontWeight: 600 }}>{c.name}</td>
+                        <td style={{ padding: "8px 12px" }}>{c.effectiveYear}</td>
+                        <td style={{ padding: "8px 12px", color: "#6b7280" }}>{c.importedAt ? new Date(c.importedAt).toLocaleDateString() : "—"}</td>
+                        <td style={{ padding: "8px 12px" }}>
+                          <span style={{
+                            padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 700,
+                            background: c.active ? "#d1fae5" : "#f3f4f6",
+                            color: c.active ? "#065f46" : "#6b7280"
+                          }}>
+                            {c.active ? "ACTIVE" : "INACTIVE"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
       )}
     </div>
   );
