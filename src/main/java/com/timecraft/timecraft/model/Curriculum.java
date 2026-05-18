@@ -28,6 +28,7 @@ public class Curriculum {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "course_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"courseSubjects","sections","hibernateLazyInitializer"})
     private Course course;
 
     @Column(nullable = false, length = 150)
@@ -42,6 +43,7 @@ public class Curriculum {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "imported_by")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer","password","roles"})
     private User importedBy;
 
     @Column(name = "imported_at", nullable = false)

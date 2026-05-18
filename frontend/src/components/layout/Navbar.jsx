@@ -150,6 +150,24 @@ const CSS = `
   .tc-conflict-btn:hover { background:rgba(245,158,11,0.2); }
 `;
 
+function LiveClock() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div style={{ textAlign:"right", flexShrink:0 }}>
+      <div style={{ fontSize:13, fontWeight:700, color:"rgba(255,255,255,0.75)", fontFamily:"'DM Mono',monospace", letterSpacing:"0.04em" }}>
+        {now.toLocaleTimeString("en-US", { hour12:false })}
+      </div>
+      <div style={{ fontSize:9, color:"rgba(255,255,255,0.28)", fontFamily:"'DM Mono',monospace", letterSpacing:"0.08em" }}>
+        {now.toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }).toUpperCase()}
+      </div>
+    </div>
+  );
+}
+
 export default function Navbar({ conflictCount = 0 }) {
   const { user, role, logout } = useAuth();
   const { notifications, clearNotifications } = useWebSocketContext();
@@ -264,7 +282,10 @@ export default function Navbar({ conflictCount = 0 }) {
           </button>
         )}
 
-        {/* Conflict badge */}
+        {/* Clock */}
+<LiveClock />
+
+{/* Conflict badge */}
         {role === "ADMIN" && conflictCount > 0 && (
           <button
             className="tc-conflict-btn"

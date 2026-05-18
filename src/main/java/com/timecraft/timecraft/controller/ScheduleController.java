@@ -342,6 +342,16 @@ public class ScheduleController {
                 deleted.stream().map(ScheduleResponse::from).toList()));
     }
 
+    @GetMapping("/history-all-sections")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<java.util.Map<String, Object>>>> getAllSectionsWithSchedules(
+            @RequestParam(required = false) String semester,
+            @RequestParam(required = false) String schoolYear) {
+        Semester sem = semester != null ? Semester.valueOf(semester) : null;
+        return ResponseEntity.ok(ApiResponse.of(
+                scheduleService.getAllSectionsWithSchedules(sem, schoolYear)));
+    }
+
     // ── GET /api/v1/schedules/back-subjects ───────────────────────────────────
     @GetMapping("/back-subjects")
     @PreAuthorize("hasRole('STUDENT')")

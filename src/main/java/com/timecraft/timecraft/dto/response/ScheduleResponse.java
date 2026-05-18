@@ -67,6 +67,7 @@ public class ScheduleResponse {
     private Short  yearLevel;
     private String courseCode;
     private String courseName;
+    private String departmentName;
 
     // ── Session 1 timeslot ────────────────────────────────────────────────────
 
@@ -165,6 +166,9 @@ public class ScheduleResponse {
                         ? schedule.getSection().getCourse().getCode() : null)
                 .courseName(schedule.getSection() != null
                         ? schedule.getSection().getCourse().getName() : null)
+                .departmentName(schedule.getSection() != null
+                        && schedule.getSection().getCourse().getDepartment() != null
+                        ? schedule.getSection().getCourse().getDepartment().getName() : null)
 
                 // Session 1
                 .timeslotId(schedule.getTimeslot() != null

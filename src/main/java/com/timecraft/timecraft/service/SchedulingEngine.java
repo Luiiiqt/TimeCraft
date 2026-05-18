@@ -334,7 +334,7 @@ public class SchedulingEngine {
                     List<Schedule> existing = scheduleRepository
                             .findBySubjectIdAndSemesterAndSchoolYear(subject.getId(), semester, schoolYear)
                             .stream()
-                            .filter(s -> s.getStatus() == ScheduleStatus.DRAFT)
+                            .filter(s -> s.getStatus() == ScheduleStatus.DRAFT || s.getStatus() == ScheduleStatus.PUBLISHED)
                             .filter(s -> s.getSection() != null && s.getTeacher() != null && s.getTimeslot() != null)
                             .filter(s -> s.getSection().getCourse().getCode().equals("BSCS"))
                             .toList();
@@ -361,7 +361,7 @@ public class SchedulingEngine {
                     List<Schedule> existing = scheduleRepository
                             .findBySubjectIdAndSemesterAndSchoolYear(subject.getId(), semester, schoolYear)
                             .stream()
-                            .filter(s -> s.getStatus() == ScheduleStatus.DRAFT)
+                            .filter(s -> s.getStatus() == ScheduleStatus.DRAFT || s.getStatus() == ScheduleStatus.PUBLISHED)
                             .filter(s -> s.getSection() != null && s.getTeacher() != null && s.getTimeslot() != null)
                             .filter(s -> s.getSection().getCourse().getCode().equals("BSCS"))
                             .filter(s -> !s.getSection().getId().equals(section.getId()))
@@ -1381,7 +1381,8 @@ public class SchedulingEngine {
                             if (isLabSession) {
                                 return 0; // labs: no preference
 
-                                                        }if (isMinor) {
+                            }
+                            if (isMinor) {
                                 return 0;      // minor: all valid rooms equal
                             }                            // major lecture: prefer 401–408, deprioritize 306
                             if (MINOR_ROOM_NUMBERS.contains(r.getRoomNumber())) {
@@ -1458,11 +1459,19 @@ public class SchedulingEngine {
                 .filter(r -> r.getRoomType() == roomType)
                 .sorted(Comparator
                         .comparingInt((Room r) -> {
-                            if (isLabSession) return 0;
-                            if (isMinor) return 0;
+                            if (isLabSession) {
+                                return 0;
+                            }
+                            if (isMinor) {
+                                return 0;
+                            }
                             // major lecture: prefer 401–408, deprioritize 306
-                            if (MINOR_ROOM_NUMBERS.contains(r.getRoomNumber())) return 0;
-                            if (ROOM_306_NUMBER.equals(r.getRoomNumber())) return 1;
+                            if (MINOR_ROOM_NUMBERS.contains(r.getRoomNumber())) {
+                                return 0;
+                            }
+                            if (ROOM_306_NUMBER.equals(r.getRoomNumber())) {
+                                return 1;
+                            }
                             return 2;
                         })
                         .thenComparingInt(r -> roomLocks.getOrDefault(r.getId(), Set.of()).size())
@@ -1518,7 +1527,7 @@ public class SchedulingEngine {
         }
 
         List<Schedule> sharedSchedules = scheduleRepository
-                .findSectionSchedules(bscsSection.getId(), semester, schoolYear)
+                .findBySectionIdAndSemesterAndSchoolYear(bscsSection.getId(), semester, schoolYear)
                 .stream()
                 .filter(s -> s.getSubject().getCourseSubjects() != null
                 && s.getSubject().getCourseSubjects().stream()

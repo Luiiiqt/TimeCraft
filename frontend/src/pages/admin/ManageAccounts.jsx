@@ -56,52 +56,67 @@ const TC_STYLES = `
   .tc-ac-table-wrap {
     background:rgba(15,23,42,0.6); backdrop-filter:blur(20px);
     border:1px solid rgba(255,255,255,0.07); border-radius:18px; overflow:hidden;
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
     box-shadow:0 20px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.03) inset;
   }
-  .tc-ac-table { width:100%; border-collapse:collapse; }
+  .tc-ac-table { width:100%; border-collapse:collapse; min-width:520px; }
   .tc-ac-table thead tr { background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.07); }
-  .tc-ac-table th { padding:13px 20px; text-align:left; font-size:10px; font-weight:700; color:rgba(255,255,255,0.28); letter-spacing:0.12em; text-transform:uppercase; font-family:'DM Mono',monospace; }
-  .tc-ac-table td { padding:14px 20px; font-size:13px; color:rgba(255,255,255,0.7); border-bottom:1px solid rgba(255,255,255,0.04); font-family:'DM Sans',sans-serif; transition:background 0.15s; }
+  .tc-ac-table th { padding:13px 16px; text-align:left; font-size:10px; font-weight:700; color:rgba(255,255,255,0.28); letter-spacing:0.12em; text-transform:uppercase; font-family:'DM Mono',monospace; white-space:nowrap; }
+  .tc-ac-table td { padding:12px 16px; font-size:13px; color:rgba(255,255,255,0.7); border-bottom:1px solid rgba(255,255,255,0.04); font-family:'DM Sans',sans-serif; transition:background 0.15s; }
   .tc-ac-table tbody tr:last-child td { border-bottom:none; }
   .tc-ac-table tbody tr:hover td { background:rgba(34,197,94,0.03); }
 
   .tc-ac-alert-ok  { padding:11px 16px; border-radius:10px; background:rgba(34,197,94,0.09);  border:1px solid rgba(34,197,94,0.2);  color:#86efac; font-size:13px; margin-bottom:16px; font-family:'DM Sans',sans-serif; animation:tcSlideIn 0.25s ease both; }
   .tc-ac-alert-err { padding:11px 16px; border-radius:10px; background:rgba(220,38,38,0.09);  border:1px solid rgba(220,38,38,0.2);  color:#fca5a5; font-size:13px; margin-bottom:16px; font-family:'DM Sans',sans-serif; animation:tcSlideIn 0.25s ease both; }
 
-  .tc-ac-search-wrap { position:relative; }
+  .tc-ac-search-wrap { position:relative; width:100%; max-width:300px; }
   .tc-ac-search-wrap .tc-ac-input { padding-left:36px; }
   .tc-ac-search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:13px; color:rgba(255,255,255,0.22); pointer-events:none; }
 
   .tc-ac-tab {
-    flex:1; padding:9px 16px; border-radius:9px; border:none; cursor:pointer;
+    flex:1; padding:9px 12px; border-radius:9px; border:none; cursor:pointer;
     background:transparent; color:rgba(255,255,255,0.4);
-    font-size:13px; font-weight:600; font-family:'DM Sans',sans-serif;
-    transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:7px;
+    font-size:12px; font-weight:600; font-family:'DM Sans',sans-serif;
+    transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:5px;
+    white-space:nowrap;
   }
   .tc-ac-tab.active { background:rgba(34,197,94,0.15); color:#86efac; box-shadow:inset 0 0 0 1px rgba(34,197,94,0.2); }
   .tc-ac-tab:hover:not(.active) { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.7); }
+
+  /* Stats strip responsive */
+  .tc-ac-stats-strip { display:flex; gap:14px; margin-bottom:28px; flex-wrap:wrap; }
+  .tc-ac-stat-item { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:12px 16px; display:flex; align-items:center; gap:10px; flex:1 1 120px; }
+
+  /* Toolbar responsive */
+  .tc-ac-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+
+  @media (max-width:640px) {
+    .tc-ac-tab { font-size:11px; padding:8px 8px; gap:3px; }
+    .tc-ac-search-wrap { max-width:100%; }
+    .tc-ac-toolbar { flex-direction:column; align-items:stretch; }
+    .tc-ac-toolbar .tc-ac-btn-ghost { width:100%; justify-content:center; }
+  }
 `;
 
 const ROLE_TABS = [
-  { key: "DEAN",         label: "Deans",          icon: "🎓", color: "#F59E0B" },
-  { key: "PROGRAM_HEAD", label: "Program Heads",  icon: "📋", color: "#EC4899" },
-  { key: "TEACHER",      label: "Teachers",       icon: "👨‍🏫", color: "#3B82F6" },
-  { key: "STUDENT",      label: "Students",       icon: "📚", color: "#8B5CF6" },
+  { key: "DEAN",         label: "Deans",         icon: "🎓", color: "#F59E0B" },
+  { key: "PROGRAM_HEAD", label: "Program Heads", icon: "📋", color: "#EC4899" },
+  { key: "TEACHER",      label: "Teachers",      icon: "👨‍🏫", color: "#3B82F6" },
+  { key: "STUDENT",      label: "Students",      icon: "📚", color: "#8B5CF6" },
 ];
 
 const ROLE_COLOR = {
-  DEAN:         { bg:"rgba(245,158,11,0.1)",  color:"#fde68a", border:"rgba(245,158,11,0.25)"  },
-  PROGRAM_HEAD: { bg:"rgba(236,72,153,0.1)",  color:"#f9a8d4", border:"rgba(236,72,153,0.25)"  },
-  TEACHER:      { bg:"rgba(59,130,246,0.1)",  color:"#93c5fd", border:"rgba(59,130,246,0.25)"  },
-  STUDENT:      { bg:"rgba(139,92,246,0.1)",  color:"#c4b5fd", border:"rgba(139,92,246,0.25)"  },
+  DEAN:         { bg: "rgba(245,158,11,0.1)",  color: "#fde68a", border: "rgba(245,158,11,0.25)"  },
+  PROGRAM_HEAD: { bg: "rgba(236,72,153,0.1)",  color: "#f9a8d4", border: "rgba(236,72,153,0.25)"  },
+  TEACHER:      { bg: "rgba(59,130,246,0.1)",  color: "#93c5fd", border: "rgba(59,130,246,0.25)"  },
+  STUDENT:      { bg: "rgba(139,92,246,0.1)",  color: "#c4b5fd", border: "rgba(139,92,246,0.25)"  },
 };
 
 function RoleBadge({ role }) {
-  const m = ROLE_COLOR[role] ?? { bg:"rgba(255,255,255,0.06)", color:"rgba(255,255,255,0.4)", border:"rgba(255,255,255,0.1)" };
-  const label = role?.replace("_", " ") ?? "—";
+  const m = ROLE_COLOR[role] ?? { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "rgba(255,255,255,0.1)" };
   return (
-    <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 11px", background:m.bg, color:m.color, border:`1px solid ${m.border}`, borderRadius:7, fontSize:11, fontWeight:700, fontFamily:"'DM Mono',monospace", letterSpacing:"0.06em" }}>
-      {label}
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 11px", background: m.bg, color: m.color, border: `1px solid ${m.border}`, borderRadius: 7, fontSize: 11, fontWeight: 700, fontFamily: "'DM Mono',monospace", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+      {role?.replace("_", " ") ?? "—"}
     </span>
   );
 }
@@ -109,109 +124,75 @@ function RoleBadge({ role }) {
 // ── Edit Modal ────────────────────────────────────────────────────────────────
 function EditModal({ user, departments, courses, onClose, onSaved }) {
   const [form, setForm] = useState({
-    fullName:     user.fullName     ?? "",
-    email:        user.email        ?? "",
+    fullName: user.fullName ?? "", email: user.email ?? "",
     departmentId: user.departmentId ?? user.department?.id ?? "",
-    courseId:     user.courseId     ?? user.course?.id     ?? "",
-    password:     "",
-    confirmPassword: "",
+    courseId: user.courseId ?? user.course?.id ?? "",
+    password: "", confirmPassword: "",
   });
-  const [saving,  setSaving]  = useState(false);
-  const [msg,     setMsg]     = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState(null);
 
-  const filteredCourses = courses.filter(c =>
-    !form.departmentId || String(c.departmentId) === String(form.departmentId)
-  );
+  const filteredCourses = courses.filter(c => !form.departmentId || String(c.departmentId) === String(form.departmentId));
 
   const handleSubmit = async () => {
-    if (form.password && form.password !== form.confirmPassword) {
-      setMsg({ ok: false, text: "Passwords do not match." });
-      return;
-    }
+    if (form.password && form.password !== form.confirmPassword) { setMsg({ ok: false, text: "Passwords do not match." }); return; }
     setSaving(true); setMsg(null);
     try {
-      const payload = {
-        fullName:     form.fullName     || undefined,
-        email:        form.email        || undefined,
-        departmentId: form.departmentId || undefined,
-        courseId:     form.courseId     || undefined,
-      };
+      const payload = { fullName: form.fullName || undefined, email: form.email || undefined, departmentId: form.departmentId || undefined, courseId: form.courseId || undefined };
       if (form.password) payload.password = form.password;
-
       await api.put(`/users/${user.id}`, payload);
       setMsg({ ok: true, text: "Account updated successfully." });
       setTimeout(() => { onSaved(); onClose(); }, 700);
-    } catch (e) {
-      setMsg({ ok: false, text: e?.response?.data?.message ?? "Update failed." });
-    } finally { setSaving(false); }
+    } catch (e) { setMsg({ ok: false, text: e?.response?.data?.message ?? "Update failed." }); }
+    finally { setSaving(false); }
   };
 
-  const showDept   = ["DEAN","PROGRAM_HEAD","TEACHER"].includes(user.role);
-  const showCourse = ["PROGRAM_HEAD","STUDENT"].includes(user.role);
+  const showDept = ["DEAN", "PROGRAM_HEAD", "TEACHER"].includes(user.role);
+  const showCourse = ["PROGRAM_HEAD", "STUDENT"].includes(user.role);
 
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.65)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000 }}>
-      <div style={{
-        background:"rgba(10,18,32,0.98)", border:"1px solid rgba(255,255,255,0.1)",
-        borderRadius:20, padding:"28px 30px", width:500, maxWidth:"95vw",
-        boxShadow:"0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset",
-        animation:"tcSlideIn 0.25s ease both", fontFamily:"'DM Sans',sans-serif",
-        maxHeight:"90vh", overflowY:"auto",
-      }}>
-        {/* Header */}
-        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:22 }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
+      <div style={{ background: "rgba(10,18,32,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "clamp(20px,4vw,28px) clamp(20px,4vw,30px)", width: "100%", maxWidth: 500, boxShadow: "0 32px 80px rgba(0,0,0,0.6)", animation: "tcSlideIn 0.25s ease both", fontFamily: "'DM Sans',sans-serif", maxHeight: "90vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 22 }}>
           <div>
-            <div style={{ display:"inline-flex", alignItems:"center", gap:6, marginBottom:8 }}>
-              <RoleBadge role={user.role} />
-            </div>
-            <h3 style={{ fontFamily:"'Sora',sans-serif", fontSize:17, fontWeight:800, color:"#fff", margin:"0 0 3px", letterSpacing:"-0.02em" }}>Edit Account</h3>
-            <p style={{ fontSize:12, color:"rgba(255,255,255,0.35)", margin:0 }}>ID #{user.id} · {user.email}</p>
+            <div style={{ marginBottom: 8 }}><RoleBadge role={user.role} /></div>
+            <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", margin: "0 0 3px", letterSpacing: "-0.02em" }}>Edit Account</h3>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", margin: 0 }}>ID #{user.id} · {user.email}</p>
           </div>
-          <button onClick={onClose} style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"rgba(255,255,255,0.5)", fontSize:14 }}>✕</button>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.5)", fontSize: 14, flexShrink: 0 }}>✕</button>
         </div>
 
         {msg && <div className={msg.ok ? "tc-ac-alert-ok" : "tc-ac-alert-err"}>{msg.text}</div>}
 
-        {/* Full Name */}
-        <div style={{ marginBottom:14 }}>
+        <div style={{ marginBottom: 14 }}>
           <label className="tc-ac-label">Full Name</label>
           <input className="tc-ac-input" value={form.fullName} onChange={e => setForm(p => ({ ...p, fullName: e.target.value }))} placeholder="Full name" />
         </div>
-
-        {/* Email */}
-        <div style={{ marginBottom:14 }}>
+        <div style={{ marginBottom: 14 }}>
           <label className="tc-ac-label">Email</label>
           <input className="tc-ac-input" type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="Email address" />
         </div>
-
-        {/* Department */}
         {showDept && (
-          <div style={{ marginBottom:14 }}>
+          <div style={{ marginBottom: 14 }}>
             <label className="tc-ac-label">Department</label>
-            <select className="tc-ac-input" value={form.departmentId} onChange={e => setForm(p => ({ ...p, departmentId: e.target.value, courseId: "" }))}>
+            <select className="tc-ac-input" value={form.departmentId} onChange={e => setForm(p => ({ ...p, departmentId: e.target.value, courseId: "" }))} style={{ colorScheme: "dark" }}>
               <option value="">— No department —</option>
               {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
           </div>
         )}
-
-        {/* Course */}
         {showCourse && (
-          <div style={{ marginBottom:14 }}>
+          <div style={{ marginBottom: 14 }}>
             <label className="tc-ac-label">Course</label>
-            <select className="tc-ac-input" value={form.courseId} onChange={e => setForm(p => ({ ...p, courseId: e.target.value }))}>
+            <select className="tc-ac-input" value={form.courseId} onChange={e => setForm(p => ({ ...p, courseId: e.target.value }))} style={{ colorScheme: "dark" }}>
               <option value="">— No course —</option>
               {filteredCourses.map(c => <option key={c.id} value={c.id}>{c.name ?? c.code}</option>)}
             </select>
           </div>
         )}
-
-        {/* Divider */}
-        <div style={{ height:1, background:"rgba(255,255,255,0.06)", margin:"18px 0" }} />
-        <p style={{ fontSize:10, color:"rgba(255,255,255,0.25)", marginBottom:14, fontFamily:"'DM Mono',monospace", letterSpacing:"0.08em" }}>CHANGE PASSWORD — LEAVE BLANK TO KEEP CURRENT</p>
-
-        {/* Password */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:14 }}>
+        <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "18px 0" }} />
+        <p style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginBottom: 14, fontFamily: "'DM Mono',monospace", letterSpacing: "0.08em" }}>CHANGE PASSWORD — LEAVE BLANK TO KEEP CURRENT</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
           <div>
             <label className="tc-ac-label">New Password</label>
             <input className="tc-ac-input" type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="••••••••" />
@@ -221,13 +202,9 @@ function EditModal({ user, departments, courses, onClose, onSaved }) {
             <input className="tc-ac-input" type="password" value={form.confirmPassword} onChange={e => setForm(p => ({ ...p, confirmPassword: e.target.value }))} placeholder="••••••••" />
           </div>
         </div>
-
-        {/* Actions */}
-        <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:22 }}>
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 22, flexWrap: "wrap" }}>
           <button onClick={onClose} className="tc-ac-btn-ghost">Cancel</button>
-          <button onClick={handleSubmit} disabled={saving} className="tc-ac-btn-primary">
-            {saving ? "Saving…" : "Save Changes"}
-          </button>
+          <button onClick={handleSubmit} disabled={saving} className="tc-ac-btn-primary">{saving ? "Saving…" : "Save Changes"}</button>
         </div>
       </div>
     </div>
@@ -236,27 +213,25 @@ function EditModal({ user, departments, courses, onClose, onSaved }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function ManageAccounts() {
-  const [activeRole,   setActiveRole]   = useState("DEAN");
-  const [users,        setUsers]        = useState([]);
-  const [departments,  setDepartments]  = useState([]);
-  const [courses,      setCourses]      = useState([]);
-  const [loading,      setLoading]      = useState(false);
-  const [error,        setError]        = useState(null);
-  const [search,       setSearch]       = useState("");
-  const [editing,      setEditing]      = useState(null);
+  const [activeRole, setActiveRole] = useState("DEAN");
+  const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState(null);
 
   const loadUsers = useCallback(async () => {
     setLoading(true); setError(null);
     try {
       const res = await api.get("/users", { params: { role: activeRole } });
       setUsers(res.data?.data ?? res.data ?? []);
-    } catch (e) {
-      setError(e?.response?.data?.message ?? "Failed to load accounts.");
-    } finally { setLoading(false); }
+    } catch (e) { setError(e?.response?.data?.message ?? "Failed to load accounts."); }
+    finally { setLoading(false); }
   }, [activeRole]);
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
-
   useEffect(() => {
     api.get("/departments").then(r => setDepartments(r.data?.data ?? r.data ?? [])).catch(() => {});
     api.get("/courses").then(r => setCourses(r.data?.data ?? r.data ?? [])).catch(() => {});
@@ -264,75 +239,71 @@ export default function ManageAccounts() {
 
   const filtered = users.filter(u =>
     (u.fullName ?? "").toLowerCase().includes(search.toLowerCase()) ||
-    (u.email    ?? "").toLowerCase().includes(search.toLowerCase())
+    (u.email ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
-  const showDept   = ["DEAN","TEACHER"].includes(activeRole);
-  const showCourse = ["PROGRAM_HEAD","STUDENT"].includes(activeRole);
+  const showDept = ["DEAN", "TEACHER"].includes(activeRole);
+  const showCourse = ["PROGRAM_HEAD", "STUDENT"].includes(activeRole);
 
   return (
-    <div className="tc-ac" style={{ color:"#fff", fontFamily:"'DM Sans',sans-serif", background:"#060d1a", minHeight:"100vh", padding:"32px" }}>
+    <div className="tc-ac" style={{ color: "#fff", fontFamily: "'DM Sans',sans-serif", background: "#060d1a", minHeight: "100vh", padding: "clamp(16px,4vw,32px)" }}>
       <style>{TC_STYLES}</style>
 
-      {/* ── Page header ─────────────────────────────────────────── */}
-      <div style={{ marginBottom:30 }}>
-        <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.22)", borderRadius:100, padding:"5px 14px", marginBottom:14 }}>
-          <span style={{ width:6, height:6, borderRadius:"50%", background:"#22C55E", display:"inline-block", animation:"tcBlink 2s ease infinite" }} />
-          <span style={{ fontSize:10, fontWeight:700, color:"#4ADE80", letterSpacing:"0.12em", textTransform:"uppercase", fontFamily:"'DM Mono',monospace" }}>Admin · User Management</span>
+      {/* Page header */}
+      <div style={{ marginBottom: 30 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.22)", borderRadius: 100, padding: "5px 14px", marginBottom: 14 }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E", display: "inline-block", animation: "tcBlink 2s ease infinite" }} />
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#4ADE80", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono',monospace" }}>Admin · User Management</span>
         </div>
-        <h1 style={{ fontFamily:"'Sora',sans-serif", fontSize:28, fontWeight:800, color:"#fff", letterSpacing:"-0.03em", margin:"0 0 6px" }}>Accounts</h1>
-        <p style={{ fontSize:14, color:"rgba(255,255,255,0.38)", margin:0 }}>Manage user accounts, departments, courses, and passwords.</p>
+        <h1 style={{ fontFamily: "'Sora',sans-serif", fontSize: "clamp(22px,5vw,28px)", fontWeight: 800, color: "#fff", letterSpacing: "-0.03em", margin: "0 0 6px" }}>Accounts</h1>
+        <p style={{ fontSize: 14, color: "rgba(255,255,255,0.38)", margin: 0 }}>Manage user accounts, departments, courses, and passwords.</p>
       </div>
 
-      {/* ── Stats strip ─────────────────────────────────────────── */}
-      <div style={{ display:"flex", gap:14, marginBottom:28, flexWrap:"wrap" }}>
+      {/* Stats strip */}
+      <div className="tc-ac-stats-strip">
         {ROLE_TABS.map(t => (
-          <div key={t.key} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:"12px 20px", display:"flex", alignItems:"center", gap:12 }}>
-            <span style={{ fontSize:18 }}>{t.icon}</span>
-            <div>
-              <div style={{ fontFamily:"'Sora',sans-serif", fontSize:11, fontWeight:700, color:t.color, letterSpacing:"0.06em", textTransform:"uppercase", fontFamily:"'DM Mono',monospace" }}>{t.label}</div>
-            </div>
+          <div key={t.key} className="tc-ac-stat-item">
+            <span style={{ fontSize: 18 }}>{t.icon}</span>
+            <div style={{ fontSize: 11, fontWeight: 700, color: t.color, letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'DM Mono',monospace" }}>{t.label}</div>
           </div>
         ))}
       </div>
 
-      {/* ── Role Tabs ────────────────────────────────────────────── */}
-      <div style={{ display:"flex", gap:4, marginBottom:22, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:4 }}>
+      {/* Role Tabs */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 22, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 4 }}>
         {ROLE_TABS.map(t => (
           <button key={t.key} className={`tc-ac-tab${activeRole === t.key ? " active" : ""}`} onClick={() => { setActiveRole(t.key); setSearch(""); }}>
-            {t.icon} {t.label}
+            {t.icon} <span style={{ display: "none" }}>{window.innerWidth > 480 ? t.label : ""}</span>
+            <span>{t.label}</span>
           </button>
         ))}
       </div>
 
-      {/* ── Toolbar ─────────────────────────────────────────────── */}
-      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:20, flexWrap:"wrap" }}>
-        <div className="tc-ac-search-wrap" style={{ width:280 }}>
+      {/* Toolbar */}
+      <div className="tc-ac-toolbar">
+        <div className="tc-ac-search-wrap">
           <span className="tc-ac-search-icon">🔍</span>
-          <input className="tc-ac-input" placeholder={`Search ${activeRole.replace("_"," ").toLowerCase()}s…`} value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="tc-ac-input" placeholder={`Search ${activeRole.replace("_", " ").toLowerCase()}s…`} value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <button className="tc-ac-btn-ghost" onClick={loadUsers} disabled={loading} style={{ marginLeft:"auto" }}>
+        <button className="tc-ac-btn-ghost" onClick={loadUsers} disabled={loading} style={{ marginLeft: "auto" }}>
           {loading ? "Loading…" : "⟳  Refresh"}
         </button>
       </div>
 
       {error && <div className="tc-ac-alert-err">{error}</div>}
 
-      {/* ── Table ────────────────────────────────────────────────── */}
+      {/* Table */}
       <div className="tc-ac-table-wrap">
-        {/* Chrome bar */}
-        <div style={{ padding:"14px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <div style={{ display:"flex", gap:5 }}>
-              {["#FF5F57","#FFBD2E","#28C840"].map((c, i) => (
-                <div key={i} style={{ width:9, height:9, borderRadius:"50%", background:c }} />
-              ))}
+        <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", gap: 5 }}>
+              {["#FF5F57", "#FFBD2E", "#28C840"].map((c, i) => <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: c }} />)}
             </div>
-            <span style={{ fontSize:11, color:"rgba(255,255,255,0.2)", fontFamily:"'DM Mono',monospace", letterSpacing:"0.08em", marginLeft:6 }}>
-              {activeRole.replace("_"," ")}S — {filtered.length} RECORDS
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono',monospace", letterSpacing: "0.08em", marginLeft: 6 }}>
+              {activeRole.replace("_", " ")}S — {filtered.length} RECORDS
             </span>
           </div>
-          {loading && <div style={{ width:13, height:13, border:"2px solid rgba(34,197,94,0.15)", borderTopColor:"#22C55E", borderRadius:"50%", animation:"tcSpin 0.7s linear infinite" }} />}
+          {loading && <div style={{ width: 13, height: 13, border: "2px solid rgba(34,197,94,0.15)", borderTopColor: "#22C55E", borderRadius: "50%", animation: "tcSpin 0.7s linear infinite" }} />}
         </div>
 
         <table className="tc-ac-table">
@@ -342,53 +313,35 @@ export default function ManageAccounts() {
               <th>Name</th>
               <th>Email</th>
               <th>Role</th>
-              {showDept   && <th>Department</th>}
+              {showDept && <th>Department</th>}
               {showCourse && <th>Course</th>}
-              <th style={{ textAlign:"right" }}>Actions</th>
+              <th style={{ textAlign: "right" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan={7} style={{ textAlign:"center", padding:48 }}>
-                  <div style={{ display:"inline-block", width:20, height:20, border:"2px solid rgba(34,197,94,0.2)", borderTopColor:"#22C55E", borderRadius:"50%", animation:"tcSpin 0.7s linear infinite" }} />
-                </td>
-              </tr>
+              <tr><td colSpan={7} style={{ textAlign: "center", padding: 48 }}>
+                <div style={{ display: "inline-block", width: 20, height: 20, border: "2px solid rgba(34,197,94,0.2)", borderTopColor: "#22C55E", borderRadius: "50%", animation: "tcSpin 0.7s linear infinite" }} />
+              </td></tr>
             ) : filtered.length === 0 ? (
-              <tr>
-                <td colSpan={7} style={{ textAlign:"center", padding:56, color:"rgba(255,255,255,0.18)", fontFamily:"'DM Mono',monospace", fontSize:12, letterSpacing:"0.06em" }}>
-                  NO {activeRole.replace("_"," ")}S FOUND
-                </td>
-              </tr>
+              <tr><td colSpan={7} style={{ textAlign: "center", padding: 56, color: "rgba(255,255,255,0.18)", fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: "0.06em" }}>NO {activeRole.replace("_", " ")}S FOUND</td></tr>
             ) : filtered.map((u, i) => (
               <tr key={u.id}>
-                <td style={{ color:"rgba(255,255,255,0.2)", fontFamily:"'DM Mono',monospace", fontSize:11 }}>
-                  {String(i + 1).padStart(2, "0")}
-                </td>
+                <td style={{ color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono',monospace", fontSize: 11 }}>{String(i + 1).padStart(2, "0")}</td>
                 <td>
-                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                    <div style={{
-                      width:30, height:30, borderRadius:"50%",
-                      background: ROLE_COLOR[u.role]?.bg ?? "rgba(255,255,255,0.06)",
-                      border: `1.5px solid ${ROLE_COLOR[u.role]?.border ?? "rgba(255,255,255,0.1)"}`,
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      fontSize:10, fontWeight:800,
-                      color: ROLE_COLOR[u.role]?.color ?? "rgba(255,255,255,0.5)",
-                      fontFamily:"'DM Mono',monospace", flexShrink:0,
-                    }}>
-                      {(u.fullName || "U").split(" ").map(w => w[0]).slice(0,2).join("").toUpperCase()}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: ROLE_COLOR[u.role]?.bg ?? "rgba(255,255,255,0.06)", border: `1.5px solid ${ROLE_COLOR[u.role]?.border ?? "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: ROLE_COLOR[u.role]?.color ?? "rgba(255,255,255,0.5)", fontFamily: "'DM Mono',monospace", flexShrink: 0 }}>
+                      {(u.fullName || "U").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()}
                     </div>
-                    <span style={{ fontWeight:600, color:"#fff" }}>{u.fullName ?? "—"}</span>
+                    <span style={{ fontWeight: 600, color: "#fff" }}>{u.fullName ?? "—"}</span>
                   </div>
                 </td>
-                <td style={{ color:"rgba(255,255,255,0.5)", fontFamily:"'DM Mono',monospace", fontSize:12 }}>{u.email ?? "—"}</td>
+                <td style={{ color: "rgba(255,255,255,0.5)", fontFamily: "'DM Mono',monospace", fontSize: 12 }}>{u.email ?? "—"}</td>
                 <td><RoleBadge role={u.role} /></td>
-                {showDept   && <td style={{ color:"rgba(255,255,255,0.55)" }}>{u.department?.name ?? u.departmentName ?? "—"}</td>}
-                {showCourse && <td style={{ color:"rgba(255,255,255,0.55)" }}>{u.course?.name ?? u.course?.code ?? u.courseName ?? "—"}</td>}
-                <td style={{ textAlign:"right" }}>
-                  <button className="tc-ac-btn-edit" onClick={() => setEditing(u)}>
-                    ✎ Edit
-                  </button>
+                {showDept && <td style={{ color: "rgba(255,255,255,0.55)" }}>{u.department?.name ?? u.departmentName ?? "—"}</td>}
+                {showCourse && <td style={{ color: "rgba(255,255,255,0.55)" }}>{u.course?.name ?? u.course?.code ?? u.courseName ?? "—"}</td>}
+                <td style={{ textAlign: "right" }}>
+                  <button className="tc-ac-btn-edit" onClick={() => setEditing(u)}>✎ Edit</button>
                 </td>
               </tr>
             ))}
@@ -396,21 +349,11 @@ export default function ManageAccounts() {
         </table>
       </div>
 
-      <div style={{ marginTop:12, fontSize:11, color:"rgba(255,255,255,0.2)", fontFamily:"'DM Mono',monospace", letterSpacing:"0.06em" }}>
-        {filtered.length} ACCOUNT{filtered.length !== 1 ? "S" : ""}
-        {search && ` · FILTERED FROM ${users.length}`}
+      <div style={{ marginTop: 12, fontSize: 11, color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono',monospace", letterSpacing: "0.06em" }}>
+        {filtered.length} ACCOUNT{filtered.length !== 1 ? "S" : ""}{search && ` · FILTERED FROM ${users.length}`}
       </div>
 
-      {/* ── Edit Modal ───────────────────────────────────────────── */}
-      {editing && (
-        <EditModal
-          user={editing}
-          departments={departments}
-          courses={courses}
-          onClose={() => setEditing(null)}
-          onSaved={loadUsers}
-        />
-      )}
+      {editing && <EditModal user={editing} departments={departments} courses={courses} onClose={() => setEditing(null)} onSaved={loadUsers} />}
     </div>
   );
 }

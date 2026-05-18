@@ -3,17 +3,17 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 // ── Constants (mirrors TimetableGrid) ─────────────────────────────────────────
-const DAYS       = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY']
-const DAY_LABELS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
-const DAY_SHORT  = ['Mon','Tue','Wed','Thu','Fri','Sat']
+const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-const START_HOUR  = 7
-const START_MIN   = 30
-const END_HOUR    = 18
-const END_MIN     = 0
-const BAND_MIN    = 30
+const START_HOUR = 7
+const START_MIN = 30
+const END_HOUR = 18
+const END_MIN = 0
+const BAND_MIN = 30
 const TOTAL_BANDS = ((END_HOUR * 60 + END_MIN) - (START_HOUR * 60 + START_MIN)) / BAND_MIN
-const ROW_H       = 52
+const ROW_H = 52
 
 function timeToBand(t) {
   if (!t) return 0
@@ -23,22 +23,22 @@ function timeToBand(t) {
 
 function bandToTime(band) {
   const total = START_HOUR * 60 + START_MIN + band * BAND_MIN
-  const h     = Math.floor(total / 60)
-  const m     = total % 60
-  const ampm  = h >= 12 ? 'PM' : 'AM'
-  const h12   = ((h % 12) || 12)
-  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`
+  const h = Math.floor(total / 60)
+  const m = total % 60
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12 = ((h % 12) || 12)
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
 const PALETTE = [
-  { bg:'#E8F5E9', accent:'#2E7D32', text:'#1B5E20' },
-  { bg:'#E3F2FD', accent:'#1565C0', text:'#0D47A1' },
-  { bg:'#FFF3E0', accent:'#E65100', text:'#BF360C' },
-  { bg:'#F3E5F5', accent:'#6A1B9A', text:'#4A148C' },
-  { bg:'#E0F7FA', accent:'#00695C', text:'#004D40' },
-  { bg:'#FFF8E1', accent:'#F57F17', text:'#E65100' },
-  { bg:'#FCE4EC', accent:'#880E4F', text:'#560027' },
-  { bg:'#E8EAF6', accent:'#283593', text:'#1A237E' },
+  { bg: '#E8F5E9', accent: '#2E7D32', text: '#1B5E20' },
+  { bg: '#E3F2FD', accent: '#1565C0', text: '#0D47A1' },
+  { bg: '#FFF3E0', accent: '#E65100', text: '#BF360C' },
+  { bg: '#F3E5F5', accent: '#6A1B9A', text: '#4A148C' },
+  { bg: '#E0F7FA', accent: '#00695C', text: '#004D40' },
+  { bg: '#FFF8E1', accent: '#F57F17', text: '#E65100' },
+  { bg: '#FCE4EC', accent: '#880E4F', text: '#560027' },
+  { bg: '#E8EAF6', accent: '#283593', text: '#1A237E' },
 ]
 const colorMap = {}
 let colorIdx = 0
@@ -57,11 +57,11 @@ function PrintGrid({ schedules, loading }) {
         if (!day || !s || !e) return
         const d = day.toUpperCase()
         if (!DAYS.includes(d)) return
-        const sb = timeToBand(s.substring(0,5))
-        const eb = timeToBand(e.substring(0,5))
+        const sb = timeToBand(s.substring(0, 5))
+        const eb = timeToBand(e.substring(0, 5))
         if (sb < 0 || eb > TOTAL_BANDS || sb >= eb) return
         for (let b = sb; b < eb; b++) {
-          if (!map[b][d]) map[b][d] = { entry, startBand:sb, endBand:eb, span:eb-sb, isFirst:b===sb, online }
+          if (!map[b][d]) map[b][d] = { entry, startBand: sb, endBand: eb, span: eb - sb, isFirst: b === sb, online }
         }
       }
       const ol = entry.isOnline || entry.online
@@ -115,10 +115,10 @@ function PrintGrid({ schedules, loading }) {
           ) : schedules.length === 0 ? (
             <tr><td colSpan={7} style={{ padding: 80, textAlign: 'center', color: '#CBD5E1', fontSize: 14 }}>No schedule found.</td></tr>
           ) : allBands.map(band => {
-            const bandMins  = START_HOUR * 60 + START_MIN + band * BAND_MIN
-            const isHour    = bandMins % 60 === 0
+            const bandMins = START_HOUR * 60 + START_MIN + band * BAND_MIN
+            const isHour = bandMins % 60 === 0
             const timeLabel = bandToTime(band)
-            const timeEnd   = bandToTime(band + 1)
+            const timeEnd = bandToTime(band + 1)
 
             return (
               <tr key={band} style={{ height: ROW_H }}>
@@ -135,7 +135,7 @@ function PrintGrid({ schedules, loading }) {
                 </td>
 
                 {DAYS.map(day => {
-                  const slot      = bandMap[band]?.[day]
+                  const slot = bandMap[band]?.[day]
                   const borderTop = isHour ? '1.5px solid #E2E8F0' : '1px dashed #F1F5F9'
 
                   if (!slot) return (
@@ -143,24 +143,24 @@ function PrintGrid({ schedules, loading }) {
                   )
                   if (!slot.isFirst) return null
 
-                  const { entry }  = slot
-                  const code       = entry.subjectCode ?? entry.subject?.code ?? ''
-                  const name       = entry.subjectName ?? entry.subject?.name ?? code
-                  const teacher    = entry.teacherName ?? entry.teacher?.fullName ?? ''
-                  const room       = entry.roomName ?? entry.room?.name ?? entry.room?.roomNumber ?? ''
-                  const isLab      = entry.sessionType === 'LABORATORY'
-                  const isOnline   = slot.online || entry.isOnline || entry.online
+                  const { entry } = slot
+                  const code = entry.subjectCode ?? entry.subject?.code ?? ''
+                  const name = entry.subjectName ?? entry.subject?.name ?? code
+                  const teacher = entry.teacherName ?? entry.teacher?.fullName ?? ''
+                  const room = entry.roomName ?? entry.room?.name ?? entry.room?.roomNumber ?? ''
+                  const isLab = entry.sessionType === 'LABORATORY'
+                  const isOnline = slot.online || entry.isOnline || entry.online
 
                   const col = isOnline
                     ? { bg: '#EFF6FF', accent: '#2563EB', text: '#1D4ED8' }
                     : isLab
-                    ? { bg: '#FFFBEB', accent: '#D97706', text: '#92400E' }
-                    : getColor(code)
+                      ? { bg: '#FFFBEB', accent: '#D97706', text: '#92400E' }
+                      : getColor(code)
 
-                  const heightPx    = ROW_H * slot.span
-                  const showName    = heightPx >= 80
+                  const heightPx = ROW_H * slot.span
+                  const showName = heightPx >= 80
                   const showTeacher = heightPx >= 80
-                  const showRoom    = heightPx >= 100
+                  const showRoom = heightPx >= 100
 
                   return (
                     <td key={day} rowSpan={slot.span} style={{
@@ -175,7 +175,7 @@ function PrintGrid({ schedules, loading }) {
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
                         <span style={{ fontSize: 13, fontWeight: 700, color: col.text, fontFamily: 'monospace', letterSpacing: '0.03em' }}>{code}</span>
-                        {isLab    && <Chip label="LAB"    bg="#FEF3C7" color="#92400E" />}
+                        {isLab && <Chip label="LAB" bg="#FEF3C7" color="#92400E" />}
                         {isOnline && <Chip label="Online" bg="#DBEAFE" color="#1D4ED8" />}
                       </div>
 
@@ -214,18 +214,18 @@ function Chip({ label, bg, color }) {
 
 // ── Main SchedulePrint ────────────────────────────────────────────────────────
 export default function SchedulePrint() {
-  const [params]   = useSearchParams()
-  const navigate   = useNavigate()
-  const courseId   = params.get("courseId")
-  const semester   = params.get("semester")
+  const [params] = useSearchParams()
+  const navigate = useNavigate()
+  const courseId = params.get("courseId")
+  const semester = params.get("semester")
   const schoolYear = params.get("schoolYear")
 
-  const [courses,    setCourses]    = useState([])
+  const [courses, setCourses] = useState([])
   const [activeCourseId, setActiveCourseId] = useState(courseId ? Number(courseId) : null)
-  const [sections,   setSections]   = useState([])
-  const [sectionId,  setSectionId]  = useState(null)
-  const [schedules,  setSchedules]  = useState([])
-  const [loading,    setLoading]    = useState(true)
+  const [sections, setSections] = useState([])
+  const [sectionId, setSectionId] = useState(null)
+  const [schedules, setSchedules] = useState([])
+  const [loading, setLoading] = useState(true)
   const [courseName, setCourseName] = useState("")
 
   // Load courses
@@ -236,7 +236,7 @@ export default function SchedulePrint() {
         setCourses(list)
         if (!activeCourseId && list.length > 0) setActiveCourseId(list[0].id)
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   // Load sections when course changes
@@ -264,13 +264,13 @@ export default function SchedulePrint() {
   }, [sectionId, semester, schoolYear])
 
   const currentSection = sections.find(s => s.id === sectionId)
-  const totalSubjects  = new Set(schedules.map(s => s.subjectId)).size
-  const conflicts      = schedules.filter(s => s.status === "CONFLICTED").length
-  const labCount       = [...new Set(schedules.filter(s => s.sessionType === "LABORATORY").map(s => s.subjectId))].length
+  const totalSubjects = new Set(schedules.map(s => s.subjectId)).size
+  const conflicts = schedules.filter(s => s.status === "CONFLICTED").length
+  const labCount = [...new Set(schedules.filter(s => s.sessionType === "LABORATORY").map(s => s.subjectId))].length
 
   const semLabel = semester === "FIRST" ? "1st Semester"
     : semester === "SECOND" ? "2nd Semester"
-    : semester ?? ""
+      : semester ?? ""
 
   return (
     <>
@@ -282,6 +282,7 @@ export default function SchedulePrint() {
           #print-area, #print-area * { visibility: visible; }
           #print-area { position: absolute; left: 0; top: 0; width: 100%; }
           .no-print { display: none !important; }
+          @page { size: landscape; margin: 1cm; }
         }
       `}</style>
 
@@ -304,7 +305,19 @@ export default function SchedulePrint() {
               style={{ padding: '8px 18px', borderRadius: 8, fontSize: 13, background: '#1B5E20', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
               🖨 Print
             </button>
-            <button onClick={() => window.print()}
+            <button onClick={() => {
+              const el = document.getElementById('print-area');
+              import('html2pdf.js').then(m => {
+                const h = m.default || m;
+                h().set({
+                  margin: 0.4,
+                  filename: `Timetable-${courseName}-${currentSection?.yearLevel}-${currentSection?.sectionName}-${semLabel}-${schoolYear}.pdf`,
+                  image: { type: 'jpeg', quality: 0.98 },
+                  html2canvas: { scale: 2, useCORS: true },
+                  jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+                }).from(el).save();
+              });
+            }}
               style={{ padding: '8px 18px', borderRadius: 8, fontSize: 13, background: '#1565C0', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
               💾 Save PDF
             </button>
@@ -332,9 +345,9 @@ export default function SchedulePrint() {
 
           {/* Stats */}
           {[
-            { label: 'Subjects',  value: totalSubjects, color: '#1B5E20' },
-            { label: 'Lab slots', value: labCount,      color: '#E65100' },
-            { label: 'Conflicts', value: conflicts,     color: conflicts > 0 ? '#B91C1C' : '#6B7280' },
+            { label: 'Subjects', value: totalSubjects, color: '#1B5E20' },
+            { label: 'Lab slots', value: labCount, color: '#E65100' },
+            { label: 'Conflicts', value: conflicts, color: conflicts > 0 ? '#B91C1C' : '#6B7280' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 14px', textAlign: 'center' }}>
               <div style={{ fontSize: 16, fontWeight: 700, color }}>{value}</div>
@@ -351,8 +364,8 @@ export default function SchedulePrint() {
           <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
             {[
               { label: 'Laboratory', bg: '#FFFBEB', accent: '#D97706' },
-              { label: 'Lecture',    bg: '#E8F5E9', accent: '#2E7D32' },
-              { label: 'Online',     bg: '#EFF6FF', accent: '#2563EB' },
+              { label: 'Lecture', bg: '#E8F5E9', accent: '#2E7D32' },
+              { label: 'Online', bg: '#EFF6FF', accent: '#2563EB' },
             ].map(({ label, bg, accent }) => (
               <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 12, height: 12, borderRadius: 3, background: bg, border: `1.5px solid ${accent}` }} />

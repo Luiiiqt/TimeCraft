@@ -60,6 +60,13 @@ public class CurriculumController {
                 curriculumService.getAll()));
     }
 
+    @GetMapping("/all-courses-with-curricula")
+    @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
+    public ResponseEntity<ApiResponse<List<java.util.Map<String, Object>>>> getAllCoursesWithCurricula() {
+        return ResponseEntity.ok(ApiResponse.of(
+                curriculumService.getAllCoursesWithCurricula()));
+    }
+
     @PostMapping(value = "/import",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('DEAN','ADMIN')")

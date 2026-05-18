@@ -49,7 +49,28 @@ public class CurriculumService {
     }
 
     public List<Curriculum> getAll() {
-        return curriculumRepository.findAll();
+        return curriculumRepository.findAllWithCourse();
+    }
+
+    public List<java.util.Map<String, Object>> getAllCoursesWithCurricula() {
+        List<com.timecraft.timecraft.model.Course> courses = courseRepository.findByIsActiveTrue();
+        List<Curriculum> curricula = curriculumRepository.findAllWithCourse();
+
+        java.util.Map<Long, List<Curriculum>> byCourse = curricula.stream()
+            .collect(java.util.stream.Collectors.groupingBy(c -> c.getCourse().getId()));
+
+        return courses.stream().map(course -> {
+            java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
+            row.put("courseId", course.getId());
+            row.put("courseCode", course.getCode());
+            row.put("courseName", course.getName());
+            java.util.Map<String, Object> dept = new java.util.LinkedHashMap<>();
+            dept.put("id", course.getDepartment().getId());
+            dept.put("name", course.getDepartment().getName());
+            row.put("department", dept);
+            row.put("curricula", byCourse.getOrDefault(course.getId(), java.util.List.of()));
+            return row;
+        }).collect(java.util.stream.Collectors.toList());
     }
 
     public Curriculum importFile(Long courseId, String effectiveYear,

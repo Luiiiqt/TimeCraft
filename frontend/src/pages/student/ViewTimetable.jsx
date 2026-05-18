@@ -36,6 +36,7 @@ export default function ViewTimetable() {
   const [mode, setMode]       = useState("mine");   // "mine" | "browse"
   const [courses, setCourses] = useState([]);
   const [browseCourseId, setBrowseCourseId] = useState("");
+  const [browseYearLevel, setBrowseYearLevel] = useState("");
   const [browseSchedules, setBrowseSchedules] = useState([]);
   const [browseLoading, setBrowseLoading]     = useState(false);
   const [browseError, setBrowseError]         = useState(null);
@@ -66,7 +67,7 @@ export default function ViewTimetable() {
     );
   }, [mode, term.semester, term.schoolYear, user?.sectionId, fetchMySchedule]);
 
-  // Browse schedules by course
+  // Browse schedules by course + year level
   useEffect(() => {
     if (mode !== "browse" || !browseCourseId) return;
     setBrowseLoading(true); setBrowseError(null);
@@ -75,10 +76,16 @@ export default function ViewTimetable() {
       semester:   term.semester,
       schoolYear: term.schoolYear,
     }})
-      .then(r => setBrowseSchedules(r.data?.data ?? r.data ?? []))
+      .then(r => {
+        let data = r.data?.data ?? r.data ?? [];
+        if (browseYearLevel) {
+          data = data.filter(s => String(s.yearLevel) === String(browseYearLevel));
+        }
+        setBrowseSchedules(data);
+      })
       .catch(e => setBrowseError(e?.response?.data?.message ?? "Failed to load schedules."))
       .finally(() => setBrowseLoading(false));
-  }, [mode, browseCourseId, term.semester, term.schoolYear]);
+  }, [mode, browseCourseId, browseYearLevel, term.semester, term.schoolYear]);
 
   const isLoading   = mode === "mine" ? loading      : browseLoading;
   const isError     = mode === "mine" ? error        : browseError;
@@ -128,17 +135,28 @@ export default function ViewTimetable() {
           </select>
         </div>
 
-        {/* Course dropdown — browse mode only */}
+        {/* Course + Year Level dropdowns — browse mode only */}
         {mode === "browse" && (
-          <div>
-            <label style={lbl}>COURSE</label>
-            <select value={browseCourseId} onChange={e => setBrowseCourseId(e.target.value)} style={{ ...selStyle, minWidth: 220 }}>
-              <option value="">Select a course…</option>
-              {courses.map(c => (
-                <option key={c.id} value={c.id}>{c.name ?? c.code}</option>
-              ))}
-            </select>
-          </div>
+          <>
+            <div>
+              <label style={lbl}>COURSE</label>
+              <select value={browseCourseId} onChange={e => { setBrowseCourseId(e.target.value); setBrowseYearLevel(""); setBrowseSchedules([]); }} style={{ ...selStyle, minWidth: 220 }}>
+                <option value="">Select a course…</option>
+                {courses.map(c => (
+                  <option key={c.id} value={c.id}>{c.name ?? c.code}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={lbl}>YEAR LEVEL</label>
+              <select value={browseYearLevel} onChange={e => setBrowseYearLevel(e.target.value)} style={selStyle} disabled={!browseCourseId}>
+                <option value="">All Years</option>
+                {[1, 2, 3, 4].map(y => (
+                  <option key={y} value={y}>Year {y}</option>
+                ))}
+              </select>
+            </div>
+          </>
         )}
 
         {mode === "mine" && (

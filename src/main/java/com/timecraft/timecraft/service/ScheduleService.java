@@ -45,6 +45,7 @@ public class ScheduleService {
     private final CampusRepository campusRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final com.timecraft.timecraft.repository.MergedSectionRepository mergedSectionRepository;
+    private final com.timecraft.timecraft.repository.CourseRepository courseRepository;
 
     // ── Lookup ────────────────────────────────────────────────────────────────
     public Schedule findById(Long id) {
@@ -59,13 +60,41 @@ public class ScheduleService {
     }
 
     public List<Schedule> findByCourse(Long courseId, Semester semester, String schoolYear) {
-        return scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear)
+        // Direct schedules for this course
+        List<Schedule> direct = scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear)
                 .stream()
                 .filter(s -> s.getSection() != null
                 && s.getSection().getCourse() != null
                 && s.getSection().getCourse().getId().equals(courseId))
                 .filter(s -> s.getStatus() == ScheduleStatus.PUBLISHED)
-                .toList();
+                .collect(java.util.stream.Collectors.toList());
+
+        // Merged schedules: find sections of this course that are secondary in MergedSection
+        List<Section> courseSections = sectionRepository.findAll().stream()
+                .filter(s -> s.getCourse().getId().equals(courseId))
+                .collect(java.util.stream.Collectors.toList());
+
+        for (Section sec : courseSections) {
+            List<com.timecraft.timecraft.model.MergedSection> merged =
+                mergedSectionRepository.findBySecondarySectionId(sec.getId())
+                    .stream()
+                    .filter(ms -> ms.getSemester().equals(semester.name())
+                            && ms.getSchoolYear().equals(schoolYear))
+                    .collect(java.util.stream.Collectors.toList());
+
+            for (com.timecraft.timecraft.model.MergedSection ms : merged) {
+                scheduleRepository.findBySubjectIdAndSemesterAndSchoolYear(
+                        ms.getSubject().getId(), semester, schoolYear)
+                    .stream()
+                    .filter(s -> s.getStatus() == ScheduleStatus.PUBLISHED)
+                    .filter(s -> s.getSection() != null
+                            && s.getSection().getCourse().getCode().equals("BSCS"))
+                    .filter(s -> direct.stream().noneMatch(d -> d.getId().equals(s.getId())))
+                    .forEach(direct::add);
+            }
+        }
+
+        return direct;
     }
 
     public List<Schedule> findBySection(Long sectionId, Semester semester,
@@ -379,6 +408,94 @@ public class ScheduleService {
         return semester != null && schoolYear != null
                 ? scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear)
                 : scheduleRepository.findAllDeleted();
+    }
+
+    public List<java.util.Map<String, Object>> getAllSectionsWithSchedules(
+            Semester semester, String schoolYear) {
+
+        // All active courses (even those with no sections yet)
+        List<com.timecraft.timecraft.model.Course> courses =
+            courseRepository.findByIsActiveTrue();
+
+        // Sections that exist
+        List<Section> sections = sectionRepository.findAll();
+
+        // Schedules for the term
+        List<Schedule> schedules = semester != null && schoolYear != null
+                ? scheduleRepository.findBySemesterAndSchoolYear(semester, schoolYear)
+                    .stream()
+                    .filter(s -> s.getDeletedAt() != null || 
+                                 s.getStatus() == ScheduleStatus.PUBLISHED)
+                    .collect(java.util.stream.Collectors.toList())
+                : List.of();
+
+        java.util.Map<Long, List<Schedule>> bySection = schedules.stream()
+            .filter(s -> s.getSection() != null)
+            .collect(java.util.stream.Collectors.groupingBy(
+                s -> s.getSection().getId()));
+
+        // Also include merged section schedules for BSIT
+        List<com.timecraft.timecraft.model.MergedSection> mergedSections =
+            mergedSectionRepository.findBySemesterAndSchoolYear(
+                semester != null ? semester.name() : null, schoolYear);
+        mergedSections.forEach(ms -> {
+            Long bsitSectionId = ms.getSecondarySection().getId();
+            Long bscsSectionId = ms.getPrimarySection().getId();
+            List<Schedule> bscsSchedules = bySection.getOrDefault(bscsSectionId, List.of())
+                .stream()
+                .filter(s -> s.getSubject().getId().equals(ms.getSubject().getId()))
+                .collect(java.util.stream.Collectors.toList());
+            if (!bscsSchedules.isEmpty()) {
+                bySection.computeIfAbsent(bsitSectionId, 
+                    k -> new java.util.ArrayList<>()).addAll(bscsSchedules);
+            }
+        });
+
+        java.util.Map<Long, List<Section>> sectionsByCourse = sections.stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                s -> s.getCourse().getId()));
+
+        return courses.stream().map(course -> {
+            java.util.Map<String, Object> dept = new java.util.LinkedHashMap<>();
+            dept.put("id", course.getDepartment().getId());
+            dept.put("name", course.getDepartment().getName());
+
+            List<Section> courseSections = sectionsByCourse
+                .getOrDefault(course.getId(), List.of());
+
+            // If no sections, return one placeholder row
+            if (courseSections.isEmpty()) {
+                java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
+                row.put("sectionId", null);
+                row.put("sectionName", null);
+                row.put("yearLevel", null);
+                row.put("courseCode", course.getCode());
+                row.put("courseName", course.getName());
+                row.put("department", dept);
+                row.put("schedules", List.of());
+                return List.of(row);
+            }
+
+            return courseSections.stream().map(section -> {
+                java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
+                row.put("sectionId", section.getId());
+                row.put("sectionName", section.getSectionName());
+                row.put("yearLevel", section.getYearLevel());
+                row.put("courseCode", course.getCode());
+                row.put("courseName", course.getName());
+                row.put("department", dept);
+                List<Schedule> sectionSchedules = bySection.getOrDefault(section.getId(), List.of());
+                List<com.timecraft.timecraft.dto.response.ScheduleResponse> sched =
+                    sectionSchedules
+                        .stream()
+                        .map(com.timecraft.timecraft.dto.response.ScheduleResponse::from)
+                        .collect(java.util.stream.Collectors.toList());
+                row.put("schedules", sched);
+                return row;
+            }).collect(java.util.stream.Collectors.toList());
+        })
+        .flatMap(List::stream)
+        .collect(java.util.stream.Collectors.toList());
     }
 
     // ── Reporting ─────────────────────────────────────────────────────────────
