@@ -5,6 +5,47 @@ import useAuth from "../../hooks/useAuth";
 const CURRENT_SEMESTER = "FIRST";
 const CURRENT_YEAR     = "2024-2025";
 
+const responsiveStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500;600&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  input::placeholder { color: rgba(255,255,255,0.2); }
+  .enroll-row:hover { background: rgba(255,255,255,0.025) !important; }
+
+  /* Responsive table */
+  .enroll-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 16px; }
+  .enroll-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 680px; }
+
+  /* Summary bar */
+  .summary-bar {
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; width: 100%; max-width: 320px; min-width: 200px; }
+
+  /* Header pills */
+  .semester-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 100px; padding: 4px 14px; margin-bottom: 14px;
+    font-size: 10px; font-weight: 700; color: #FCD34D;
+    letter-spacing: 0.12em; text-transform: uppercase; font-family: 'DM Mono', monospace;
+  }
+
+  /* Responsive page padding */
+  .enroll-page { max-width: 1100px; margin: 0 auto; padding: 32px 20px 60px; position: relative; z-index: 1; }
+
+  @media (min-width: 600px) {
+    .enroll-page { padding: 40px 32px 60px; }
+    .search-wrap { width: auto; }
+  }
+  @media (min-width: 900px) {
+    .enroll-page { padding: 40px 40px 60px; }
+  }
+
+  /* Footer count */
+  .footer-count { font-size: 12px; color: rgba(255,255,255,0.2); font-family: 'DM Mono', monospace; margin-top: 12px; text-align: right; }
+`;
+
 export default function Enrollment() {
   const { user } = useAuth();
 
@@ -13,10 +54,10 @@ export default function Enrollment() {
       <div style={{
         minHeight: "100vh", background: "#060D1A",
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'DM Sans', sans-serif", padding: "24px",
       }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500;600&display=swap');`}</style>
-        <div style={{ textAlign: "center" }}>
+        <style>{responsiveStyles}</style>
+        <div style={{ textAlign: "center", maxWidth: 340 }}>
           <div style={{
             width: 72, height: 72, borderRadius: 20,
             background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)",
@@ -91,18 +132,12 @@ export default function Enrollment() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#060D1A", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500;600&display=swap');
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        input::placeholder { color: rgba(255,255,255,0.2); }
-        .enroll-row:hover { background: rgba(255,255,255,0.025) !important; }
-      `}</style>
+      <style>{responsiveStyles}</style>
 
       {/* Ambient background */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: "-8%", left: "30%", width: 560, height: 560, borderRadius: "50%", background: "radial-gradient(circle, rgba(34,197,94,0.07) 0%, transparent 70%)", filter: "blur(60px)" }} />
-        <div style={{ position: "absolute", bottom: "15%", right: "5%", width: 380, height: 380, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,158,11,0.05) 0%, transparent 70%)", filter: "blur(60px)" }} />
+        <div style={{ position: "absolute", top: "-8%", left: "30%", width: "min(560px, 80vw)", height: "min(560px, 80vw)", borderRadius: "50%", background: "radial-gradient(circle, rgba(34,197,94,0.07) 0%, transparent 70%)", filter: "blur(60px)" }} />
+        <div style={{ position: "absolute", bottom: "15%", right: "5%", width: "min(380px, 60vw)", height: "min(380px, 60vw)", borderRadius: "50%", background: "radial-gradient(circle, rgba(245,158,11,0.05) 0%, transparent 70%)", filter: "blur(60px)" }} />
         <div style={{
           position: "absolute", inset: 0,
           backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
@@ -112,36 +147,30 @@ export default function Enrollment() {
         }} />
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 40px 60px", position: "relative", zIndex: 1 }}>
+      <div className="enroll-page">
 
         {/* ── Header ── */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)",
-            borderRadius: 100, padding: "4px 14px", marginBottom: 14,
-          }}>
+        <div style={{ marginBottom: 28 }}>
+          <div className="semester-pill">
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#F59E0B", display: "inline-block" }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: "#FCD34D", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>
-              Irregular Student · {CURRENT_SEMESTER === "FIRST" ? "1st" : "2nd"} Semester · {CURRENT_YEAR}
-            </span>
+            Irregular Student · {CURRENT_SEMESTER === "FIRST" ? "1st" : "2nd"} Semester · {CURRENT_YEAR}
           </div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#fff", marginBottom: 6 }}>
+          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: "clamp(1.4rem, 5vw, 2rem)", fontWeight: 800, letterSpacing: "-0.03em", color: "#fff", marginBottom: 6 }}>
             Back Subject Enrollment
           </h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, lineHeight: 1.6 }}>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "clamp(13px, 2vw, 14px)", lineHeight: 1.6 }}>
             Enroll in subjects from previous year levels that you still need to complete.
           </p>
         </div>
 
         {/* ── Alerts ── */}
         {successMsg && (
-          <div style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 10, padding: "11px 16px", marginBottom: 18, color: "#86EFAC", fontSize: 13, display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 10, padding: "11px 16px", marginBottom: 16, color: "#86EFAC", fontSize: 13, display: "flex", gap: 8, alignItems: "flex-start" }}>
             ✅ {successMsg}
           </div>
         )}
         {error && (
-          <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 10, padding: "11px 16px", marginBottom: 18, color: "#FCA5A5", fontSize: 13, display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 10, padding: "11px 16px", marginBottom: 16, color: "#FCA5A5", fontSize: 13, display: "flex", gap: 8, alignItems: "flex-start" }}>
             ⚠️ {error}
           </div>
         )}
@@ -149,32 +178,32 @@ export default function Enrollment() {
         {/* ── Summary bar ── */}
         <div style={{
           background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 14, padding: "14px 20px", marginBottom: 22,
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
+          borderRadius: 14, padding: "14px 18px", marginBottom: 20,
         }}>
-          <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, color: "#86EFAC", fontSize: 18 }}>
-              {enrolled.length}
-            </span>
-            <span style={{ marginLeft: 8 }}>back subject{enrolled.length !== 1 ? "s" : ""} enrolled this term</span>
-          </div>
+          <div className="summary-bar">
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, color: "#86EFAC", fontSize: 18 }}>
+                {enrolled.length}
+              </span>
+              <span style={{ marginLeft: 8 }}>back subject{enrolled.length !== 1 ? "s" : ""} enrolled</span>
+            </div>
 
-          {/* Search */}
-          <div style={{ position: "relative", minWidth: 260 }}>
-            <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: "rgba(255,255,255,0.2)" }}>🔍</span>
-            <input
-              placeholder="Search by subject name or code…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{
-                width: "100%", padding: "8px 12px 8px 32px",
-                border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9,
-                background: "rgba(255,255,255,0.05)", color: "#fff",
-                fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif",
-              }}
-              onFocus={e => e.target.style.borderColor = "rgba(245,158,11,0.5)"}
-              onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
-            />
+            <div className="search-wrap">
+              <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: "rgba(255,255,255,0.2)" }}>🔍</span>
+              <input
+                placeholder="Search subject name or code…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                  width: "100%", padding: "8px 12px 8px 32px",
+                  border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9,
+                  background: "rgba(255,255,255,0.05)", color: "#fff",
+                  fontSize: 13, outline: "none", fontFamily: "'DM Sans', sans-serif",
+                }}
+                onFocus={e => e.target.style.borderColor = "rgba(245,158,11,0.5)"}
+                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
+              />
+            </div>
           </div>
         </div>
 
@@ -186,31 +215,28 @@ export default function Enrollment() {
         ) : filtered.length === 0 ? (
           <div style={{
             background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: 16, padding: "60px 24px", textAlign: "center",
+            borderRadius: 16, padding: "clamp(32px, 8vw, 60px) 24px", textAlign: "center",
           }}>
             <div style={{ fontSize: 40, marginBottom: 14 }}>📭</div>
             <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 16, color: "#F1F5F9", marginBottom: 6 }}>
               No back subjects available
             </div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", lineHeight: 1.6, maxWidth: 320, margin: "0 auto" }}>
               All your back subjects may already be enrolled, or none are scheduled this term.
             </div>
           </div>
         ) : (
-          <div style={{
-            background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: 16, overflow: "hidden",
-          }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <div className="enroll-table-wrap" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <table className="enroll-table">
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                  {["Subject", "Code", "Year Level", "Section", "Schedule", "Room", "Status", "Action"].map(h => (
+                  {["Subject", "Code", "Yr", "Section", "Schedule", "Room", "Status", "Action"].map(h => (
                     <th key={h} style={{
-                      padding: "12px 16px", textAlign: "left",
+                      padding: "12px 14px", textAlign: "left",
                       fontWeight: 700, color: "rgba(255,255,255,0.35)",
-                      fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase",
+                      fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
                       fontFamily: "'DM Mono', monospace",
-                      background: "rgba(255,255,255,0.02)",
+                      background: "rgba(255,255,255,0.02)", whiteSpace: "nowrap",
                     }}>{h}</th>
                   ))}
                 </tr>
@@ -229,50 +255,51 @@ export default function Enrollment() {
                         transition: "background 0.15s",
                       }}
                     >
-                      <td style={{ padding: "12px 16px", fontWeight: 500, color: "#F1F5F9" }}>{s.subjectName}</td>
-                      <td style={{ padding: "12px 16px", color: "#93C5FD", fontWeight: 700, fontFamily: "'DM Mono', monospace", fontSize: 12 }}>{s.subjectCode}</td>
-                      <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                      <td style={{ padding: "12px 14px", fontWeight: 500, color: "#F1F5F9", maxWidth: 180 }}>{s.subjectName}</td>
+                      <td style={{ padding: "12px 14px", color: "#93C5FD", fontWeight: 700, fontFamily: "'DM Mono', monospace", fontSize: 12, whiteSpace: "nowrap" }}>{s.subjectCode}</td>
+                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
                         <span style={{
                           fontSize: 11, fontWeight: 700, fontFamily: "'DM Mono', monospace",
                           background: "rgba(245,158,11,0.12)", color: "#FCD34D",
                           border: "1px solid rgba(245,158,11,0.3)",
-                          borderRadius: 6, padding: "3px 9px",
-                        }}>Year {s.yearLevel}</span>
+                          borderRadius: 6, padding: "3px 8px", whiteSpace: "nowrap",
+                        }}>Y{s.yearLevel}</span>
                       </td>
-                      <td style={{ padding: "12px 16px", color: "rgba(255,255,255,0.6)" }}>{s.sectionName}</td>
-                      <td style={{ padding: "12px 16px", fontSize: 12, color: "rgba(255,255,255,0.5)", fontFamily: "'DM Mono', monospace", lineHeight: 1.7 }}>
+                      <td style={{ padding: "12px 14px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" }}>{s.sectionName}</td>
+                      <td style={{ padding: "12px 14px", fontSize: 11, color: "rgba(255,255,255,0.5)", fontFamily: "'DM Mono', monospace", lineHeight: 1.7, whiteSpace: "nowrap" }}>
                         {s.day1} {s.startTime1}
                         {s.day2 && <><br />{s.day2} {s.startTime2}</>}
                       </td>
-                      <td style={{ padding: "12px 16px", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{s.roomNumber || s.roomName}</td>
-                      <td style={{ padding: "12px 16px" }}>
+                      <td style={{ padding: "12px 14px", fontSize: 12, color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap" }}>{s.roomNumber || s.roomName}</td>
+                      <td style={{ padding: "12px 14px" }}>
                         {isEnrolled ? (
                           <span style={{
                             fontSize: 11, fontWeight: 700, fontFamily: "'DM Mono', monospace",
                             background: "rgba(34,197,94,0.12)", color: "#86EFAC",
                             border: "1px solid rgba(34,197,94,0.3)",
-                            borderRadius: 6, padding: "3px 10px",
+                            borderRadius: 6, padding: "3px 10px", whiteSpace: "nowrap",
                           }}>Enrolled</span>
                         ) : (
                           <span style={{
                             fontSize: 11, fontWeight: 700, fontFamily: "'DM Mono', monospace",
                             background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)",
                             border: "1px solid rgba(255,255,255,0.1)",
-                            borderRadius: 6, padding: "3px 10px",
+                            borderRadius: 6, padding: "3px 10px", whiteSpace: "nowrap",
                           }}>Available</span>
                         )}
                       </td>
-                      <td style={{ padding: "12px 16px" }}>
+                      <td style={{ padding: "12px 14px" }}>
                         {isEnrolled ? (
                           <button
                             onClick={() => handleDrop(s.id)}
                             disabled={isSaving}
                             style={{
-                              fontSize: 12, padding: "6px 14px", borderRadius: 7,
+                              fontSize: 12, padding: "6px 12px", borderRadius: 7,
                               border: "1px solid rgba(239,68,68,0.3)",
                               background: "rgba(239,68,68,0.1)", color: "#FCA5A5",
                               cursor: isSaving ? "not-allowed" : "pointer", fontWeight: 700,
                               fontFamily: "'DM Sans', sans-serif", transition: "all 0.15s",
+                              whiteSpace: "nowrap",
                             }}
                           >{isSaving ? "…" : "Drop"}</button>
                         ) : (
@@ -280,13 +307,13 @@ export default function Enrollment() {
                             onClick={() => handleEnroll(s.id)}
                             disabled={isSaving}
                             style={{
-                              fontSize: 12, padding: "6px 14px", borderRadius: 7,
+                              fontSize: 12, padding: "6px 12px", borderRadius: 7,
                               border: "none",
                               background: isSaving ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg, #22C55E, #16A34A)",
                               color: "#fff", cursor: isSaving ? "not-allowed" : "pointer", fontWeight: 700,
                               fontFamily: "'DM Sans', sans-serif",
                               boxShadow: isSaving ? "none" : "0 4px 14px rgba(34,197,94,0.25)",
-                              transition: "all 0.2s ease",
+                              transition: "all 0.2s ease", whiteSpace: "nowrap",
                             }}
                           >{isSaving ? "…" : "Enroll →"}</button>
                         )}
@@ -299,9 +326,8 @@ export default function Enrollment() {
           </div>
         )}
 
-        {/* Footer count */}
         {filtered.length > 0 && (
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono', monospace", marginTop: 12, textAlign: "right" }}>
+          <p className="footer-count">
             {filtered.length} subject{filtered.length !== 1 ? "s" : ""} shown · {enrolled.length} enrolled
           </p>
         )}

@@ -79,7 +79,10 @@ const CSS = `
   @keyframes tc-nav-in        { from{opacity:0;transform:translateY(-10px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);} }
   @keyframes tc-notif-pulse   { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.4);}50%{box-shadow:0 0 0 6px rgba(245,158,11,0);} }
   @keyframes tc-blink         { 0%,100%{opacity:1;}50%{opacity:0;} }
+  @keyframes tc-drawer-in     { from{opacity:0;transform:translateX(-100%);}to{opacity:1;transform:translateX(0);} }
+  @keyframes tc-overlay-in    { from{opacity:0;}to{opacity:1;} }
 
+  /* ── Desktop nav links ── */
   .tc-nav-link {
     position:relative; display:flex; align-items:center; gap:5px;
     padding:6px 13px; border-radius:8px; border:none;
@@ -95,10 +98,23 @@ const CSS = `
     content:''; position:absolute; bottom:-1px; left:50%; transform:translateX(-50%);
     width:20px; height:2px; border-radius:2px; background:#22C55E;
   }
-
   .tc-nav-icon { font-size:11px; opacity:0.7; }
   .tc-nav-link.active .tc-nav-icon { opacity:1; }
 
+  /* ── Mobile drawer nav links ── */
+  .tc-drawer-link {
+    display:flex; align-items:center; gap:12px;
+    width:100%; padding:12px 20px; border:none;
+    background:transparent; color:rgba(255,255,255,0.55);
+    font-size:14px; font-weight:600; cursor:pointer;
+    font-family:'DM Sans',sans-serif;
+    transition:color 0.15s, background 0.15s;
+    border-radius:10px; text-align:left;
+  }
+  .tc-drawer-link:hover { color:rgba(255,255,255,0.9); background:rgba(255,255,255,0.06); }
+  .tc-drawer-link.active { color:#fff; background:rgba(34,197,94,0.15); }
+
+  /* ── User pill ── */
   .tc-user-btn {
     display:flex; align-items:center; gap:8px; cursor:pointer;
     padding:4px 10px 4px 4px; border-radius:30px;
@@ -108,6 +124,7 @@ const CSS = `
   }
   .tc-user-btn:hover { border-color:rgba(34,197,94,0.4); background:rgba(34,197,94,0.06); }
 
+  /* ── Dropdown ── */
   .tc-dropdown {
     position:absolute; top:calc(100% + 10px); right:0;
     width:230px;
@@ -120,7 +137,6 @@ const CSS = `
     animation:tc-nav-in 0.18s ease both;
     z-index:200;
   }
-
   .tc-dropdown-item {
     width:100%; padding:10px 16px; border:none; background:transparent;
     text-align:left; font-size:12.5px; color:rgba(255,255,255,0.6);
@@ -131,6 +147,7 @@ const CSS = `
   .tc-dropdown-item.danger { color:rgba(248,113,113,0.8); }
   .tc-dropdown-item.danger:hover { background:rgba(239,68,68,0.09); color:#fca5a5; }
 
+  /* ── Notification & conflict ── */
   .tc-notif-btn {
     display:flex; align-items:center; gap:6px;
     padding:5px 12px; border-radius:8px;
@@ -139,7 +156,6 @@ const CSS = `
     font-family:'DM Sans',sans-serif; transition:all 0.2s;
   }
   .tc-notif-btn:hover { background:rgba(245,158,11,0.18); }
-
   .tc-conflict-btn {
     position:relative; width:32px; height:32px; border-radius:9px;
     background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.25);
@@ -148,6 +164,51 @@ const CSS = `
     transition:background 0.2s;
   }
   .tc-conflict-btn:hover { background:rgba(245,158,11,0.2); }
+
+  /* ── Hamburger button ── */
+  .tc-hamburger {
+    display:none; flex-direction:column; justify-content:center; align-items:center;
+    gap:5px; width:36px; height:36px; border-radius:9px; border:none; cursor:pointer;
+    background:rgba(255,255,255,0.06); padding:0;
+    transition:background 0.2s;
+  }
+  .tc-hamburger:hover { background:rgba(255,255,255,0.1); }
+  .tc-hamburger span {
+    display:block; width:18px; height:2px; border-radius:2px;
+    background:rgba(255,255,255,0.7); transition:all 0.25s;
+  }
+
+  /* ── Mobile overlay ── */
+  .tc-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(4px); z-index:150;
+    animation:tc-overlay-in 0.2s ease both;
+  }
+
+  /* ── Mobile drawer ── */
+  .tc-drawer {
+    position:fixed; top:0; left:0; bottom:0; width:min(280px,85vw);
+    background:rgba(6,13,26,0.98); backdrop-filter:blur(24px);
+    border-right:1px solid rgba(255,255,255,0.08);
+    z-index:160; display:flex; flex-direction:column;
+    padding:0 0 24px;
+    box-shadow:12px 0 40px rgba(0,0,0,0.5);
+    animation:tc-drawer-in 0.25s cubic-bezier(0.22,1,0.36,1) both;
+    overflow-y:auto;
+  }
+
+  /* ── Responsive breakpoints ── */
+  @media (max-width:1023px) {
+    .tc-desktop-nav { display:none !important; }
+    .tc-hamburger   { display:flex !important; }
+    .tc-clock-wrap  { display:none !important; }
+  }
+  @media (max-width:639px) {
+    .tc-notif-btn   { padding:5px 8px !important; font-size:10px !important; }
+    .tc-role-badge  { display:none !important; }
+    .tc-user-name   { display:none !important; }
+    .tc-user-btn    { padding:4px !important; border-radius:50% !important; }
+  }
 `;
 
 function LiveClock() {
@@ -157,7 +218,7 @@ function LiveClock() {
     return () => clearInterval(t);
   }, []);
   return (
-    <div style={{ textAlign:"right", flexShrink:0 }}>
+    <div className="tc-clock-wrap" style={{ textAlign:"right", flexShrink:0 }}>
       <div style={{ fontSize:13, fontWeight:700, color:"rgba(255,255,255,0.75)", fontFamily:"'DM Mono',monospace", letterSpacing:"0.04em" }}>
         {now.toLocaleTimeString("en-US", { hour12:false })}
       </div>
@@ -168,12 +229,117 @@ function LiveClock() {
   );
 }
 
+function MobileDrawer({ open, onClose, links, accentColor, role, user, initials, onNavigate, onLogout }) {
+  if (!open) return null;
+  return (
+    <>
+      <div className="tc-overlay" style={{ display:"block" }} onClick={onClose} />
+      <div className="tc-drawer">
+        {/* Drawer header */}
+        <div style={{
+          display:"flex", alignItems:"center", gap:10,
+          padding:"18px 20px 16px", borderBottom:"1px solid rgba(255,255,255,0.07)",
+          flexShrink:0,
+        }}>
+          <div style={{
+            width:32, height:32, borderRadius:9,
+            background:"linear-gradient(135deg,#22C55E,#16A34A)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:16, fontWeight:900, color:"#fff",
+            boxShadow:"0 4px 14px rgba(34,197,94,0.35)",
+            flexShrink:0,
+          }}>⬡</div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontFamily:"'Sora',sans-serif", fontWeight:800, fontSize:14.5, letterSpacing:"-0.02em", color:"#fff", lineHeight:1.1 }}>TimeCraft</div>
+            <div style={{ fontSize:8.5, color:"rgba(255,255,255,0.3)", letterSpacing:"0.12em", textTransform:"uppercase", fontFamily:"'DM Mono',monospace" }}>Lorma College</div>
+          </div>
+          <button onClick={onClose} style={{
+            width:28, height:28, borderRadius:7, border:"none",
+            background:"rgba(255,255,255,0.06)", cursor:"pointer",
+            color:"rgba(255,255,255,0.5)", fontSize:14, display:"flex",
+            alignItems:"center", justifyContent:"center", flexShrink:0,
+          }}>✕</button>
+        </div>
+
+        {/* User info */}
+        <div style={{ padding:"14px 20px", borderBottom:"1px solid rgba(255,255,255,0.07)", flexShrink:0 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{
+              width:38, height:38, borderRadius:"50%",
+              background:`${accentColor}22`, border:`1.5px solid ${accentColor}55`,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:12, fontWeight:800, color:accentColor, fontFamily:"'DM Mono',monospace",
+              flexShrink:0,
+            }}>{initials}</div>
+            <div style={{ minWidth:0 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                {user?.fullName || "User"}
+              </div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,0.35)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                {user?.email || ""}
+              </div>
+            </div>
+          </div>
+          <div style={{
+            marginTop:10, display:"inline-flex", padding:"3px 10px", borderRadius:20,
+            background:`${accentColor}15`, border:`1px solid ${accentColor}30`,
+            fontSize:10, fontWeight:700, color:accentColor,
+            fontFamily:"'DM Mono',monospace", letterSpacing:"0.08em", textTransform:"uppercase",
+          }}>
+            {role?.replace("_", " ")}
+          </div>
+        </div>
+
+        {/* Nav links */}
+        <nav style={{ flex:1, padding:"10px 12px", overflowY:"auto" }}>
+          {links.map(({ path, label, icon }) => (
+            <button
+              key={path}
+              className={`tc-drawer-link`}
+              onClick={() => { onNavigate(path); onClose(); }}
+              style={{ color: location.pathname === path ? "#fff" : undefined }}
+            >
+              <span style={{ fontSize:16, width:22, textAlign:"center", flexShrink:0 }}>{icon}</span>
+              <span>{label}</span>
+              {location.pathname === path && (
+                <span style={{
+                  marginLeft:"auto", width:6, height:6, borderRadius:"50%",
+                  background:accentColor, flexShrink:0,
+                }}/>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        {/* Sign out */}
+        <div style={{ padding:"0 12px 8px", flexShrink:0 }}>
+          <div style={{ height:1, background:"rgba(255,255,255,0.06)", marginBottom:8 }}/>
+          <button
+            style={{
+              display:"flex", alignItems:"center", gap:12,
+              width:"100%", padding:"12px 20px", border:"none",
+              background:"rgba(239,68,68,0.06)", borderRadius:10,
+              color:"rgba(248,113,113,0.8)", fontSize:14, fontWeight:600,
+              cursor:"pointer", fontFamily:"'DM Sans',sans-serif", textAlign:"left",
+              transition:"background 0.15s",
+            }}
+            onClick={onLogout}
+          >
+            <span>↩</span> Sign Out
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function Navbar({ conflictCount = 0 }) {
   const { user, role, logout } = useAuth();
   const { notifications, clearNotifications } = useWebSocketContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -199,189 +365,215 @@ export default function Navbar({ conflictCount = 0 }) {
     return () => document.removeEventListener("mousedown", close);
   }, [dropdownOpen]);
 
-  const handleLogout = () => { setDropdownOpen(false); logout(); navigate("/login"); };
+  // Close drawer on route change
+  useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
+
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [drawerOpen]);
+
+  const handleLogout = () => {
+    setDropdownOpen(false);
+    setDrawerOpen(false);
+    logout();
+    navigate("/login");
+  };
+
   const initials = (user?.fullName || "U").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
   const links = NAV_LINKS[role] ?? [];
   const accentColor = ROLE_COLOR[role] ?? "#22C55E";
 
-  // Current page meta
-  const currentMeta = PAGE_META[location.pathname] ?? { title: "TimeCraft", section: "" };
-
   return (
-    <header style={{
-      background: scrolled
-        ? "rgba(6,13,26,0.94)"
-        : "rgba(6,13,26,0.85)",
-      backdropFilter: "blur(24px)",
-      height: "60px",
-      display: "flex",
-      alignItems: "center",
-      padding: "0 24px",
-      gap: 0,
-      fontFamily: "'DM Sans', sans-serif",
-      position: "sticky",
-      top: 0,
-      zIndex: 100,
-      borderBottom: scrolled
-        ? "1px solid rgba(255,255,255,0.08)"
-        : "1px solid rgba(255,255,255,0.05)",
-      transition: "background 0.3s, border-color 0.3s",
-    }}>
+    <>
+      <style>{CSS}</style>
 
-      {/* ── Brand ──────────────────────────────────────────────── */}
-      <div style={{ display:"flex", alignItems:"center", gap:10, marginRight:24, flexShrink:0 }}>
-        <div style={{
-          width:32, height:32, borderRadius:9,
-          background:"linear-gradient(135deg,#22C55E,#16A34A)",
-          display:"flex", alignItems:"center", justifyContent:"center",
-          fontSize:16, fontWeight:900, color:"#fff",
-          boxShadow:"0 4px 14px rgba(34,197,94,0.35)",
-        }}>⬡</div>
-        <div>
-          <div style={{ fontFamily:"'Sora',sans-serif", fontWeight:800, fontSize:14.5, letterSpacing:"-0.02em", color:"#fff", lineHeight:1.1 }}>TimeCraft</div>
-          <div style={{ fontSize:8.5, color:"rgba(255,255,255,0.3)", letterSpacing:"0.12em", textTransform:"uppercase", fontFamily:"'DM Mono',monospace" }}>Lorma College</div>
+      <MobileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        links={links}
+        accentColor={accentColor}
+        role={role}
+        user={user}
+        initials={initials}
+        onNavigate={navigate}
+        onLogout={handleLogout}
+      />
+
+      <header style={{
+        background: scrolled ? "rgba(6,13,26,0.94)" : "rgba(6,13,26,0.85)",
+        backdropFilter: "blur(24px)",
+        height: "60px",
+        display: "flex",
+        alignItems: "center",
+        padding: "0 16px",
+        gap: 0,
+        fontFamily: "'DM Sans', sans-serif",
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+        borderBottom: scrolled
+          ? "1px solid rgba(255,255,255,0.08)"
+          : "1px solid rgba(255,255,255,0.05)",
+        transition: "background 0.3s, border-color 0.3s",
+      }}>
+
+        {/* ── Hamburger (mobile/tablet) ── */}
+        <button
+          className="tc-hamburger"
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Open navigation menu"
+          style={{ marginRight:12 }}
+        >
+          <span/><span/><span/>
+        </button>
+
+        {/* ── Brand ── */}
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginRight:16, flexShrink:0 }}>
+          <div style={{
+            width:32, height:32, borderRadius:9,
+            background:"linear-gradient(135deg,#22C55E,#16A34A)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:16, fontWeight:900, color:"#fff",
+            boxShadow:"0 4px 14px rgba(34,197,94,0.35)",
+          }}>⬡</div>
+          <div>
+            <div style={{ fontFamily:"'Sora',sans-serif", fontWeight:800, fontSize:14.5, letterSpacing:"-0.02em", color:"#fff", lineHeight:1.1 }}>TimeCraft</div>
+            <div style={{ fontSize:8.5, color:"rgba(255,255,255,0.3)", letterSpacing:"0.12em", textTransform:"uppercase", fontFamily:"'DM Mono',monospace" }}>Lorma College</div>
+          </div>
         </div>
-      </div>
 
-      {/* ── Divider ─────────────────────────────────────────────── */}
-      <div style={{ width:1, height:24, background:"rgba(255,255,255,0.08)", marginRight:20, flexShrink:0 }} />
+        {/* ── Divider ── */}
+        <div className="tc-desktop-nav" style={{ width:1, height:24, background:"rgba(255,255,255,0.08)", marginRight:20, flexShrink:0 }} />
 
-      {/* ── Center nav ─────────────────────────────────────────── */}
-      <nav style={{ display:"flex", alignItems:"center", gap:2, flex:1, justifyContent:"center" }}>
-        {links.map(({ path, label, icon }) => {
-          const isActive = location.pathname === path;
-          return (
-            <button
-              key={path}
-              className={`tc-nav-link${isActive ? " active" : ""}`}
-              onClick={() => navigate(path)}
-              style={isActive ? { color:"#fff", background:`${accentColor}18` } : {}}
-            >
-              <span className="tc-nav-icon">{icon}</span>
-              {label}
-              {/* Active indicator dot override for non-green roles */}
-              {isActive && accentColor !== "#22C55E" && (
-                <span style={{
-                  position:"absolute", bottom:-1, left:"50%", transform:"translateX(-50%)",
-                  width:20, height:2, borderRadius:2, background:accentColor,
-                  display:"block",
-                }} />
-              )}
+        {/* ── Center nav (desktop only) ── */}
+        <nav className="tc-desktop-nav" style={{ display:"flex", alignItems:"center", gap:2, flex:1, justifyContent:"center" }}>
+          {links.map(({ path, label, icon }) => {
+            const isActive = location.pathname === path;
+            return (
+              <button
+                key={path}
+                className={`tc-nav-link${isActive ? " active" : ""}`}
+                onClick={() => navigate(path)}
+                style={isActive ? { color:"#fff", background:`${accentColor}18` } : {}}
+              >
+                <span className="tc-nav-icon">{icon}</span>
+                {label}
+                {isActive && accentColor !== "#22C55E" && (
+                  <span style={{
+                    position:"absolute", bottom:-1, left:"50%", transform:"translateX(-50%)",
+                    width:20, height:2, borderRadius:2, background:accentColor,
+                    display:"block",
+                  }}/>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* ── Right side ── */}
+        <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+
+          {/* Notifications */}
+          {notifications.length > 0 && (
+            <button className="tc-notif-btn" onClick={clearNotifications} title={notifications[0]?.message}>
+              🔔 <span>{notifications.length}</span>
+              <span className="tc-notif-label"> new</span>
             </button>
-          );
-        })}
-      </nav>
+          )}
 
-      {/* ── Right side ─────────────────────────────────────────── */}
-      <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+          {/* Clock (hidden below 1024px via CSS) */}
+          <LiveClock />
 
-        {/* Notifications */}
-        {notifications.length > 0 && (
-          <button className="tc-notif-btn" onClick={clearNotifications} title={notifications[0]?.message}>
-            🔔 {notifications.length} new
-          </button>
-        )}
+          {/* Conflict badge */}
+          {role === "ADMIN" && conflictCount > 0 && (
+            <button
+              className="tc-conflict-btn"
+              onClick={() => navigate("/admin/reports")}
+              title={`${conflictCount} unresolved conflict${conflictCount !== 1 ? "s" : ""}`}
+            >
+              ⚠️
+              <span style={{
+                position:"absolute", top:6, right:6,
+                width:7, height:7, borderRadius:"50%",
+                background:"#f59e0b", border:"1.5px solid rgba(6,13,26,0.9)",
+                animation:"tc-blink 2s ease infinite",
+              }}/>
+            </button>
+          )}
 
-        {/* Clock */}
-<LiveClock />
-
-{/* Conflict badge */}
-        {role === "ADMIN" && conflictCount > 0 && (
-          <button
-            className="tc-conflict-btn"
-            onClick={() => navigate("/admin/reports")}
-            title={`${conflictCount} unresolved conflict${conflictCount !== 1 ? "s" : ""}`}
-          >
-            ⚠️
-            <span style={{
-              position:"absolute", top:6, right:6,
-              width:7, height:7, borderRadius:"50%",
-              background:"#f59e0b", border:"1.5px solid rgba(6,13,26,0.9)",
-              animation:"tc-blink 2s ease infinite",
-            }} />
-          </button>
-        )}
-
-        {/* Role badge */}
-        <div style={{
-          padding:"3px 10px", borderRadius:20,
-          background:`${accentColor}15`,
-          border:`1px solid ${accentColor}30`,
-          fontSize:10, fontWeight:700,
-          color:accentColor,
-          fontFamily:"'DM Mono',monospace",
-          letterSpacing:"0.08em",
-          textTransform:"uppercase",
-          flexShrink:0,
-        }}>
-          {role?.replace("_", " ")}
-        </div>
-
-        {/* User pill + dropdown */}
-        <div style={{ position:"relative" }} ref={dropdownRef}>
-          <div className="tc-user-btn" onClick={() => setDropdownOpen(v => !v)}>
-            {/* Avatar */}
-            <div style={{
-              width:28, height:28, borderRadius:"50%",
-              background:`${accentColor}22`,
-              border:`1.5px solid ${accentColor}55`,
-              display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:10, fontWeight:800, color:accentColor,
-              fontFamily:"'DM Mono',monospace", letterSpacing:"0.05em",
-            }}>{initials}</div>
-            <div style={{ maxWidth:120 }}>
-              <div style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,0.85)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
-                {user?.fullName || "User"}
-              </div>
-            </div>
-            <span style={{ fontSize:9, color:"rgba(255,255,255,0.25)", marginLeft:2 }}>▾</span>
+          {/* Role badge (hidden on mobile) */}
+          <div className="tc-role-badge" style={{
+            padding:"3px 10px", borderRadius:20,
+            background:`${accentColor}15`,
+            border:`1px solid ${accentColor}30`,
+            fontSize:10, fontWeight:700,
+            color:accentColor,
+            fontFamily:"'DM Mono',monospace",
+            letterSpacing:"0.08em",
+            textTransform:"uppercase",
+            flexShrink:0,
+          }}>
+            {role?.replace("_", " ")}
           </div>
 
-          {/* Dropdown */}
-          {dropdownOpen && (
-            <div className="tc-dropdown">
-              {/* User info */}
-              <div style={{ padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{
-                    width:36, height:36, borderRadius:"50%",
-                    background:`${accentColor}22`, border:`1.5px solid ${accentColor}50`,
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:12, fontWeight:800, color:accentColor, fontFamily:"'DM Mono',monospace",
-                  }}>{initials}</div>
-                  <div>
-                    <div style={{ fontSize:13, fontWeight:700, color:"#fff" }}>{user?.fullName || "User"}</div>
-                    <div style={{ fontSize:10, color:"rgba(255,255,255,0.35)", marginTop:2 }}>{user?.email || ""}</div>
-                  </div>
+          {/* User pill + dropdown */}
+          <div style={{ position:"relative" }} ref={dropdownRef}>
+            <div className="tc-user-btn" onClick={() => setDropdownOpen(v => !v)}>
+              <div style={{
+                width:28, height:28, borderRadius:"50%",
+                background:`${accentColor}22`,
+                border:`1.5px solid ${accentColor}55`,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:10, fontWeight:800, color:accentColor,
+                fontFamily:"'DM Mono',monospace", letterSpacing:"0.05em",
+                flexShrink:0,
+              }}>{initials}</div>
+              <div className="tc-user-name" style={{ maxWidth:120, minWidth:0 }}>
+                <div style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,0.85)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                  {user?.fullName || "User"}
                 </div>
               </div>
-
-              {/* Status line */}
-              <div style={{ padding:"8px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", alignItems:"center", gap:6 }}>
-                <span style={{ width:6, height:6, borderRadius:"50%", background:"#22C55E", display:"inline-block", animation:"tc-blink 2.5s ease infinite" }} />
-                <span style={{ fontSize:10, color:"rgba(255,255,255,0.28)", fontFamily:"'DM Mono',monospace", letterSpacing:"0.08em" }}>
-                  ACTIVE SESSION · {role?.replace("_", " ")}
-                </span>
-              </div>
-
-              {/* Dashboard link */}
-              <button
-                className="tc-dropdown-item"
-                onClick={() => { setDropdownOpen(false); navigate(links[0]?.path ?? "/"); }}
-              >
-                <span style={{ fontSize:13 }}>⬡</span> Dashboard
-              </button>
-
-              <div style={{ height:1, background:"rgba(255,255,255,0.06)" }} />
-
-              {/* Sign out */}
-              <button className="tc-dropdown-item danger" onClick={handleLogout}>
-                <span style={{ fontSize:13 }}>↩</span> Sign Out
-              </button>
+              <span style={{ fontSize:9, color:"rgba(255,255,255,0.25)", marginLeft:2 }}>▾</span>
             </div>
-          )}
+
+            {/* Dropdown */}
+            {dropdownOpen && (
+              <div className="tc-dropdown">
+                <div style={{ padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <div style={{
+                      width:36, height:36, borderRadius:"50%",
+                      background:`${accentColor}22`, border:`1.5px solid ${accentColor}50`,
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      fontSize:12, fontWeight:800, color:accentColor, fontFamily:"'DM Mono',monospace",
+                      flexShrink:0,
+                    }}>{initials}</div>
+                    <div style={{ minWidth:0 }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{user?.fullName || "User"}</div>
+                      <div style={{ fontSize:10, color:"rgba(255,255,255,0.35)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{user?.email || ""}</div>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ padding:"8px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", alignItems:"center", gap:6 }}>
+                  <span style={{ width:6, height:6, borderRadius:"50%", background:"#22C55E", display:"inline-block", animation:"tc-blink 2.5s ease infinite", flexShrink:0 }}/>
+                  <span style={{ fontSize:10, color:"rgba(255,255,255,0.28)", fontFamily:"'DM Mono',monospace", letterSpacing:"0.08em" }}>
+                    ACTIVE · {role?.replace("_", " ")}
+                  </span>
+                </div>
+                <button className="tc-dropdown-item" onClick={() => { setDropdownOpen(false); navigate(links[0]?.path ?? "/"); }}>
+                  <span style={{ fontSize:13 }}>⬡</span> Dashboard
+                </button>
+                <div style={{ height:1, background:"rgba(255,255,255,0.06)" }}/>
+                <button className="tc-dropdown-item danger" onClick={handleLogout}>
+                  <span style={{ fontSize:13 }}>↩</span> Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }

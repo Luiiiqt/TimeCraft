@@ -89,6 +89,9 @@ export default function SubjectAssignments() {
     }
   };
 
+  const finalized = assignments.filter(a => a.finalized).length;
+  const drafts    = assignments.length - finalized;
+
   const selectStyle = {
     width: "100%", padding: "9px 12px",
     border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9,
@@ -96,9 +99,6 @@ export default function SubjectAssignments() {
     fontFamily: "'DM Sans', sans-serif", outline: "none", cursor: "pointer",
     transition: "border-color 0.2s",
   };
-
-  const finalized   = assignments.filter(a => a.finalized).length;
-  const drafts      = assignments.length - finalized;
 
   return (
     <div style={{ minHeight: "100vh", background: "#060D1A", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
@@ -109,6 +109,103 @@ export default function SubjectAssignments() {
         select { color-scheme: dark; }
         select:focus { border-color: rgba(34,197,94,0.5) !important; }
         .assign-row:hover { background: rgba(255,255,255,0.025) !important; }
+
+        /* ── Stats row ── */
+        .sa-stats {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+          margin-bottom: 28px;
+        }
+
+        /* ── Header row ── */
+        .sa-header-row {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          margin-bottom: 32px;
+          flex-wrap: wrap;
+          gap: 16px;
+        }
+
+        .sa-term-selectors {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          flex-shrink: 0;
+          flex-wrap: wrap;
+        }
+
+        /* ── Form grid ── */
+        .sa-form-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr auto;
+          gap: 12px;
+          align-items: end;
+        }
+
+        /* ── Table wrapper (horizontal scroll on mobile) ── */
+        .sa-table-wrapper {
+          background: rgba(255,255,255,0.025);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          overflow: hidden;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .sa-table-wrapper table {
+          width: 100%;
+          min-width: 560px;
+          border-collapse: collapse;
+          font-size: 13px;
+        }
+
+        /* ── Tablet (≤900px) ── */
+        @media (max-width: 900px) {
+          .sa-form-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .sa-form-grid > div:nth-child(3) {
+            grid-column: 1 / -1;
+          }
+
+          .sa-form-grid > button {
+            grid-column: 1 / -1;
+            justify-self: stretch;
+          }
+        }
+
+        /* ── Mobile (≤600px) ── */
+        @media (max-width: 600px) {
+          .sa-stats {
+            grid-template-columns: 1fr;
+            gap: 8px;
+          }
+
+          .sa-header-row {
+            flex-direction: column;
+            gap: 12px;
+          }
+
+          .sa-term-selectors {
+            width: 100%;
+          }
+
+          .sa-term-selectors select {
+            flex: 1;
+          }
+
+          .sa-form-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .sa-form-grid > div,
+          .sa-form-grid > button {
+            grid-column: 1 / -1;
+          }
+        }
       `}</style>
 
       {/* Ambient background */}
@@ -124,10 +221,10 @@ export default function SubjectAssignments() {
         }} />
       </div>
 
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 40px 60px", position: "relative", zIndex: 1 }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "clamp(20px,5vw,40px) clamp(16px,5vw,40px) 60px", position: "relative", zIndex: 1 }}>
 
         {/* ── Header ── */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
+        <div className="sa-header-row">
           <div>
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 8,
@@ -139,7 +236,7 @@ export default function SubjectAssignments() {
                 Subject Assignments
               </span>
             </div>
-            <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.03em", color: "#fff", marginBottom: 6 }}>
+            <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: "clamp(1.5rem,4vw,2rem)", fontWeight: 800, letterSpacing: "-0.03em", color: "#fff", marginBottom: 6 }}>
               Manage Assignments
             </h1>
             <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, lineHeight: 1.6 }}>
@@ -147,28 +244,33 @@ export default function SubjectAssignments() {
             </p>
           </div>
 
-          {/* Term selectors */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <select value={term.semester} onChange={e => setTerm(t => ({ ...t, semester: e.target.value }))}
-              style={{ ...selectStyle, width: "auto", padding: "8px 12px" }}>
+          <div className="sa-term-selectors">
+            <select
+              value={term.semester}
+              onChange={e => setTerm(t => ({ ...t, semester: e.target.value }))}
+              style={{ ...selectStyle, width: "auto", padding: "8px 12px", flex: "1 1 120px" }}
+            >
               {SEMESTER_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
-            <select value={term.schoolYear} onChange={e => setTerm(t => ({ ...t, schoolYear: e.target.value }))}
-              style={{ ...selectStyle, width: "auto", padding: "8px 12px" }}>
+            <select
+              value={term.schoolYear}
+              onChange={e => setTerm(t => ({ ...t, schoolYear: e.target.value }))}
+              style={{ ...selectStyle, width: "auto", padding: "8px 12px", flex: "1 1 120px" }}
+            >
               {SCHOOL_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
         </div>
 
         {/* ── Mini stats ── */}
-        <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
+        <div className="sa-stats">
           {[
             { label: "Total Assignments", value: assignments.length, color: "#3B82F6" },
             { label: "Draft",             value: drafts,             color: "#F59E0B" },
             { label: "Finalized",         value: finalized,          color: "#22C55E" },
           ].map((s, i) => (
             <div key={i} style={{
-              flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 12, padding: "16px 18px", position: "relative", overflow: "hidden",
             }}>
               <div style={{
@@ -196,7 +298,7 @@ export default function SubjectAssignments() {
         {/* ── Add assignment form ── */}
         <div style={{
           background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 16, padding: "22px 24px", marginBottom: 24,
+          borderRadius: 16, padding: "clamp(16px,3vw,22px) clamp(16px,3vw,24px)", marginBottom: 24,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E" }} />
@@ -205,7 +307,7 @@ export default function SubjectAssignments() {
             </span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 12, alignItems: "end" }}>
+          <div className="sa-form-grid">
             <div>
               <label style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.35)", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.07em", fontFamily: "'DM Mono', monospace" }}>Subject</label>
               <select value={form.subjectId} onChange={e => setForm(f => ({ ...f, subjectId: e.target.value }))} style={selectStyle}>
@@ -248,11 +350,8 @@ export default function SubjectAssignments() {
         </div>
 
         {/* ── Assignments table ── */}
-        <div style={{
-          background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 16, overflow: "hidden",
-        }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <div className="sa-table-wrapper">
+          <table>
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                 {["Subject", "Code", "Assigned Teacher", "Status", "Actions"].map(h => (
@@ -262,21 +361,30 @@ export default function SubjectAssignments() {
                     fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase",
                     fontFamily: "'DM Mono', monospace",
                     background: "rgba(255,255,255,0.02)",
+                    whiteSpace: "nowrap",
                   }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} style={{ padding: "48px 0", textAlign: "center", color: "rgba(255,255,255,0.25)", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>Loading…</td></tr>
+                <tr>
+                  <td colSpan={5} style={{ padding: "48px 0", textAlign: "center", color: "rgba(255,255,255,0.25)", fontFamily: "'DM Mono', monospace", fontSize: 13 }}>
+                    Loading…
+                  </td>
+                </tr>
               ) : assignments.length === 0 ? (
-                <tr><td colSpan={5} style={{ padding: "48px 0", textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 14 }}>No assignments yet for this term.</td></tr>
+                <tr>
+                  <td colSpan={5} style={{ padding: "48px 0", textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 14 }}>
+                    No assignments yet for this term.
+                  </td>
+                </tr>
               ) : assignments.map(a => (
                 <tr key={a.id} className="assign-row" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", transition: "background 0.15s" }}>
-                  <td style={{ padding: "12px 16px", fontWeight: 500, color: "#F1F5F9" }}>{a.subject?.name}</td>
-                  <td style={{ padding: "12px 16px", color: "#93C5FD", fontWeight: 700, fontFamily: "'DM Mono', monospace", fontSize: 12 }}>{a.subject?.code}</td>
-                  <td style={{ padding: "12px 16px", color: "rgba(255,255,255,0.7)" }}>{a.teacher?.fullName}</td>
-                  <td style={{ padding: "12px 16px" }}>
+                  <td style={{ padding: "12px 16px", fontWeight: 500, color: "#F1F5F9", minWidth: 140 }}>{a.subject?.name}</td>
+                  <td style={{ padding: "12px 16px", color: "#93C5FD", fontWeight: 700, fontFamily: "'DM Mono', monospace", fontSize: 12, whiteSpace: "nowrap" }}>{a.subject?.code}</td>
+                  <td style={{ padding: "12px 16px", color: "rgba(255,255,255,0.7)", minWidth: 140 }}>{a.teacher?.fullName}</td>
+                  <td style={{ padding: "12px 16px", whiteSpace: "nowrap" }}>
                     {a.finalized ? (
                       <span style={{
                         fontSize: 11, background: "rgba(34,197,94,0.12)", color: "#86EFAC",
@@ -293,7 +401,7 @@ export default function SubjectAssignments() {
                   </td>
                   <td style={{ padding: "12px 16px" }}>
                     {!a.finalized && (
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "nowrap" }}>
                         <button
                           onClick={() => handleFinalize(a.id)}
                           style={{
@@ -301,7 +409,7 @@ export default function SubjectAssignments() {
                             background: "rgba(34,197,94,0.12)", color: "#86EFAC",
                             border: "1px solid rgba(34,197,94,0.3)",
                             borderRadius: 7, cursor: "pointer", fontWeight: 700,
-                            fontFamily: "'DM Sans', sans-serif", transition: "all 0.15s",
+                            fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
                           }}
                         >Finalize</button>
                         <button
@@ -311,7 +419,7 @@ export default function SubjectAssignments() {
                             background: "rgba(239,68,68,0.08)", color: "#FCA5A5",
                             border: "1px solid rgba(239,68,68,0.2)",
                             borderRadius: 7, cursor: "pointer", fontWeight: 700,
-                            fontFamily: "'DM Sans', sans-serif", transition: "all 0.15s",
+                            fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
                           }}
                         >Delete</button>
                       </div>
@@ -323,7 +431,6 @@ export default function SubjectAssignments() {
           </table>
         </div>
 
-        {/* Footer count */}
         {assignments.length > 0 && (
           <p style={{ fontSize: 12, color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono', monospace", marginTop: 12, textAlign: "right" }}>
             {assignments.length} total · {finalized} finalized · {drafts} draft

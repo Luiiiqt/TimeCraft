@@ -19,9 +19,6 @@ function getDefaultTerm() {
   };
 }
 
-const lbl = { fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 4, letterSpacing: "0.05em" };
-const sel = { padding: "7px 12px", borderRadius: 8, border: "1.5px solid #d1d5db", fontSize: 13, color: "#111827", background: "#fff" };
-
 export default function PHScheduleView() {
   const [params] = useSearchParams();
   const defaults = getDefaultTerm();
@@ -68,40 +65,136 @@ export default function PHScheduleView() {
   }, [sectionId, activeSemester, activeSchoolYear]);
 
   return (
-    <div style={{ padding: "1.5rem 1.5rem", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }}>
-      <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#111827", marginBottom: 4 }}>
-        Schedule View
-      </h1>
-      <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 20 }}>
-        View the timetable for your managed courses.
-      </p>
+    <div className="phsv-root">
+      <style>{`
+        .phsv-root {
+          padding: clamp(1rem, 4vw, 1.5rem);
+          font-family: 'DM Sans', sans-serif;
+          box-sizing: border-box;
+        }
+
+        .phsv-title {
+          font-size: clamp(1.25rem, 4vw, 1.75rem);
+          font-weight: 700;
+          color: #111827;
+          margin-bottom: 4px;
+        }
+
+        .phsv-subtitle {
+          color: #6b7280;
+          font-size: 14px;
+          margin-bottom: 20px;
+          line-height: 1.5;
+        }
+
+        /* Filters */
+        .phsv-filters {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          align-items: flex-end;
+          margin-bottom: 20px;
+        }
+
+        .phsv-filter-group {
+          display: flex;
+          flex-direction: column;
+          min-width: 130px;
+          flex: 1 1 130px;
+          max-width: 220px;
+        }
+
+        .phsv-filter-group label {
+          font-size: 10px;
+          font-weight: 700;
+          color: #6b7280;
+          margin-bottom: 4px;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
+        .phsv-filter-group select {
+          padding: 7px 12px;
+          border-radius: 8px;
+          border: 1.5px solid #d1d5db;
+          font-size: 13px;
+          color: #111827;
+          background: #fff;
+          width: 100%;
+        }
+
+        .phsv-filter-group select:focus {
+          outline: none;
+          border-color: #1565C0;
+        }
+
+        /* Empty state */
+        .phsv-empty {
+          background: #fff;
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
+          padding: clamp(32px, 6vw, 48px);
+          text-align: center;
+        }
+
+        .phsv-empty-icon { font-size: clamp(32px, 6vw, 40px); margin-bottom: 12px; }
+        .phsv-empty-text { color: #9ca3af; font-size: 14px; }
+
+        /* Tablet (≤768px) */
+        @media (max-width: 768px) {
+          .phsv-filter-group {
+            max-width: none;
+            min-width: 110px;
+          }
+
+          .phsv-filters {
+            gap: 8px;
+          }
+        }
+
+        /* Mobile (≤480px) */
+        @media (max-width: 480px) {
+          .phsv-filters {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .phsv-filter-group {
+            max-width: 100%;
+            flex: 1 1 auto;
+          }
+        }
+      `}</style>
+
+      <h1 className="phsv-title">Schedule View</h1>
+      <p className="phsv-subtitle">View the timetable for your managed courses.</p>
 
       {/* Filters */}
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 20 }}>
+      <div className="phsv-filters">
         {courses.length > 0 && (
-          <div>
-            <label style={lbl}>COURSE</label>
-            <select value={activeCourseId ?? ""} onChange={e => setActiveCourseId(Number(e.target.value))} style={sel}>
+          <div className="phsv-filter-group">
+            <label>Course</label>
+            <select value={activeCourseId ?? ""} onChange={e => setActiveCourseId(Number(e.target.value))}>
               {courses.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
             </select>
           </div>
         )}
-        <div>
-          <label style={lbl}>SEMESTER</label>
-          <select value={activeSemester} onChange={e => { setActiveSemester(e.target.value); setSectionId(null); }} style={sel}>
+        <div className="phsv-filter-group">
+          <label>Semester</label>
+          <select value={activeSemester} onChange={e => { setActiveSemester(e.target.value); setSectionId(null); }}>
             {SEMESTERS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
-        <div>
-          <label style={lbl}>SCHOOL YEAR</label>
-          <select value={activeSchoolYear} onChange={e => { setActiveSchoolYear(e.target.value); setSectionId(null); }} style={sel}>
+        <div className="phsv-filter-group">
+          <label>School Year</label>
+          <select value={activeSchoolYear} onChange={e => { setActiveSchoolYear(e.target.value); setSectionId(null); }}>
             {SCHOOL_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
         {sections.length > 0 && (
-          <div>
-            <label style={lbl}>SECTION</label>
-            <select value={sectionId ?? ""} onChange={e => setSectionId(Number(e.target.value))} style={sel}>
+          <div className="phsv-filter-group">
+            <label>Section</label>
+            <select value={sectionId ?? ""} onChange={e => setSectionId(Number(e.target.value))}>
               {sections.map(s => <option key={s.id} value={s.id}>Year {s.yearLevel}-{s.sectionName}</option>)}
             </select>
           </div>
@@ -109,9 +202,9 @@ export default function PHScheduleView() {
       </div>
 
       {!loading && schedules.length === 0 && (
-        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 48, textAlign: "center" }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-          <p style={{ color: "#9ca3af", fontSize: 14 }}>No schedule found for this section and term.</p>
+        <div className="phsv-empty">
+          <div className="phsv-empty-icon">📭</div>
+          <p className="phsv-empty-text">No schedule found for this section and term.</p>
         </div>
       )}
 
