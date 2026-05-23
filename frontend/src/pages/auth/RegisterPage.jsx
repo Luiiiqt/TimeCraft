@@ -9,7 +9,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     firstName:"", middleName:"", lastName:"",
     schoolId:"", email:"", password:"",
-    courseId:"", yearLevel:"1", section:"", isIrregular:false,
+    courseId:"", yearLevel:"1", isIrregular:false,
   });
   const [courses, setCourses] = useState([]);
 
@@ -25,6 +25,8 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
   const [focused, setFocused] = useState(null);
   const [showPw, setShowPw] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const handleChange = e => {
     const {name,value,type,checked} = e.target;
@@ -34,6 +36,11 @@ export default function RegisterPage() {
   const handleSubmit = async e => {
     e.preventDefault();
     setError(null);
+    setShowTerms(true);
+  };
+
+  const handleConfirmRegister = async () => {
+    setShowTerms(false);
     setLoading(true);
     try {
       await register({
@@ -41,7 +48,7 @@ export default function RegisterPage() {
         schoolId:form.schoolId, email:form.email, password:form.password,
         courseId:Number(form.courseId)||undefined,
         yearLevel:Number(form.yearLevel), userType:"STUDENT",
-        section: form.isIrregular ? null : (form.section || null),
+        section: null,
         isIrregular: form.isIrregular,
       });
       setSuccess(true);
@@ -208,12 +215,7 @@ export default function RegisterPage() {
               </select>
             </div>
 
-            {!form.isIrregular && (
-              <div className="tc-field">
-                <label className="tc-label">Section <span style={{opacity:.5,fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></label>
-                <input {...inputProps("section")} placeholder="e.g. A"/>
-              </div>
-            )}
+            
 
             {/* Irregular checkbox */}
             <div style={{margin:"4px 0 18px"}}>
@@ -232,6 +234,100 @@ export default function RegisterPage() {
                 </span>
               </label>
             </div>
+
+            {showTerms && (
+              <div style={{
+                position: "fixed", inset: 0, zIndex: 1000,
+                background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: "20px",
+              }}>
+                <div style={{
+                  background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 20, padding: "28px 24px", maxWidth: 480, width: "100%",
+                  maxHeight: "80vh", display: "flex", flexDirection: "column",
+                  boxShadow: "0 24px 80px rgba(0,0,0,0.6)",
+                }}>
+                  {/* Header */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg,#22C55E,#16A34A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>📋</div>
+                      <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: "-.02em" }}>Terms & Conditions</h2>
+                    </div>
+                    <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", lineHeight: 1.6 }}>Please read and accept before creating your account.</p>
+                  </div>
+
+                  {/* Scrollable content */}
+                  <div style={{
+                    overflowY: "auto", flex: 1,
+                    border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12,
+                    padding: "16px", marginBottom: 20,
+                    background: "rgba(255,255,255,0.02)",
+                    fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1.8,
+                  }}>
+                    <p style={{ fontWeight: 700, color: "rgba(255,255,255,0.8)", marginBottom: 10 }}>TimeCraft Student Account Registration</p>
+                    <p style={{ marginBottom: 12 }}>By creating an account in TimeCraft, you agree to the following terms:</p>
+
+                    <p style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>1. Account Accuracy</p>
+                    <p style={{ marginBottom: 12 }}>You confirm that all information provided during registration — including your name, School ID, email address, course, and year level — is accurate and belongs to you. Providing false information may result in account suspension.</p>
+
+                    <p style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>2. Account Activation</p>
+                    <p style={{ marginBottom: 12 }}>Your account is subject to review and activation by the system administrator. Access to the timetable and other features will only be granted once your account has been verified and activated.</p>
+
+                    <p style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>3. Data Privacy</p>
+                    <p style={{ marginBottom: 12 }}>Your personal information is collected solely for the purpose of timetable scheduling within Lorma College. Your data will not be shared with third parties without your consent, in compliance with the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
+
+                    <p style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>4. Account Security</p>
+                    <p style={{ marginBottom: 12 }}>You are responsible for keeping your login credentials confidential. Do not share your password with anyone. Report any unauthorized access immediately to the system administrator.</p>
+
+                    <p style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>5. Acceptable Use</p>
+                    <p style={{ marginBottom: 12 }}>TimeCraft is intended for academic scheduling purposes only. Any attempt to misuse, manipulate, or tamper with the system is strictly prohibited and may result in permanent account deactivation.</p>
+
+                    <p style={{ fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>6. Changes to Terms</p>
+                    <p>Lorma College reserves the right to update these terms at any time. Continued use of the system implies acceptance of any revised terms.</p>
+                  </div>
+
+                  {/* Agree checkbox */}
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", marginBottom: 18 }}>
+                    <div style={{
+                      width: 20, height: 20, borderRadius: 5, flexShrink: 0, marginTop: 1,
+                      background: agreedToTerms ? "#22C55E" : "rgba(255,255,255,.05)",
+                      border: `1.5px solid ${agreedToTerms ? "#22C55E" : "rgba(255,255,255,.15)"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "all .15s",
+                    }} onClick={() => setAgreedToTerms(p => !p)}>
+                      {agreedToTerms && <span style={{ fontSize: 10, color: "#fff", fontWeight: 900, lineHeight: 1 }}>✓</span>}
+                    </div>
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,.5)", lineHeight: 1.5 }}>
+                      I have read and agree to the <strong style={{ color: "rgba(255,255,255,.8)" }}>Terms and Conditions</strong> of TimeCraft.
+                    </span>
+                  </label>
+
+                  {/* Buttons */}
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button onClick={() => { setShowTerms(false); setAgreedToTerms(false); }}
+                      style={{
+                        flex: 1, padding: "12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)",
+                        background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)",
+                        fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
+                      }}>
+                      Cancel
+                    </button>
+                    <button onClick={handleConfirmRegister} disabled={!agreedToTerms}
+                      style={{
+                        flex: 2, padding: "12px", borderRadius: 10, border: "none",
+                        background: agreedToTerms ? "linear-gradient(135deg,#22C55E,#16A34A)" : "#1f2937",
+                        color: agreedToTerms ? "#fff" : "rgba(255,255,255,0.3)",
+                        fontSize: 14, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed",
+                        fontFamily: "'DM Sans',sans-serif", transition: "all .2s",
+                        boxShadow: agreedToTerms ? "0 4px 16px rgba(34,197,94,0.3)" : "none",
+                      }}>
+                      I Agree & Create Account →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button type="submit" disabled={loading||success} className="tc-btn">
               {loading
