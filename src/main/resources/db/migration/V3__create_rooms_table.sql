@@ -59,10 +59,10 @@ INSERT INTO rooms (campus_id, department_id, name, room_number, capacity, room_t
     -- ITCS/CPE Lecture Room 306
     ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 306', '306', 45, 'LECTURE'),
 
-    -- General Lecture Rooms 401–408
-    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 401', '401', 45, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 402', '402', 45, 'LECTURE'),
-    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 403', '403', 45, 'LECTURE'),
+    -- CS Lecture Room 307 (max 10 students for BSCS)
+    ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'CS Lecture Room 307', '307', 10, 'LECTURE'),
+
+    -- General Lecture Rooms 404–408 (401–403 removed)
     ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 404', '404', 45, 'LECTURE'),
     ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 405', '405', 45, 'LECTURE'),
     ((SELECT id FROM campuses WHERE code = 'CLI'), NULL, 'Lecture Room 406', '406', 45, 'LECTURE'),

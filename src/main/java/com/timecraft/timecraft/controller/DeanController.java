@@ -238,4 +238,19 @@ public class DeanController {
                 return ResponseEntity.ok(ApiResponse.of(
                                 deanService.getManagedCourses(userId)));
         }
+
+        @PostMapping("/enrollment")
+        @PreAuthorize("hasAnyRole('DEAN','ADMIN')")
+        public ResponseEntity<ApiResponse<Void>> updateEnrollment(
+                        @RequestBody Map<String, Object> body,
+                        Principal principal) {
+                Long userId = resolveUserId(principal);
+                Long courseId = Long.valueOf(body.get("courseId").toString());
+                short yearLevel = Short.parseShort(body.get("yearLevel").toString());
+                int enrolledCount = Integer.parseInt(body.get("enrolledCount").toString());
+                String semester = body.get("semester").toString();
+                String schoolYear = body.get("schoolYear").toString();
+                deanService.updateEnrollmentForCourse(userId, courseId, yearLevel, enrolledCount, semester, schoolYear);
+                return ResponseEntity.ok(ApiResponse.success("Enrollment updated"));
+        }
 }

@@ -107,11 +107,11 @@ export default function ViewTimetable() {
       term.semester,
       term.schoolYear,
       user?.sectionId ?? null,
-      user?.isIrregular ? {
+      {
         courseId:  user?.courseId,
         yearLevel: user?.yearLevel,
         section:   user?.section,
-      } : null
+      }
     );
   }, [mode, term.semester, term.schoolYear, user?.sectionId, fetchMySchedule]);
 

@@ -437,6 +437,64 @@ public class DeanService {
         return report;
     }
 
+    @Transactional
+    public void updateEnrollmentForCourse(Long deanUserId, Long courseId, short yearLevel,
+            int enrolledCount, String semester, String schoolYear) {
+
+        assertManagesCourse(deanUserId, courseId);
+
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + courseId));
+
+        com.timecraft.timecraft.model.CourseSubject.Semester sem =
+                com.timecraft.timecraft.model.CourseSubject.Semester.valueOf(semester);
+
+        // Find or create the base section (Section A)
+        Section base = sectionRepository
+                .findByCourseIdAndYearLevelAndSemesterAndSchoolYear(courseId, yearLevel, sem, schoolYear)
+                .stream()
+                .filter(s -> s.getSectionName().equals("A"))
+                .findFirst()
+                .orElseGet(() -> sectionRepository.save(Section.builder()
+                        .course(course).yearLevel(yearLevel).sectionName("A")
+                        .semester(sem).schoolYear(schoolYear)
+                        .maxStudents((short) 45).build()));
+
+        base.setEnrolledCount(enrolledCount);
+        base.setGroupNumber(0);
+        sectionRepository.save(base);
+
+        if (enrolledCount > 40) {
+            // Groups are for LAB scheduling only — lecture stays combined
+            ensureGroupSection(base, 1, enrolledCount / 2);
+            ensureGroupSection(base, 2, enrolledCount - enrolledCount / 2);
+            log.info("Enrollment {} > 40 for course {} Y{} — lab groups created, lecture combined",
+                    enrolledCount, courseId, yearLevel);
+        }
+    }
+
+    private void ensureGroupSection(Section parent, int groupNum, int groupCount) {
+        String groupName = parent.getSectionName() + "-G" + groupNum;
+        Section group = sectionRepository
+                .findByCourseIdAndYearLevelAndSemesterAndSchoolYear(
+                        parent.getCourse().getId(), parent.getYearLevel(),
+                        parent.getSemester(), parent.getSchoolYear())
+                .stream()
+                .filter(s -> s.getSectionName().equals(groupName))
+                .findFirst()
+                .orElseGet(() -> Section.builder()
+                        .course(parent.getCourse())
+                        .yearLevel(parent.getYearLevel())
+                        .sectionName(groupName)
+                        .semester(parent.getSemester())
+                        .schoolYear(parent.getSchoolYear())
+                        .maxStudents((short) 25)
+                        .build());
+        group.setEnrolledCount(groupCount);
+        group.setGroupNumber(groupNum);
+        sectionRepository.save(group);
+    }
+
     public List<Course> getManagedCourses(Long programHeadId) {
         return programHeadCourseRepository.findByDeanUserId(programHeadId)
                 .stream()

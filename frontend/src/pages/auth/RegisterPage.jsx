@@ -9,7 +9,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     firstName:"", middleName:"", lastName:"",
     schoolId:"", email:"", password:"",
-    courseId:"", yearLevel:"1", isIrregular:false,
+    courseId:"", yearLevel:"1", section:"", isIrregular:false,
   });
   const [courses, setCourses] = useState([]);
 
@@ -41,6 +41,8 @@ export default function RegisterPage() {
         schoolId:form.schoolId, email:form.email, password:form.password,
         courseId:Number(form.courseId)||undefined,
         yearLevel:Number(form.yearLevel), userType:"STUDENT",
+        section: form.isIrregular ? null : (form.section || null),
+        isIrregular: form.isIrregular,
       });
       setSuccess(true);
       setTimeout(()=>navigate("/login"),2000);
@@ -205,6 +207,13 @@ export default function RegisterPage() {
                 {[1,2,3,4,5].map(y=><option key={y} value={y}>Year {y}</option>)}
               </select>
             </div>
+
+            {!form.isIrregular && (
+              <div className="tc-field">
+                <label className="tc-label">Section <span style={{opacity:.5,fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></label>
+                <input {...inputProps("section")} placeholder="e.g. A"/>
+              </div>
+            )}
 
             {/* Irregular checkbox */}
             <div style={{margin:"4px 0 18px"}}>

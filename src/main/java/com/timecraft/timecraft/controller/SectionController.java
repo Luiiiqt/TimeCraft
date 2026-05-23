@@ -30,7 +30,7 @@ public class SectionController {
 
     // ── GET /api/v1/sections ──────────────────────────────────────────────────
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','DEAN')")
+    @PreAuthorize("hasAnyRole('ADMIN','DEAN','STUDENT','TEACHER','PROGRAM_HEAD','GE_COORDINATOR')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> findAll(
             @RequestParam(required = false) Long courseId,
             @RequestParam(required = false) Short yearLevel,

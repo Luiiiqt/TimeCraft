@@ -127,6 +127,8 @@ public class SectionService {
 
         // ── Section config (PH sets section count) ────────────────────────────────
 
+        private static final int GROUP_SPLIT_THRESHOLD = 40;
+
         @Transactional
         public void setSectionConfig(Long courseId, short yearLevel,
                         short sectionCount, Semester semester, String schoolYear) {
@@ -160,6 +162,44 @@ public class SectionService {
                                                 .maxStudents((short) 45)
                                                 .build());
                         }
+                }
+        }
+
+        /**
+         * Updates enrolled count and auto-splits into Group 1 / Group 2 if > 40.
+         * For merged (BSCS+BSIT) sections, splitting applies to the combined total.
+         */
+        @Transactional
+        public void updateEnrollmentAndGroups(Long sectionId, int enrolledCount) {
+                Section section = findById(sectionId);
+                section.setEnrolledCount(enrolledCount);
+
+                if (enrolledCount > GROUP_SPLIT_THRESHOLD) {
+                        // Find or create Group 1 and Group 2 variants
+                        ensureGroup(section, 1);
+                        ensureGroup(section, 2);
+                        section.setGroupNumber(0); // parent has no group number
+                } else {
+                        section.setGroupNumber(0);
+                }
+                sectionRepository.save(section);
+        }
+
+        private void ensureGroup(Section parent, int groupNum) {
+                String groupName = parent.getSectionName() + "-G" + groupNum;
+                if (!sectionRepository.existsByCourseIdAndYearLevelAndSectionNameAndSemesterAndSchoolYear(
+                                parent.getCourse().getId(), parent.getYearLevel(),
+                                groupName, parent.getSemester(), parent.getSchoolYear())) {
+                        sectionRepository.save(Section.builder()
+                                        .course(parent.getCourse())
+                                        .yearLevel(parent.getYearLevel())
+                                        .sectionName(groupName)
+                                        .semester(parent.getSemester())
+                                        .schoolYear(parent.getSchoolYear())
+                                        .maxStudents((short) 20)
+                                        .enrolledCount(0)
+                                        .groupNumber(groupNum)
+                                        .build());
                 }
         }
 

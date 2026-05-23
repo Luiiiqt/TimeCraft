@@ -71,11 +71,11 @@ function useSchedule() {
   [_fetch]);
 
   /** Student: own timetable — uses section if sectionId provided, else /my for irregular */
-  const fetchMySchedule = useCallback(async (semester, schoolYear, sectionId, fallback) => {
+    const fetchMySchedule = useCallback(async (semester, schoolYear, sectionId, fallback) => {
     if (sectionId) {
       return _fetch(`/schedules/section/${sectionId}`, { semester, schoolYear });
     }
-    // Resolve sectionId from sections endpoint using course+year+section
+    // Regular student: resolve sectionId from course+year+section
     if (fallback?.courseId && fallback?.yearLevel && fallback?.section) {
       try {
         const res = await api.get(`/sections`, {
@@ -86,6 +86,21 @@ function useSchedule() {
           s.yearLevel == fallback.yearLevel &&
           s.sectionName === fallback.section
         );
+        if (match?.id) {
+          return _fetch(`/schedules/section/${match.id}`, { semester, schoolYear });
+        }
+      } catch {
+        // fall through
+      }
+    }
+    // Irregular student: find any section matching course+year and fetch its published schedule
+    if (fallback?.courseId && fallback?.yearLevel) {
+      try {
+        const res = await api.get(`/sections`, {
+          params: { courseId: fallback.courseId }
+        });
+        const sections = res.data?.data ?? [];
+        const match = sections.find(s => s.yearLevel == fallback.yearLevel);
         if (match?.id) {
           return _fetch(`/schedules/section/${match.id}`, { semester, schoolYear });
         }

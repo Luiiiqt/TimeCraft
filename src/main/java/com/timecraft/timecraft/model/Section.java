@@ -68,6 +68,18 @@ private Course course;
     @Builder.Default
     private boolean isActive = true;
 
+    /** Total students enrolled this semester (stored for display and grouping logic). */
+    @Column(name = "enrolled_count", nullable = false)
+    @Builder.Default
+    private int enrolledCount = 0;
+
+    /**
+     * Group number when enrollment exceeds 40 (1 = Group 1, 2 = Group 2, 0 = no split).
+     */
+    @Column(name = "group_number", nullable = false)
+    @Builder.Default
+    private int groupNumber = 0;
+
     @OneToMany(mappedBy = "section", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Schedule> schedules = new ArrayList<>();

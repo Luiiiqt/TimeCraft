@@ -110,10 +110,12 @@ public class SchedulingEngine {
 
     private static final String ROOM_305_NUMBER = "305";
     private static final String ROOM_306_NUMBER = "306";
+    private static final String ROOM_307_NUMBER = "307";
     private static final Set<String> MINOR_ROOM_NUMBERS
-            = Set.of("401", "402", "403", "404", "405", "406", "407", "408");
+            = Set.of("404", "405", "406", "407", "408"); // 401–403 removed; 404 optional
     private static final Set<String> COMPUTER_LAB_NUMBERS
             = Set.of("301", "302", "303", "304");
+    private static final int ROOM_307_MAX_STUDENTS = 10;
 
     // ── Per-run in-memory state (reset each generateForTerm call) ─────────────
     /**
@@ -378,10 +380,36 @@ public class SchedulingEngine {
             boolean isMajor = subject.getSubjectType() == SubjectType.MAJOR;
 
             if (isMajor && subject.isHasLab()) {
-                // ── Step 1: Schedule LAB first (90min, scarce lab rooms — most constrained)
+                // ── Check if this section has groups (enrolled > 40) ───────────
+                List<Section> labGroups = sectionRepository
+                        .findBySemesterAndSchoolYear(semester, schoolYear)
+                        .stream()
+                        .filter(Section::isActive)
+                        .filter(s -> s.getCourse().getId().equals(section.getCourse().getId()))
+                        .filter(s -> s.getYearLevel() == section.getYearLevel())
+                        .filter(s -> s.getGroupNumber() > 0)
+                        .toList();
+
+                // ── Step 1: Schedule LAB — one per group if groups exist, else one for all
                 Schedule lab = assign(subject, section, campus, semester, schoolYear,
                         SessionType.LABORATORY, subjectTeacherCache, Set.of());
                 boolean labFailed = lab.getStatus() == ScheduleStatus.CONFLICTED;
+
+                // Schedule additional lab sessions for Group 2 if groups exist
+                if (!labFailed && labGroups.size() >= 2) {
+                    Section group1 = labGroups.stream().filter(s -> s.getGroupNumber() == 1).findFirst().orElse(null);
+                    Section group2 = labGroups.stream().filter(s -> s.getGroupNumber() == 2).findFirst().orElse(null);
+                    if (group1 != null && group2 != null) {
+                        // Group 1 lab
+                        Schedule labG1 = assign(subject, group1, campus, semester, schoolYear,
+                                SessionType.LABORATORY, subjectTeacherCache, Set.of());
+                        if (labG1.getStatus() != ScheduleStatus.CONFLICTED) result.add(labG1);
+                        // Group 2 lab — different timeslot, same subject+teacher
+                        Schedule labG2 = assign(subject, group2, campus, semester, schoolYear,
+                                SessionType.LABORATORY, subjectTeacherCache, Set.of());
+                        if (labG2.getStatus() != ScheduleStatus.CONFLICTED) result.add(labG2);
+                    }
+                }
 
                 // ── Step 2: Build excluded days from LAB
                 Set<DayOfWeek> labDays = new HashSet<>();
@@ -557,29 +585,12 @@ public class SchedulingEngine {
                             continue;
                         }
                         // R5: no section double-booking
-                        // Saturday ts1 is online — skip section lock check for that slot
-                        boolean sat1check = ts1.getDayOfWeek() == DayOfWeek.SATURDAY;
-                        boolean satOnlineCheck = (isMajorLec || isMinor) && sat1check;
-                        if (satOnlineCheck) {
-                            if (!isSectionFree(section.getId(), null, ts2)) {
-                                continue;
-                            }
-                        } else {
-                            if (!isSectionFree(section.getId(), ts1, ts2)) {
-                                continue;
-                            }
+                        if (!isSectionFree(section.getId(), ts1, ts2)) {
+                            continue;
                         }
                         // Teacher declared unavailable at this slot
-                        // Saturday ts1 is online — only check ts2 availability
-                        boolean satOnlineAvail = (isMajorLec || isMinor) && ts1.getDayOfWeek() == DayOfWeek.SATURDAY;
-                        if (satOnlineAvail) {
-                            if (!isTeacherAvailableForSubject(teacher.getId(), subject.getId(), null, ts2)) {
-                                continue;
-                            }
-                        } else {
-                            if (!isTeacherAvailableForSubject(teacher.getId(), subject.getId(), ts1, ts2)) {
-                                continue;
-                            }
+                        if (!isTeacherAvailableForSubject(teacher.getId(), subject.getId(), ts1, ts2)) {
+                            continue;
                         }
 
                         // ── Soft constraints (relaxed progressively) ──────────
@@ -598,50 +609,18 @@ public class SchedulingEngine {
                             continue;
                         }
 
-                        // ── Find room — per-session online fallback (LECTURE/MINOR only) ───
+                        // ── Find room — both sessions must have a room (no online fallback) ──
                         Room room = null;
                         boolean onlineTs1 = false;
                         boolean onlineTs2 = false;
 
-// R9/R10: Saturday ts1 is always online (no room)
-                        if ((isMajorLec || isMinor) && ts1.getDayOfWeek() == DayOfWeek.SATURDAY) {
-                            onlineTs1 = true;
-                            room = findRoomForSingleSlot(profile, campus, reqRoomType,
-                                    section.getMaxStudents(), ts2.getId(), isMinor, subject);
-                            if (room == null) {
-                                continue;
-                            }
-                        } else if (isLab) {
-                            // LAB: must have a room for BOTH sessions — never online
-                            room = findRoom(profile, campus, reqRoomType,
-                                    section.getMaxStudents(), ts1.getId(), ts2.getId(),
-                                    isMinor, subject);
-                            if (room == null) {
-                                continue;
-                            }
-                        } else {
-                            // LECTURE (both lecture-only and has-lab) and MINOR
-                            room = findRoom(profile, campus, reqRoomType,
-                                    section.getMaxStudents(), ts1.getId(), ts2.getId(),
-                                    isMinor, subject);
-                            if (room == null) {
-                                Room roomTs1 = findRoomForSingleSlot(profile, campus, reqRoomType,
-                                        section.getMaxStudents(), ts1.getId(), isMinor, subject);
-                                if (roomTs1 != null) {
-                                    room = roomTs1;
-                                    onlineTs2 = true;
-                                } else {
-                                    Room roomTs2 = findRoomForSingleSlot(profile, campus, reqRoomType,
-                                            section.getMaxStudents(), ts2.getId(), isMinor, subject);
-                                    if (roomTs2 != null) {
-                                        room = roomTs2;
-                                        onlineTs1 = true;
-                                    } else {
-                                        onlineTs1 = true;
-                                        onlineTs2 = true;
-                                    }
-                                }
-                            }
+                        // LAB: must have a room for BOTH sessions
+                        // LECTURE/MINOR: must have a room for BOTH sessions (Saturday included)
+                        room = findRoom(profile, campus, reqRoomType,
+                                section.getMaxStudents(), ts1.getId(), ts2.getId(),
+                                isMinor, subject, section);
+                        if (room == null) {
+                            continue;
                         }
 
                         // ── R7: no room double-booking ─────────────────────────
@@ -654,10 +633,8 @@ public class SchedulingEngine {
                         }
 
                         // ── All constraints passed — commit ────────────────────
-                        boolean online = onlineTs1 || onlineTs2;
+                        boolean online = false;
                         lockTeacher(teacher.getId(), ts1, ts2);
-                        boolean sat1 = ts1.getDayOfWeek() == DayOfWeek.SATURDAY;
-                        boolean satOnline = (isMajorLec || isMinor) && sat1;
                         lockSection(section.getId(), ts1, ts2);
                         addToTeacherDayLoad(teacher.getId(), ts1, ts2);
                         if (room != null) {
@@ -703,68 +680,22 @@ public class SchedulingEngine {
                 if (!isTeacherFree(teacher.getId(), ts1, ts2)) {
                     continue;
                 }
-                boolean sat1fb = ts1.getDayOfWeek() == DayOfWeek.SATURDAY;
-                boolean satOnlineFb = (isMajorLec || isMinor) && sat1fb;
-                if (satOnlineFb) {
-                    if (!isSectionFree(section.getId(), null, ts2)) {
-                        continue;
-                    }
-                } else {
-                    if (!isSectionFree(section.getId(), ts1, ts2)) {
-                        continue;
-                    }
+                if (!isSectionFree(section.getId(), ts1, ts2)) {
+                    continue;
                 }
-                boolean satOnlineAvailFb = (isMajorLec || isMinor) && ts1.getDayOfWeek() == DayOfWeek.SATURDAY;
-                if (satOnlineAvailFb) {
-                    if (!isTeacherAvailableForSubject(teacher.getId(), subject.getId(), null, ts2)) {
-                        continue;
-                    }
-                } else {
-                    if (!isTeacherAvailableForSubject(teacher.getId(), subject.getId(), ts1, ts2)) {
-                        continue;
-                    }
+                if (!isTeacherAvailableForSubject(teacher.getId(), subject.getId(), ts1, ts2)) {
+                    continue;
                 }
 
                 Room room = null;
                 boolean onlineTs1 = false;
                 boolean onlineTs2 = false;
 
-                if ((isMajorLec || isMinor) && ts1.getDayOfWeek() == DayOfWeek.SATURDAY) {
-                    onlineTs1 = true;
-                    room = findRoomForSingleSlot(profile, campus, reqRoomType,
-                            section.getMaxStudents(), ts2.getId(), isMinor, subject);
-                    if (room == null) {
-                        continue;
-                    }
-                } else if (isLab) {
-                    room = findRoom(profile, campus, reqRoomType,
-                            section.getMaxStudents(), ts1.getId(), ts2.getId(),
-                            isMinor, subject);
-                    if (room == null) {
-                        continue;
-                    }
-                } else {
-                    room = findRoom(profile, campus, reqRoomType,
-                            section.getMaxStudents(), ts1.getId(), ts2.getId(),
-                            isMinor, subject);
-                    if (room == null) {
-                        Room roomTs1 = findRoomForSingleSlot(profile, campus, reqRoomType,
-                                section.getMaxStudents(), ts1.getId(), isMinor, subject);
-                        if (roomTs1 != null) {
-                            room = roomTs1;
-                            onlineTs2 = true;
-                        } else {
-                            Room roomTs2 = findRoomForSingleSlot(profile, campus, reqRoomType,
-                                    section.getMaxStudents(), ts2.getId(), isMinor, subject);
-                            if (roomTs2 != null) {
-                                room = roomTs2;
-                                onlineTs1 = true;
-                            } else {
-                                onlineTs1 = true;
-                                onlineTs2 = true;
-                            }
-                        }
-                    }
+                room = findRoom(profile, campus, reqRoomType,
+                        section.getMaxStudents(), ts1.getId(), ts2.getId(),
+                        isMinor, subject, section);
+                if (room == null) {
+                    continue;
                 }
                 if (room != null) {
                     Timeslot rct1 = onlineTs1 ? null : ts1;
@@ -1115,7 +1046,7 @@ public class SchedulingEngine {
                 .filter(ts -> ts.getDurationMinutes() == reqDuration)
                 .filter(ts -> !excludeDays.contains(ts.getDayOfWeek()))
                 .filter(ts -> ts.getDayOfWeek() != DayOfWeek.SUNDAY)
-                .filter(ts -> !isLab || ts.getDayOfWeek() != DayOfWeek.SATURDAY) // R8: LAB never Saturday
+                // Saturday LAB is now allowed per revised rules
                 .toList();
 
         List<TimeslotPair> result = new ArrayList<>();
@@ -1173,10 +1104,7 @@ public class SchedulingEngine {
                 return load1 + load2;
             }));
             for (DayOfWeek[] pair : adjacentPairs) {
-                // R8: LAB sessions never on Saturday
-                if (isLab && (pair[0] == DayOfWeek.SATURDAY || pair[1] == DayOfWeek.SATURDAY)) {
-                    continue;
-                }
+                // Saturday LAB allowed — no exclusion needed
                 List<Timeslot> slotsA = byDay.get(pair[0]);
                 List<Timeslot> slotsB = byDay.get(pair[1]);
                 Map<Integer, Timeslot> bByStart = new java.util.LinkedHashMap<>();
@@ -1354,7 +1282,7 @@ public class SchedulingEngine {
     private Room findRoom(TeacherProfile profile, Campus defaultCampus,
             RoomType roomType, int minCapacity,
             long ts1Id, long ts2Id,
-            boolean isMinor, Subject subject) {
+            boolean isMinor, Subject subject, Section section) {
 
         boolean isLabSession = roomType == RoomType.LABORATORY;
         boolean isCPESubject = subject.getDepartment() != null
@@ -1424,12 +1352,22 @@ public class SchedulingEngine {
                 continue;
             }
 
-            // R3: minor → must be 401–408
+            // R12: 307 — BSCS lecture only, max 10 students
+            if (ROOM_307_NUMBER.equals(num)) {
+                boolean isBSCS = subject.getDepartment() != null
+                        && section != null
+                        && "BSCS".equalsIgnoreCase(section.getCourse().getCode());
+                if (!isBSCS || minCapacity > ROOM_307_MAX_STUDENTS) {
+                    continue;
+                }
+            }
+
+            // R3: minor → must be 404–408
             if (isMinor && !MINOR_ROOM_NUMBERS.contains(num)) {
                 continue;
             }
-            // R12: 401–408 = minor/GE rooms — LAB must NOT use them,
-            // but major LECTURE can use them (306 is deprioritized, not exclusive)
+            // R12: 404–408 = minor/GE rooms — LAB must NOT use them,
+            // but major LECTURE can use them (404 is optional fallback)
             if (!isMinor && isLabSession && MINOR_ROOM_NUMBERS.contains(num)) {
                 continue;
             }

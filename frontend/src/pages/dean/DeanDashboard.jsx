@@ -193,9 +193,10 @@ export default function DeanDashboard() {
   const [pendingIrregular, setPendingIrregular] = useState([]);
   const [loading,          setLoading]          = useState(true);
   const [courses,          setCourses]          = useState([]);
-  const [sectionForm,   setSectionForm]   = useState({ courseId: "", yearLevel: 1, sectionCount: 1 });
-  const [sectionSaving, setSectionSaving] = useState(false);
-  const [sectionMsg,    setSectionMsg]    = useState("");
+  
+  const [enrollForm,    setEnrollForm]    = useState({ courseId: "", yearLevel: 1, enrolledCount: "" });
+  const [enrollSaving,  setEnrollSaving]  = useState(false);
+  const [enrollMsg,     setEnrollMsg]     = useState("");
 
   useEffect(() => {
     Promise.all([
@@ -209,26 +210,35 @@ export default function DeanDashboard() {
       setPendingIrregular(iRes.data?.data ?? []);
       const courseList = cRes.data?.data ?? [];
       setCourses(courseList);
-      if (courseList.length > 0) setSectionForm(f => ({ ...f, courseId: courseList[0].id }));
+      if (courseList.length > 0) {
+        setEnrollForm(f => ({ ...f, courseId: courseList[0].id }));
+      }
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
 
-  const saveSectionConfig = async () => {
-    if (!sectionForm.courseId) return;
-    setSectionSaving(true); setSectionMsg("");
+  const saveEnrollment = async () => {
+    if (!enrollForm.courseId || enrollForm.enrolledCount === "") return;
+    setEnrollSaving(true); setEnrollMsg("");
     try {
-      await api.post("/sections/config", {
-        courseId: Number(sectionForm.courseId),
-        yearLevel: Number(sectionForm.yearLevel),
-        sectionCount: Number(sectionForm.sectionCount),
+      await api.post(`/dean/enrollment`, {
+        courseId: Number(enrollForm.courseId),
+        yearLevel: Number(enrollForm.yearLevel),
+        enrolledCount: Number(enrollForm.enrolledCount),
         semester: SEMESTER,
         schoolYear: SCHOOL_YEAR,
       });
-      setSectionMsg(`✓ ${sectionForm.sectionCount} section(s) created for Year ${sectionForm.yearLevel}`);
-    } catch (e) { setSectionMsg("✗ " + (e.response?.data?.message ?? "Failed to save")); }
-    finally { setSectionSaving(false); }
+      const count = Number(enrollForm.enrolledCount);
+      setEnrollMsg(
+        count > 40
+          ? `✓ ${count} students saved — will be split into Group 1 & Group 2`
+          : `✓ ${count} students enrolled for Year ${enrollForm.yearLevel}`
+      );
+    } catch (e) { setEnrollMsg("✗ " + (e.response?.data?.message ?? "Failed to save")); }
+    finally { setEnrollSaving(false); }
   };
+
+  
 
   const finalized = assignments.filter(a => a.finalized).length;
   const semLabel = SEMESTER === "FIRST" ? "1st" : SEMESTER === "SECOND" ? "2nd" : "Summer";
@@ -279,45 +289,58 @@ export default function DeanDashboard() {
           ))}
         </div>
 
-        {/* Section Setup */}
-        <div className="tc-card" style={{ padding: "20px 22px", marginBottom: "clamp(18px, 3vw, 28px)", animation: "slideUp .5s ease .14s both" }}>
-          <h2 style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4, fontFamily: "'Sora',sans-serif" }}>Section Setup</h2>
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 18, lineHeight: 1.6 }}>Configure the number of sections per year level for this term.</p>
+        
+
+        {/* Enrollment Input */}
+        <div className="tc-card" style={{ padding: "20px 22px", marginBottom: "clamp(18px, 3vw, 28px)", animation: "slideUp .5s ease .17s both" }}>
+          <h2 style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4, fontFamily: "'Sora',sans-serif" }}>Student Enrollment</h2>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 18, lineHeight: 1.6 }}>
+            Enter the number of enrolled students per section. Sections exceeding 40 will automatically be split into Group 1 and Group 2.
+          </p>
 
           <div className="tc-section-row">
             {courses.length > 1 && (
-              <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+              <div style={{ flex: "0 0 auto" }}>
                 <label className="tc-field-label">Course</label>
-                <select className="tc-select" value={sectionForm.courseId} onChange={e => setSectionForm(f => ({ ...f, courseId: e.target.value }))}>
+                <select className="tc-select" value={enrollForm.courseId}
+                  onChange={e => setEnrollForm(f => ({ ...f, courseId: e.target.value }))}>
                   {courses.map(c => <option key={c.id} value={c.id}>{c.code}</option>)}
                 </select>
               </div>
             )}
             <div>
               <label className="tc-field-label">Year Level</label>
-              <select className="tc-select" value={sectionForm.yearLevel} onChange={e => setSectionForm(f => ({ ...f, yearLevel: e.target.value }))}>
+              <select className="tc-select" value={enrollForm.yearLevel}
+                onChange={e => setEnrollForm(f => ({ ...f, yearLevel: e.target.value }))}>
                 {[1, 2, 3, 4].map(y => <option key={y} value={y}>Year {y}</option>)}
               </select>
             </div>
             <div>
-              <label className="tc-field-label">No. of Sections</label>
+              <label className="tc-field-label">No. of Students</label>
               <input
                 type="number"
                 className="tc-input"
-                min={1} max={10}
-                value={sectionForm.sectionCount}
-                onChange={e => setSectionForm(f => ({ ...f, sectionCount: e.target.value }))}
-                style={{ width: 86 }}
+                min={0} max={200}
+                placeholder="e.g. 45"
+                value={enrollForm.enrolledCount}
+                onChange={e => setEnrollForm(f => ({ ...f, enrolledCount: e.target.value }))}
+                style={{ width: 110 }}
               />
             </div>
-            <button className="tc-btn-primary" onClick={saveSectionConfig} disabled={sectionSaving}>
-              {sectionSaving ? "Saving…" : "Save & Create"}
+            <button className="tc-btn-primary" onClick={saveEnrollment} disabled={enrollSaving || enrollForm.courseId === "" || enrollForm.enrolledCount === ""}>
+              {enrollSaving ? "Saving…" : "Save Enrollment"}
             </button>
           </div>
 
-          {sectionMsg && (
-            <p style={{ fontSize: 12, marginTop: 12, color: sectionMsg.startsWith("✓") ? "#4ADE80" : "#f87171", fontFamily: "'DM Mono',monospace" }}>
-              {sectionMsg}
+          {Number(enrollForm.enrolledCount) > 40 && (
+            <div style={{ marginTop: 12, padding: "8px 12px", borderRadius: 8, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", fontSize: 12, color: "#FCD34D", fontFamily: "'DM Mono',monospace" }}>
+              ⚠ Enrollment exceeds 40 — Laboratory classes will be split into Group 1 and Group 2. Lecture classes remain combined. BSCS+BSIT merged subjects are unaffected.
+            </div>
+          )}
+
+          {enrollMsg && (
+            <p style={{ fontSize: 12, marginTop: 12, color: enrollMsg.startsWith("✓") ? "#4ADE80" : "#f87171", fontFamily: "'DM Mono',monospace" }}>
+              {enrollMsg}
             </p>
           )}
         </div>

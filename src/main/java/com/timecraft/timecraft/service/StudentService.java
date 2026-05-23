@@ -109,9 +109,8 @@ public class StudentService {
             department = course.getDepartment();
         }
 
-        // Auto-set irregular if no section provided
-        if (section == null || section.isBlank()) {
-            isIrregular = true;
+        // Only force null section if irregular
+        if (isIrregular) {
             section = null;
         }
 
